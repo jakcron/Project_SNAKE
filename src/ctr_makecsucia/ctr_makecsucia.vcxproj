@@ -126,9 +126,6 @@
     <ProjectReference Include="..\..\lib\es\es.vcxproj">
       <Project>{0f5381d5-e27f-4a1a-b6b2-9fb2a06f0846}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\lib\oschar\oschar.vcxproj">
-      <Project>{8df88f4d-831f-4a47-847d-e97e50fb60dd}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
