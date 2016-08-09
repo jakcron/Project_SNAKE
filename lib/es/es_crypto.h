@@ -25,7 +25,7 @@ public:
 	static const void* GetSignedBinaryBody(const void* signed_binary);
 	static size_t GetSignatureSize(const void* signed_binary);
 
-	static void SetupContentAesIv(u16 index, u8* iv);
+	static void SetupContentAesIv(u16 index, u8 iv[Crypto::kAesBlockSize]);
 
 	
 private:

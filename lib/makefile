@@ -1,5 +1,4 @@
-LIBS = crypto ctr es oschar yaml ctr_icon
-
+LIBS = crypto yaml es oschar ctr ctr_icon 
 main: build
 
 rebuild: clean build

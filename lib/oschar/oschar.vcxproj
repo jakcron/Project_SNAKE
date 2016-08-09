@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{8DF88F4D-831F-4A47-847D-E97E50FB60DD}</ProjectGuid>
+    <ProjectGuid>{B987915F-7D73-4C7F-9A2E-A6D87F92E206}</ProjectGuid>
     <RootNamespace>oschar</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>

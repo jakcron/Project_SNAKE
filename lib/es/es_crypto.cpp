@@ -100,7 +100,7 @@ int EsCrypto::RsaVerify(const u8* hash, const u8* modulus, const u8* signature)
 	return ret;
 }
 
-const void * EsCrypto::GetSignedBinaryBody(const void * signed_binary)
+const void* EsCrypto::GetSignedBinaryBody(const void* signed_binary)
 {
 	EsSignType sign_type = get_sign_type(signed_binary);
 	size_t signature_size = GetSignatureSize(sign_type);
@@ -110,12 +110,12 @@ const void * EsCrypto::GetSignedBinaryBody(const void * signed_binary)
 	return ((const u8*)signed_binary) + signature_size;
 }
 
-size_t EsCrypto::GetSignatureSize(const void * signed_binary)
+size_t EsCrypto::GetSignatureSize(const void* signed_binary)
 {
 	return GetSignatureSize(get_sign_type(signed_binary));
 }
 
-void EsCrypto::SetupContentAesIv(u16 index, u8 * iv)
+void EsCrypto::SetupContentAesIv(u16 index, u8 iv[Crypto::kAesBlockSize])
 {
 	memset(iv, 0, Crypto::kAesBlockSize);
 	iv[0] = (index >> 8) & 0xff;

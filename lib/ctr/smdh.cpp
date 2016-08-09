@@ -51,7 +51,7 @@ void Smdh::SetTitle(SmdhTitle language, utf16char_t name[kNameLen], utf16char_t 
 
 void Smdh::SetRegionLockout(SmdhRegion region)
 {
-	smdh_.settings.region_lockout = region;
+	smdh_.settings.region_lockout = le_word(region);
 }
 
 void Smdh::SetAgeRestriction(SmdhRatingAgency agency, u8 age, u8 flags)
