@@ -5,6 +5,8 @@
 
 #include "program_id.h"
 
+#include "cia_header.h"
+
 #include "ncch_header.h"
 #include "cxi_extended_header.h"
 

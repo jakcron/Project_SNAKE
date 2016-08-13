@@ -74,7 +74,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\lib\yaml;..\..\lib\es;..\..\lib\common;..\..\lib\ctr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\lib\crypto;..\..\lib\yaml;..\..\lib\es;..\..\lib\common;..\..\lib\ctr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -112,13 +112,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="makefile" />
+    <None Include="reimplement_notes.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="KeyStore.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RsfSettings.cpp" />
     <ClCompile Include="UserSettings.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="KeyStore.h" />
     <ClInclude Include="RsfSettings.h" />
     <ClInclude Include="UserSettings.h" />
   </ItemGroup>

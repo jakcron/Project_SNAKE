@@ -1,0 +1,32 @@
+Commandline options changed:
+  -desc option now specifies SDK desc file
+  -target removed, all keys are specified by KSF specied with -ksf option
+  -exheader now deserialises the exheader content, 
+
+Commandline options removed (due to uselessness or deprecation):
+ -logo
+ -showkeys
+ -inclupd
+ -fsign
+ -cverinfo
+ -esaccid (too specific and unused)
+
+Commandline options moved to RSF (under Options:)
+ -nocodepadding
+ -ckeyid
+ -ncchseckey
+ -rand
+
+Rsf Changes:
+  Option: has new keys:
+   - "TitleKey" (hex string) for manually specifying titlekeys
+   - "RandomTitleKey" (bool) migrated argument "-rand" from cmd (false default)
+   - "CommonKeyIndex" (unsigned byte) migrated argument "-ckeyid" from cmd
+   - "UseUnfixedKey" (bool) signals usage of unfixed aes key (false default)
+   - "UnfixedKeyType" (string) migrated argument "-ncchseckey" from cmd (0 default)
+   - "EnableCodePadding" (bool) aligns code regions to memory page size (true default) (migrated argument "-nocompresscode")
+  Option: has renamed keys
+   - "EnableCompress" -> "EnableCodeCompress" (bool) lz77 compress code binary (false default) (old name will still be accepted)
+
+  AccessControlInfo: has the modified keys:
+   - "EnableCpuSpeedUp" (bool) replaces "CpuSpeed", enables x3 CPU speed on SNAKE (default false)
