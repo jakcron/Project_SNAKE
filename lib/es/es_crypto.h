@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdlib>
 #include "crypto.h"
 
 class EsCrypto

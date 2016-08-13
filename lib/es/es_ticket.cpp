@@ -135,7 +135,7 @@ void EsTicket::SetContentMask(const std::vector<u16>& indexes)
 
 	for (size_t i = 0; i < indexes.size(); i++)
 	{
-		if (entry.index_block != (indexes[i] >> 10))
+		if (entry.index_block != ((u32)indexes[i] >> (u32)10))
 		{
 			if (i > 0)
 			{

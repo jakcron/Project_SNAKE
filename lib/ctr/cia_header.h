@@ -5,6 +5,8 @@
 class CiaHeader
 {
 public:
+	static const int kCiaMaxContentNum = 0x10000;
+
 	CiaHeader();
 	~CiaHeader();
 
@@ -36,7 +38,7 @@ private:
 	static const int kCiaSizeAlign = 0x40;
 	static const u16 kCiaType = 0;
 	static const u16 kCiaVersion = 0;
-	static const int kCiaContentMaskSize = 0x2000;
+	static const int kCiaContentMaskSize = kCiaMaxContentNum/8;
 
 #pragma pack (push, 1)
 	struct sCiaHeader

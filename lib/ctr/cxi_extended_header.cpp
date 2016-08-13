@@ -422,7 +422,7 @@ inline u32 align_to_page(u32 address)
 void CxiExtendedHeader::SetStaticMapping(const std::vector<struct sMemoryMapping>& mapping_list)
 {
 	// todo: be more strict?
-	for (int i = 0; i < mapping_list.size(); i++)
+	for (size_t i = 0; i < mapping_list.size(); i++)
 	{
 		if (mapping_list[i].start == 0)
 		{
@@ -447,7 +447,7 @@ void CxiExtendedHeader::SetStaticMapping(const std::vector<struct sMemoryMapping
 void CxiExtendedHeader::SetIOMapping(const std::vector<struct sMemoryMapping>& mapping_list)
 {
 	// todo: be more strict?
-	for (int i = 0; i < mapping_list.size(); i++)
+	for (size_t i = 0; i < mapping_list.size(); i++)
 	{
 		if (mapping_list[i].start == 0)
 		{

@@ -115,6 +115,7 @@
     <ClInclude Include="es_crypto.h" />
     <ClInclude Include="es_ticket.h" />
     <ClInclude Include="es_tmd.h" />
+    <ClInclude Include="es_version.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="es_cert.cpp" />

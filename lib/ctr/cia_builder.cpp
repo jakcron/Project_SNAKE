@@ -1,4 +1,5 @@
 #include "cia_builder.h"
+#include "es_version.h"
 
 #define die(msg) do { fputs(msg "\n\n", stderr); return 1; } while(0)
 #define safe_call(a) do { int rc = a; if(rc != 0) return rc; } while(0)
@@ -236,7 +237,7 @@ int CiaBuilder::SetCxiSaveDataSize(u32 size)
 
 int CiaBuilder::SetVersion(u8 major, u8 minor, u8 build)
 {
-	title_version_ = (major & 63) << 10 | (minor & 63) << 4 | build & 15;
+	title_version_ = EsVersion::make_version(major, minor, build);
 	return 0;
 }
 

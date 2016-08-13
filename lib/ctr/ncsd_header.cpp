@@ -52,6 +52,8 @@ int NcsdHeader::ValidateHeaderSignature(const Crypto::sRsa2048Key & ncsd_rsa_key
 	Crypto::Sha256((u8*)header_.magic, sizeof(struct sNcsdHeader) - 0x100, hash);
 	// sign header
 	safe_call(Crypto::VerifyRsa2048(ncsd_rsa_key, Crypto::HASH_SHA256, hash, header_.signature));
+
+	return 0;
 }
 
 void NcsdHeader::SetTitleId(u64 title_id)
@@ -109,7 +111,7 @@ void NcsdHeader::FinaliseNcsdLayout()
 {
 	u32 size = size_to_block(sizeof(sNcsdHeader));
 
-	size += size_to_block(0x4000 - sizeof(sNcsdHeader));
+	size += size_to_block(kDefaultNcchOffset - sizeof(sNcsdHeader));
 
 	for (int i = 0; i < kSectionNum; i++) 
 	{

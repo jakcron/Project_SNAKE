@@ -27,6 +27,9 @@
     <ClInclude Include="es_tmd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="es_version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="es_cert.cpp">

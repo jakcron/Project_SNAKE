@@ -88,6 +88,7 @@ public:
 private:
 	const char kMagic[4] = { 'N', 'C', 'S', 'D' };
 	static const uint32_t kDefaultBlockSize = 0x200;
+	static const uint32_t kDefaultNcchOffset = 0x4000;
 
 	struct sSectionGeometry
 	{
