@@ -12,7 +12,7 @@ YamlFileLayout::~YamlFileLayout()
 int YamlFileLayout::AddChild(const std::string& parent_name, const std::string& child_name, YamlElement::ElementType child_type)
 {
 	YamlElement* parent;
-	
+
 	// resolve parent path to a YamlElement
 	if (ResolveElementPath(parent_name, parent) != ERR_NOERROR)
 	{
@@ -25,21 +25,11 @@ int YamlFileLayout::AddChild(const std::string& parent_name, const std::string& 
 		return ERR_PARENT_NOT_NODE;
 	}
 
-	// verify the child doesn't already exist
-	for (auto& child : parent->childs())
-	{
-		if (child.name() == child_name)
-		{
-			return ERR_CHILD_ALREADY_EXISTS;
-		}
-	}
-
 	// verify that the child isn't generic and there already exist childs
 	if (child_name == kAnyChild && parent->childs().size())
 	{
 		return ERR_CHILD_INVALID;
 	}
-
 
 	// verify that the generic child isn't a node
 	if (child_name == kAnyChild && child_type == YamlElement::ELEMENT_NODE)
@@ -54,7 +44,10 @@ int YamlFileLayout::AddChild(const std::string& parent_name, const std::string& 
 	}
 
 	// add new child
-	parent->AddChild(YamlElement(child_name, child_type));
+	if (parent->AddChild(YamlElement(child_name, child_type)) != YamlElement::ERR_NOERROR)
+	{
+		return ERR_CHILD_ALREADY_EXISTS;
+	}
 
 	return ERR_NOERROR;
 }
