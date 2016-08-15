@@ -5,6 +5,13 @@
 class NcsdHeader
 {
 public:
+	enum ErrorCode
+	{
+		ERR_NOERROR,
+		ERR_SIGN_FAIL,
+		ERR_CORRUPT_DATA,
+	};
+
 	enum SectionFsType
 	{
 		FS_TYPE_NONE = 0,

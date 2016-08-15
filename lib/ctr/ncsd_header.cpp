@@ -3,9 +3,6 @@
 #include <cmath>
 #include "ncsd_header.h"
 
-#define die(msg) do { fputs(msg "\n\n", stderr); return 1; } while(0)
-#define safe_call(a) do { int rc = a; if(rc != 0) return rc; } while(0)
-
 NcsdHeader::NcsdHeader()
 {
 	memset((u8*)&header_, 0, sizeof(sNcsdHeader));
@@ -30,19 +27,25 @@ int NcsdHeader::CreateHeader(const Crypto::sRsa2048Key & ncsd_rsa_key)
 	// hash header
 	Crypto::Sha256((u8*)header_.magic, sizeof(struct sNcsdHeader) - 0x100, hash);
 	// sign header
-	safe_call(Crypto::SignRsa2048(ncsd_rsa_key, Crypto::HASH_SHA256, hash, header_.signature));
+	if (Crypto::SignRsa2048(ncsd_rsa_key, Crypto::HASH_SHA256, hash, header_.signature))
+	{
+		return ERR_SIGN_FAIL;
+	}
 
 
-	return 0;
+	return ERR_NOERROR;
 }
 
 int NcsdHeader::SetHeader(const u8 * header)
 {
 	memcpy((u8*)&header_, header, sizeof(sNcsdHeader));
 
-	if (memcmp(header_.magic, kMagic, 4) != 0) die("[ERROR] Not a NCSD header!");
+	if (memcmp(header_.magic, kMagic, 4) != 0) 
+	{
+		return ERR_CORRUPT_DATA;
+	}
 
-	return 0;
+	return ERR_NOERROR;
 }
 
 int NcsdHeader::ValidateHeaderSignature(const Crypto::sRsa2048Key & ncsd_rsa_key)
@@ -51,9 +54,12 @@ int NcsdHeader::ValidateHeaderSignature(const Crypto::sRsa2048Key & ncsd_rsa_key
 	u8 hash[Crypto::kSha256HashLen];
 	Crypto::Sha256((u8*)header_.magic, sizeof(struct sNcsdHeader) - 0x100, hash);
 	// sign header
-	safe_call(Crypto::VerifyRsa2048(ncsd_rsa_key, Crypto::HASH_SHA256, hash, header_.signature));
+	if (Crypto::VerifyRsa2048(ncsd_rsa_key, Crypto::HASH_SHA256, hash, header_.signature) != 0) 
+	{
+		return ERR_SIGN_FAIL;
+	}
 
-	return 0;
+	return ERR_NOERROR;
 }
 
 void NcsdHeader::SetTitleId(u64 title_id)
