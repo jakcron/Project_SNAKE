@@ -30,6 +30,15 @@
     <ClInclude Include="libyaml\yaml_private.h">
       <Filter>Header Files\libyaml</Filter>
     </ClInclude>
+    <ClInclude Include="YamlFileLayout.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="YamlElement.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="YamlFile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="YamlReader.cpp">
@@ -58,6 +67,15 @@
     </ClCompile>
     <ClCompile Include="libyaml\writer.c">
       <Filter>Source Files\libyaml</Filter>
+    </ClCompile>
+    <ClCompile Include="YamlFileLayout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="YamlElement.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="YamlFile.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
