@@ -43,3 +43,46 @@ int YamlElement::AddChild(const YamlElement & child)
 
 	return ERR_NOERROR;
 }
+
+int YamlElement::AddData(const std::string& str)
+{
+	data_.push_back(str);
+	return 0;
+}
+
+int YamlElement::AddData(const std::vector<std::string>& str)
+{
+	for (const auto& sub_str : str)
+	{
+		AddData(sub_str);
+	}
+
+	return 0;
+}
+
+
+const YamlElement * YamlElement::GetChild(const std::string & name) const
+{
+	for (const auto& child : childs_)
+	{
+		if (child.name_ == name)
+		{
+			return &child;
+		}
+	}
+
+	return nullptr;
+}
+
+YamlElement* YamlElement::EditChild(const std::string& name)
+{
+	for (auto& child : childs_)
+	{
+		if (child.name_ == name)
+		{
+			return &child;
+		}
+	}
+
+	return nullptr;
+}

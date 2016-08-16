@@ -27,8 +27,7 @@ int YamlReader::LoadFile(const char * path)
 	if (yaml_file_ptr_ == NULL) 
 	{
 		//throw YamlException("Failed to open: " + std::string(path));
-		fprintf(stderr, "[ERROR] Failed to open: %s\n", path);
-		return 1;
+		return ERR_FAILED_TO_OPEN_FILE;
 	}
 
 	// Associate file with parser object
@@ -39,10 +38,10 @@ int YamlReader::LoadFile(const char * path)
 	is_key_ = true;
 	level_ = 0;
 
-	// Read the event sequence until the first mapping appears
-	while (GetEvent() && !is_event_mapping_start()) continue;
+	// Read the event sequence until the first document starts the mapping appears after
+	while (GetEvent() && !is_event_document_start()) continue;
 
-	return 0;
+	return ERR_NOERROR;
 }
 
 int YamlReader::SaveValue(std::string & dst)
@@ -51,26 +50,24 @@ int YamlReader::SaveValue(std::string & dst)
 
 	if (!GetEvent() || !is_event_scalar()) 
 	{
-		fprintf(stderr, "[ERROR] Item \"%s\" requires a value\n", key.c_str());
-		return 1;
+		return ERR_UNEXPECTED_LAYOUT;
 	}
 
 	dst = std::string(event_string());
 
-	return 0;
+	return ERR_NOERROR;
 }
 
 int YamlReader::SaveValueSequence(std::vector<std::string>& dst)
 {
 	if (!GetEvent() || !is_event_sequence_start())
 	{
-		fprintf(stderr, "[ERROR] Bad formatting, expected sequence\n");
-		return 1;
+		return ERR_UNEXPECTED_LAYOUT;
 	}
 
 	dst.clear();
 
-	u32 init_level = level();
+	uint32_t init_level = level();
 	while (GetEvent() && is_level_same(init_level)) 
 	{
 		if (is_event_scalar() && !event_string().empty())
@@ -79,7 +76,7 @@ int YamlReader::SaveValueSequence(std::vector<std::string>& dst)
 		}
 	}
 	
-	return 0;
+	return ERR_NOERROR;
 }
 
 bool YamlReader::GetEvent()
@@ -114,36 +111,66 @@ bool YamlReader::GetEvent()
 	switch (event_.type) 
 	{
 		case YAML_NO_EVENT:
+#ifdef YAML_DEBUG
+			printf("[YAML DEBUG] API REPORTS NO EVENT\n");
+#endif
 			break;
 		case YAML_STREAM_START_EVENT:
+#ifdef YAML_DEBUG
+			printf("[YAML DEBUG] API REPORTS STREAM_START EVENT\n");
+#endif
 			break;
 		case YAML_DOCUMENT_START_EVENT:
+#ifdef YAML_DEBUG
+			printf("[YAML DEBUG] API REPORTS DOCUMENT_START EVENT\n");
+#endif
 			break;
 		case YAML_ALIAS_EVENT:
+#ifdef YAML_DEBUG
+			printf("[YAML DEBUG] API REPORTS ALIAS EVENT\n");
+#endif
 			break;
 		case YAML_SCALAR_EVENT:
 			event_str_ = std::string(reinterpret_cast<char*>(event_.data.scalar.value));
+#ifdef YAML_DEBUG
+			printf("[YAML DEBUG] API REPORTS SCALAR EVENT(%s)\n", event_str_.c_str());
+#endif
 			break;
 		case YAML_SEQUENCE_START_EVENT:
+#ifdef YAML_DEBUG
+			printf("[YAML DEBUG] API REPORTS SEQUENCE_START EVENT\n");
+#endif
 			is_sequence_ = true;
 			is_key_ = false;
 			level_++;
 			break;
 		case YAML_SEQUENCE_END_EVENT:
+#ifdef YAML_DEBUG
+			printf("[YAML DEBUG] API REPORTS SEQUENCE EVENT\n");
+#endif
 			is_sequence_ = false;
 			is_key_ = true;
 			level_--;
 			break;
 		case YAML_MAPPING_START_EVENT:
+#ifdef YAML_DEBUG
+			printf("[YAML DEBUG] API REPORTS MAPPING_START EVENT\n");
+#endif
 			is_key_ = true;
 			level_++;
 			break;
 		case YAML_MAPPING_END_EVENT:
+#ifdef YAML_DEBUG
+			printf("[YAML DEBUG] API REPORTS MAPPING_END EVENT\n");
+#endif
 			is_key_ = true;
 			level_--;
 			break;
 		case YAML_DOCUMENT_END_EVENT:
 		case YAML_STREAM_END_EVENT:
+#ifdef YAML_DEBUG
+			printf("[YAML DEBUG] API REPORTS DOCUMENT/STREAM_END EVENT\n");
+#endif
 			is_done_ = true;
 			break;
 		default: break;

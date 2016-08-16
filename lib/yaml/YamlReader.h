@@ -1,9 +1,9 @@
 #pragma once
 #include <cstdlib>
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <exception>
-#include "types.h"
 #include "libyaml/yaml.h"
 
 /*
@@ -32,6 +32,13 @@ private:
 class YamlReader
 {
 public:
+	enum ErrorCodes
+	{
+		ERR_NOERROR,
+		ERR_FAILED_TO_OPEN_FILE,
+		ERR_UNEXPECTED_LAYOUT
+	};
+
 	YamlReader();
 	~YamlReader();
 
@@ -46,12 +53,14 @@ public:
 
 	// yaml event controls
 	bool GetEvent();
-	inline u32 level() const { return level_; }
-	inline bool is_level_in_scope(u32 level) const { return level_ >= level; }
-	inline bool is_level_same(u32 level) const { return level_ == level; }
+	inline uint32_t level() const { return level_; }
+	inline bool is_level_in_scope(uint32_t level) const { return level_ >= level; }
+	inline bool is_level_same(uint32_t level) const { return level_ == level; }
 	inline bool is_done() const { return is_done_; }
 	inline bool is_error() const { return is_api_error_; }
 
+	inline bool is_event_document_start() const { return event_.type == YAML_DOCUMENT_START_EVENT; }
+	inline bool is_event_document_end() const { return event_.type == YAML_DOCUMENT_END_EVENT; }
 	inline bool is_event_nothing() const { return event_.type == YAML_NO_EVENT; }
 	inline bool is_event_scalar() const { return event_.type == YAML_SCALAR_EVENT; }
 	inline bool is_event_mapping_start() const { return event_.type == YAML_MAPPING_START_EVENT; }
@@ -73,7 +82,7 @@ private:
 	// for event control
 	bool is_sequence_;
 	bool is_key_;
-	u32 level_;
+	uint32_t level_;
 
 	std::string event_str_;
 

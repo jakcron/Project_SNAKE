@@ -114,7 +114,6 @@
     <ClInclude Include="libyaml\yaml_private.h" />
     <ClInclude Include="YamlElement.h" />
     <ClInclude Include="YamlFile.h" />
-    <ClInclude Include="YamlFileLayout.h" />
     <ClInclude Include="YamlReader.h" />
   </ItemGroup>
   <ItemGroup>
@@ -128,7 +127,6 @@
     <ClCompile Include="libyaml\writer.c" />
     <ClCompile Include="YamlElement.cpp" />
     <ClCompile Include="YamlFile.cpp" />
-    <ClCompile Include="YamlFileLayout.cpp" />
     <ClCompile Include="YamlReader.cpp" />
   </ItemGroup>
   <ItemGroup>
