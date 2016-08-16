@@ -1,8 +1,6 @@
 #include "YamlFile.h"
 #include <cstdint>
 
-#define YAML_DEBUG 1
-
 YamlFile::YamlFile() :
 	allow_duplicate_data_childs_(false),
 	layout_(kRootParent, layout_.ELEMENT_NODE),
