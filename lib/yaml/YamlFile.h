@@ -29,6 +29,7 @@ public:
 	int AddChildToRoot(const std::string& child_name, YamlElement::ElementType child_type);
 	int AddGenericChildToParent(const std::string& parent_path, YamlElement::ElementType child_type);
 	int AddChildToParent(const std::string& parent_path, const std::string& child_name, YamlElement::ElementType child_type);
+	void AllowDuplicateDataChilds(bool allow);
 
 	// retreve element
 	// GetLayoutElement retrieves the prototype yaml layout data
@@ -39,6 +40,8 @@ public:
 private:
 	const std::string kRootParent = "#ROOTPARENT#";
 	const std::string kAnyChild = "#ANYCHILD#";
+
+	bool allow_duplicate_data_childs_;
 
 	YamlReader reader_;
 	YamlElement layout_;

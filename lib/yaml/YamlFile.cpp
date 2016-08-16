@@ -1,8 +1,10 @@
 #include "YamlFile.h"
 #include <cstdint>
 
+#define YAML_DEBUG 1
 
 YamlFile::YamlFile() :
+	allow_duplicate_data_childs_(false),
 	layout_(kRootParent, layout_.ELEMENT_NODE),
 	data_(kRootParent, data_.ELEMENT_NODE)
 {
@@ -89,6 +91,11 @@ int YamlFile::AddChildToParent(const std::string& parent_path, const std::string
 	return ERR_NOERROR;
 }
 
+void YamlFile::AllowDuplicateDataChilds(bool allow)
+{
+	allow_duplicate_data_childs_ = allow;
+}
+
 const YamlElement* YamlFile::GetLayoutElement(const std::string& path)
 {
 	return ResolveElementPath(&layout_, path);
@@ -148,11 +155,11 @@ int YamlFile::ProcessYamlElement(const YamlElement* layout, YamlElement* data)
 			}
 
 			YamlElement* data_child = data->EditChild(reader_.event_string());
-			// if the data doesn't have such a child yet, create it
-			if (data_child == nullptr)
+			// if the data doesn't have such a child yet (or duplicate childs are allowed), create it
+			if (data_child == nullptr || allow_duplicate_data_childs_)
 			{
-				data->AddChild(YamlElement(reader_.event_string(), layout_child->type()));
-				data_child = data->EditChild(reader_.event_string());
+				data->AddChild(YamlElement(reader_.event_string(), layout_child->type()), allow_duplicate_data_childs_);				
+				data_child = data->EditChild(reader_.event_string(), data->GetChildOccurence(reader_.event_string()) - 1);
 			}
 
 			// process child

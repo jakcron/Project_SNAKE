@@ -31,11 +31,19 @@ int YamlElement::SetType(ElementType type)
 
 int YamlElement::AddChild(const YamlElement & child)
 {
-	for (auto& i : childs_)
+	return AddChild(child, false);
+}
+
+int YamlElement::AddChild(const YamlElement & child, bool allow_duplicates)
+{
+	if (!allow_duplicates)
 	{
-		if (i.name() == child.name())
+		for (auto& i : childs_)
 		{
-			return ERR_CHILD_ALREADY_EXISTS;
+			if (i.name() == child.name())
+			{
+				return ERR_CHILD_ALREADY_EXISTS;
+			}
 		}
 	}
 
@@ -61,13 +69,39 @@ int YamlElement::AddData(const std::vector<std::string>& str)
 }
 
 
-const YamlElement * YamlElement::GetChild(const std::string & name) const
+size_t YamlElement::GetChildOccurence(const std::string & name) const
 {
+	size_t num = 0;
 	for (const auto& child : childs_)
 	{
 		if (child.name_ == name)
 		{
-			return &child;
+			num++;
+		}
+	}
+
+	return num;
+}
+
+const YamlElement* YamlElement::GetChild(const std::string & name) const
+{
+	return GetChild(name, 0);
+}
+
+const YamlElement * YamlElement::GetChild(const std::string & name, size_t pos) const
+{
+	size_t num = 0;
+	for (const auto& child : childs_)
+	{
+		if (child.name_ == name)
+		{
+			// return if the child is at the correct position
+			if (num == pos)
+			{
+				return &child;
+			}
+			
+			num++;
 		}
 	}
 
@@ -76,11 +110,23 @@ const YamlElement * YamlElement::GetChild(const std::string & name) const
 
 YamlElement* YamlElement::EditChild(const std::string& name)
 {
+	return EditChild(name, 0);
+}
+
+YamlElement * YamlElement::EditChild(const std::string & name, size_t pos)
+{
+	size_t num = 0;
 	for (auto& child : childs_)
 	{
 		if (child.name_ == name)
 		{
-			return &child;
+			// return if the child is at the correct position
+			if (num == pos)
+			{
+				return &child;
+			}
+
+			num++;
 		}
 	}
 

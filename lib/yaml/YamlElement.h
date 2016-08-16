@@ -29,12 +29,16 @@ public:
 	int SetName(const std::string& name);
 	int SetType(ElementType type);
 	int AddChild(const YamlElement& child);
+	int AddChild(const YamlElement& child, bool allow_duplicates);
 	int AddData(const std::string& str);
 	int AddData(const std::vector<std::string>& str);
 
 	// complex data getters
+	size_t GetChildOccurence(const std::string& name) const;
 	const YamlElement* GetChild(const std::string& name) const;
+	const YamlElement* GetChild(const std::string& name, size_t pos) const;
 	YamlElement* EditChild(const std::string& name);
+	YamlElement* EditChild(const std::string& name, size_t pos);
 
 	// inline simple data getters
 	const std::string& name(void) const { return name_; }
@@ -43,9 +47,6 @@ public:
 	const std::vector<std::string>& data() const { return data_; }
 
 private:
-	bool is_root_;
-	bool is_wildcard_child_;
-
 	std::string name_;
 	ElementType type_;
 
