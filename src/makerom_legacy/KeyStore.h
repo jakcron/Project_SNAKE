@@ -3,8 +3,10 @@
 #include "crypto.h"
 #include "es_crypto.h"
 #include "es_cert.h"
+#include "YamlFile.h"
 
 #include <vector>
+
 
 class KeyStore
 {
@@ -56,4 +58,7 @@ private:
 		std::vector<sUnfixedNcchKey> unfixed_keys;
 	} ctr_;
 
+	YamlFile yaml_;
+
+	void SetUpYamlLayout(void);
 };
