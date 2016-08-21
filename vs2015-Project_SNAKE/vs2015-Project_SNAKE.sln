@@ -40,6 +40,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "makerom_legacy", "..\src\ma
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ctrtool_legacy", "..\src\ctrtool_legacy\ctrtool_legacy.vcxproj", "{8A8D09F5-6D74-4899-8F4B-85536118DC0A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "keystore", "..\lib\keystore\keystore.vcxproj", "{8432B1FC-A8B2-48BC-88B2-430866DEDF63}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -136,6 +138,14 @@ Global
 		{8A8D09F5-6D74-4899-8F4B-85536118DC0A}.Release|x64.Build.0 = Release|x64
 		{8A8D09F5-6D74-4899-8F4B-85536118DC0A}.Release|x86.ActiveCfg = Release|Win32
 		{8A8D09F5-6D74-4899-8F4B-85536118DC0A}.Release|x86.Build.0 = Release|Win32
+		{8432B1FC-A8B2-48BC-88B2-430866DEDF63}.Debug|x64.ActiveCfg = Debug|x64
+		{8432B1FC-A8B2-48BC-88B2-430866DEDF63}.Debug|x64.Build.0 = Debug|x64
+		{8432B1FC-A8B2-48BC-88B2-430866DEDF63}.Debug|x86.ActiveCfg = Debug|Win32
+		{8432B1FC-A8B2-48BC-88B2-430866DEDF63}.Debug|x86.Build.0 = Debug|Win32
+		{8432B1FC-A8B2-48BC-88B2-430866DEDF63}.Release|x64.ActiveCfg = Release|x64
+		{8432B1FC-A8B2-48BC-88B2-430866DEDF63}.Release|x64.Build.0 = Release|x64
+		{8432B1FC-A8B2-48BC-88B2-430866DEDF63}.Release|x86.ActiveCfg = Release|Win32
+		{8432B1FC-A8B2-48BC-88B2-430866DEDF63}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -152,5 +162,6 @@ Global
 		{B987915F-7D73-4C7F-9A2E-A6D87F92E206} = {A6EEF765-3C6A-4CA7-BE4D-F12DDEAF3F37}
 		{7E93F15A-E190-4107-805C-66BB893D56EC} = {EDCB22AF-6E4B-404B-AC2C-6D924F7EC346}
 		{8A8D09F5-6D74-4899-8F4B-85536118DC0A} = {EDCB22AF-6E4B-404B-AC2C-6D924F7EC346}
+		{8432B1FC-A8B2-48BC-88B2-430866DEDF63} = {A6EEF765-3C6A-4CA7-BE4D-F12DDEAF3F37}
 	EndGlobalSection
 EndGlobal
