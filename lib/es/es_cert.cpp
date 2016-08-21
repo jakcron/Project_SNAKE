@@ -2,34 +2,53 @@
 
 EsCert::EsCert()
 {
+	Clear();
 }
 
 EsCert::~EsCert()
 {
+	Clear();
+}
+
+void EsCert::Clear()
+{
+	memset(child_issuer_, 0, kStringMax);
 }
 
 int EsCert::ImportCert(const void * cert)
 {
-	if (EsCrypto::GetSignedBinaryBody(cert) == nullptr) {
-		return 1;
+	// check if the signature header is valid by attempting to get a pointer the the body
+	if (EsCrypto::GetSignedBinaryBody(cert) == nullptr) 
+	{
+		return ERR_INVALID_SIGNATURE_HEADER;
 	}
 
-	// copy certificate body into internal member 
-	memcpy(&body_, EsCrypto::GetSignedBinaryBody(cert), sizeof(sCertificateBody));
+	// get temporary pointer to body_
+	//sCertificateBody body;
+	//memcpy(&body, EsCrypto::GetSignedBinaryBody(cert), sizeof(sCertificateBody));
+	body_ = (sCertificateBody*)EsCrypto::GetSignedBinaryBody(cert);
 
 
 	// check that the public key type is valid
-	if (GetPublicKeySize(public_key_type()) == 0) {
-		return 1;
+	if (GetPublicKeySize(public_key_type()) == 0) 
+	{
+		return ERR_INVALID_PUBLIC_KEY_TYPE;
 	}
 
-	// allocate memory for and save public key
-	public_key_.alloc(GetPublicKeySize(public_key_type()));
-	memcpy(public_key_.data(), ((const u8*)EsCrypto::GetSignedBinaryBody(cert)) + sizeof(sCertificateBody), public_key_.size());
+	// determine certificate size
+	cert_size_ = EsCrypto::GetSignatureSize(cert) + sizeof(sCertificateBody) + GetPublicKeySize(public_key_type());
+	if (cert_size_ > kBufferLen)
+	{
+		return ERR_CERTIFICATE_TOO_LARGE;
+	}
 
-	// allocate memory for and save complete certificate blob
-	blob_.alloc(EsCrypto::GetSignatureSize(cert) + sizeof(sCertificateBody) + public_key_.size());
-	memcpy(blob_.data(), cert, blob_.size());
+	// save copy of certificate
+	memcpy(cert_, cert, cert_size_);
+
+
+	// save pointers for body and public key location
+	body_ = (sCertificateBody*)(cert_ + EsCrypto::GetSignatureSize(cert));
+	public_key_ = cert_ + (EsCrypto::GetSignatureSize(cert) + sizeof(sCertificateBody));
 
 	// generate issuer to be used by child signed binaries
 	snprintf(child_issuer_, kStringMax, "%s-%s", issuer(), name());
