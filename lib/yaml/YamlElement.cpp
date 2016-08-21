@@ -6,8 +6,16 @@ YamlElement::YamlElement()
 {
 }
 
+YamlElement::YamlElement(const std::string & parent_path, const std::string & name, ElementType type)
+{
+	SetParentPath(parent_path);
+	SetName(name);
+	SetType(type);
+}
+
 YamlElement::YamlElement(const std::string & name, ElementType type)
 {
+	SetParentPath("");
 	SetName(name);
 	SetType(type);
 }
@@ -15,6 +23,12 @@ YamlElement::YamlElement(const std::string & name, ElementType type)
 
 YamlElement::~YamlElement()
 {
+}
+
+int YamlElement::SetParentPath(const std::string & parent_path)
+{
+	parent_path_ = parent_path;
+	return ERR_NOERROR;
 }
 
 int YamlElement::SetName(const std::string & name)
@@ -54,8 +68,15 @@ int YamlElement::AddChild(const YamlElement & child, bool allow_duplicates)
 
 int YamlElement::AddData(const std::string& str)
 {
+	// prevent multiple data from being set to a SINGLE_KEY
+	// TODO decide whether correct behavior is to override rather than ignore
+	if (!data_.empty() && type_ == ELEMENT_SINGLE_KEY)
+	{
+		return ERR_NOERROR;
+	}
+
 	data_.push_back(str);
-	return 0;
+	return ERR_NOERROR;
 }
 
 int YamlElement::AddData(const std::vector<std::string>& str)

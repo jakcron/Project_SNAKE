@@ -1,13 +1,14 @@
 #include "YamlFile.h"
 #include <cstdint>
 
+#define YAML_ERROR true
+
 YamlFile::YamlFile() :
 	allow_duplicate_data_childs_(false),
 	layout_(kRootParent, layout_.ELEMENT_NODE),
 	data_(kRootParent, data_.ELEMENT_NODE)
 {
 }
-
 
 YamlFile::~YamlFile()
 {
@@ -55,6 +56,11 @@ int YamlFile::AddChildToParent(const std::string& parent_path, const std::string
 
 	// create child
 	YamlElement child(child_name, child_type);
+
+	if (parent_path != kRootParent)
+	{
+		child.SetParentPath(parent_path);
+	}
 
 	// forbid anychilds being nodes
 	if (child_name == kAnyChild && child_type == child.ELEMENT_NODE)
@@ -133,6 +139,18 @@ int YamlFile::ProcessYamlElement(const YamlElement* layout, YamlElement* data)
 		// get level for children
 		uint32_t level = reader_.level();
 
+		// get parent path for children
+		std::string new_parent_path = "";
+		if (data->name() != kRootParent)
+		{
+			if (!data->parent_path().empty())
+			{
+				new_parent_path += data->parent_path() + "/";
+			}
+
+			new_parent_path += data->name();
+		}
+
 		while (reader_.GetEvent() && reader_.level() >= level)
 		{
 			if (!reader_.is_event_scalar()) continue;
@@ -148,6 +166,9 @@ int YamlFile::ProcessYamlElement(const YamlElement* layout, YamlElement* data)
 
 				if (layout_child == nullptr)
 				{
+#ifdef YAML_ERROR
+					printf("[YAML ERROR] Unrecognised Key: %s%s%s\n", new_parent_path.c_str(), new_parent_path.empty()? "" : "/", reader_.event_string().c_str());
+#endif
 					return ERR_NODE_HAS_NO_SUCH_CHILD;
 				}
 			}
@@ -156,7 +177,7 @@ int YamlFile::ProcessYamlElement(const YamlElement* layout, YamlElement* data)
 			// if the data doesn't have such a child yet (or duplicate childs are allowed), create it
 			if (data_child == nullptr || allow_duplicate_data_childs_)
 			{
-				data->AddChild(YamlElement(reader_.event_string(), layout_child->type()), allow_duplicate_data_childs_);				
+				data->AddChild(YamlElement(new_parent_path,reader_.event_string(), layout_child->type()), allow_duplicate_data_childs_);
 				data_child = data->EditChild(reader_.event_string(), data->GetChildOccurence(reader_.event_string()) - 1);
 			}
 
@@ -212,6 +233,10 @@ YamlElement* YamlFile::ResolveElementPath(YamlElement* root, const std::string& 
 		return nullptr;
 	}
 
+#ifdef YAML_DEBUG
+	printf("[YAML DEBUG] RESOLVE_PATH(%s)", path.c_str());
+#endif
+
 	YamlElement* cur = root;
 
 	std::size_t start, end;
@@ -237,6 +262,9 @@ YamlElement* YamlFile::ResolveElementPath(YamlElement* root, const std::string& 
 		// check if it's in the child list, return on fail
 		if (cur->GetChild(element_name) == nullptr)
 		{
+#ifdef YAML_DEBUG
+			printf(" FAIL\n");
+#endif
 			return nullptr;
 		}
 
@@ -244,5 +272,8 @@ YamlElement* YamlFile::ResolveElementPath(YamlElement* root, const std::string& 
 		cur = cur->EditChild(element_name);
 	}
 
+#ifdef YAML_DEBUG
+	printf(" SUCCESS\n");
+#endif
 	return cur;
 }
