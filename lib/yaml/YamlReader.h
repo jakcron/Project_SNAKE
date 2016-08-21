@@ -32,7 +32,7 @@ private:
 class YamlReader
 {
 public:
-	enum ErrorCodes
+	enum ErrorCode
 	{
 		ERR_NOERROR,
 		ERR_FAILED_TO_OPEN_FILE,
