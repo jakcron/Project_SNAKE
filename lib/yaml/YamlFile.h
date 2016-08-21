@@ -6,7 +6,7 @@
 class YamlFile
 {
 public:
-	enum ErrorCodes
+	enum ErrorCode
 	{
 		ERR_NOERROR,
 		ERR_NODE_HAS_NO_CHILDREN,
