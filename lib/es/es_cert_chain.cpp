@@ -118,6 +118,26 @@ bool EsCertChain::ValidateChain(const Crypto::sRsa4096Key& root_key) const
 	return fail_count == 0;
 }
 
+bool EsCertChain::ValidateChainExceptCa() const
+{
+	int fail_count = 0;
+	for (size_t i = 0; i < certs_.size(); i++)
+	{
+		if (certs_[i].GetIssuer() == kCaCertIssuer)
+		{
+			continue;
+		}
+		else
+		{
+			if (!certs_[i].ValidateSignature((*this)[certs_[i].GetIssuer()]))
+			{
+				fail_count++;
+			}
+		}
+	}
+	return fail_count == 0;
+}
+
 const std::vector<EsCert>& EsCertChain::GetCertificates() const
 {
 	return certs_;

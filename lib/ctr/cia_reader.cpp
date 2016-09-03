@@ -169,3 +169,23 @@ bool CiaReader::VerifyContent(const sContentInfo& content)
 
 	return hash_valid;
 }
+
+bool CiaReader::ValidateCertificates(const Crypto::sRsa4096Key & root_key) const
+{
+	return certs_.ValidateChain(root_key);
+}
+
+bool CiaReader::ValidateCertificatesExceptCa() const
+{
+	return certs_.ValidateChainExceptCa();
+}
+
+bool CiaReader::ValidateTicket() const
+{
+	return tik_.ValidateSignature(certs_[tik_.GetIssuer()]);
+}
+
+bool CiaReader::ValidateTmd() const
+{
+	return tmd_.ValidateSignature(certs_[tmd_.GetIssuer()]);
+}

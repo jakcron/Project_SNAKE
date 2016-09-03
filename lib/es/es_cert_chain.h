@@ -26,6 +26,7 @@ public:
 	// deserialise chain
 	void DeserialiseCertChain(const u8* data, size_t size);
 	bool ValidateChain(const Crypto::sRsa4096Key& root_key) const;
+	bool ValidateChainExceptCa() const;
 	const std::vector<EsCert>& GetCertificates() const;
 	size_t GetCertificateNum() const;
 

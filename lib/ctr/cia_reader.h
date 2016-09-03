@@ -49,6 +49,12 @@ public:
 	void DecryptContentToBuffer(const sContentInfo& content, ByteBuffer& out);
 	bool VerifyContent(const sContentInfo& content); // if the content is encrypted, it will be duplicated in memory, decrypted then verified 
 
+	// section validation
+	bool ValidateCertificates(const Crypto::sRsa4096Key& root_key) const; // verifies all certificates, using the root key to check certificates signed by "Root"
+	bool ValidateCertificatesExceptCa() const; // same as above, except certifcates with "Root" as parent aren't checked
+	bool ValidateTicket() const; // verifies the ticket with the corresponding cert in the cert chain
+	bool ValidateTmd() const; // verifies the tmd with the corresponding cert in the cert chain
+
 private:
 	const std::string kModuleName = "CIA_READER";
 
