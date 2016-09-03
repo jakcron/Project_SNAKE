@@ -1,40 +1,36 @@
 #include "YamlFile.h"
 #include <cstdint>
 
-#define YAML_ERROR true
+//#define YAML_DEBUG true
 
-YamlFile::YamlFile() :
+YamlFile::YamlFile() noexcept :
 	allow_duplicate_data_childs_(false),
 	layout_(kRootParent, layout_.ELEMENT_NODE),
 	data_(kRootParent, data_.ELEMENT_NODE)
 {
 }
 
-YamlFile::~YamlFile()
+YamlFile::~YamlFile() noexcept
 {
 }
 
-int YamlFile::ParseFile(const char * path)
+void YamlFile::ParseFile(const char* path)
 {
-	if (reader_.LoadFile(path) != reader_.ERR_NOERROR)
-	{
-		return ERR_READER_FAILED_TO_OPEN_FILE;
-	}
-
-	return ProcessYamlElement(&layout_, &data_);
+	reader_.LoadFile(path);
+	ProcessYamlElement(&layout_, &data_);
 }
 
-int YamlFile::AddChildToRoot(const std::string & child_name, YamlElement::ElementType child_type)
+void YamlFile::AddChildToRoot(const std::string & child_name, YamlElement::ElementType child_type)
 {
-	return AddChildToParent(kRootParent, child_name, child_type);
+	AddChildToParent(kRootParent, child_name, child_type);
 }
 
-int YamlFile::AddGenericChildToParent(const std::string & parent_path, YamlElement::ElementType child_type)
+void YamlFile::AddGenericChildToParent(const std::string & parent_path, YamlElement::ElementType child_type)
 {
-	return AddChildToParent(parent_path, kAnyChild, child_type);
+	AddChildToParent(parent_path, kAnyChild, child_type);
 }
 
-int YamlFile::AddChildToParent(const std::string& parent_path, const std::string& child_name, YamlElement::ElementType child_type)
+void YamlFile::AddChildToParent(const std::string& parent_path, const std::string& child_name, YamlElement::ElementType child_type)
 {
 	YamlElement* parent = nullptr;
 
@@ -51,7 +47,8 @@ int YamlFile::AddChildToParent(const std::string& parent_path, const std::string
 	// attempt to get parent element
 	if (parent == nullptr)
 	{
-		return ERR_PATH_FAILED_TO_RESOLVE;
+		throw ProjectSnakeException(kModuleName, "Failed to add child(" + child_name + ") to parent(" + parent_path + "), reason: parent does not exist");
+		//return ERR_PATH_FAILED_TO_RESOLVE;
 	}
 
 	// create child
@@ -65,52 +62,51 @@ int YamlFile::AddChildToParent(const std::string& parent_path, const std::string
 	// forbid anychilds being nodes
 	if (child_name == kAnyChild && child_type == child.ELEMENT_NODE)
 	{
-		return ERR_FORBIDDEN_ATTRIBUTE;
+		throw ProjectSnakeException(kModuleName, "Failed to add (" + child_name + ") child to parent(" + parent_path + "), reason: child is a node which is illegal");
+		//return ERR_FORBIDDEN_ATTRIBUTE;
 	}
 
 	// forbid rootparent from being created again
 	if (child_name == kRootParent)
 	{
-		return ERR_FORBIDDEN_ATTRIBUTE;
+		throw ProjectSnakeException(kModuleName, "Failed to add (" + child_name + ") to parent(" + parent_path + "), reason: child uses a reserved name");
+		//return ERR_FORBIDDEN_ATTRIBUTE;
 	}
 
 	// prevent adding children when an anychild exists
 	if (parent->GetChild(kAnyChild) != nullptr)
 	{
-		return ERR_CHILD_ALREADY_EXISTS;
+		throw ProjectSnakeException(kModuleName, "Failed to add child(" + child_name + ") to parent(" + parent_path + "), reason: " + kAnyChild + " exists as a child, no others can be added");
+		//return ERR_CHILD_ALREADY_EXISTS;
 	}
 
 	// prevent adding an anychild when children exist
 	if (child_name == kAnyChild && !parent->childs().empty())
 	{
-		return ERR_CHILD_ALREADY_EXISTS;
+		throw ProjectSnakeException(kModuleName, "Failed to add child(" + child_name + ") to parent(" + parent_path + "), reason: attempted to add " + kAnyChild  + " when other children existed");
+		//return ERR_CHILD_ALREADY_EXISTS;
 	}
 
 	// add child to parent
-	if (parent->AddChild(child) != parent->ERR_NOERROR)
-	{
-		return ERR_CHILD_ALREADY_EXISTS;
-	}
-
-	return ERR_NOERROR;
+	parent->AddChild(child);
 }
 
-void YamlFile::AllowDuplicateDataChilds(bool allow)
+void YamlFile::AllowDuplicateDataChilds(bool allow) noexcept
 {
 	allow_duplicate_data_childs_ = allow;
 }
 
-const YamlElement* YamlFile::GetLayoutElement(const std::string& path)
+const YamlElement* YamlFile::GetLayoutElement(const std::string& path) noexcept
 {
 	return ResolveElementPath(&layout_, path);
 }
 
-const YamlElement* YamlFile::GetDataElement(const std::string& path)
+const YamlElement* YamlFile::GetDataElement(const std::string& path) noexcept
 {
 	return ResolveElementPath(&data_, path);
 }
 
-int YamlFile::ProcessYamlElement(const YamlElement* layout, YamlElement* data)
+void YamlFile::ProcessYamlElement(const YamlElement* layout, YamlElement* data)
 {
 	if (data->type() == data->ELEMENT_NODE)
 	{
@@ -121,23 +117,6 @@ int YamlFile::ProcessYamlElement(const YamlElement* layout, YamlElement* data)
 			printf("[YAML DEBUG] NODE(%s) -> EXP_CHILD(%s)\n", layout->name().c_str(), child.name().c_str());
 		}
 #endif
-
-		// check if the layout supports children
-		if (layout->childs().empty())
-		{
-			return ERR_NODE_HAS_NO_CHILDREN;
-		}
-
-		
-		// move into children of the element
-		reader_.GetEvent();
-		if (!reader_.is_event_mapping_start())
-		{
-			return ERR_YAML_MAPPING_EVENT_DID_NOT_OCCUR;
-		}
-
-		// get level for children
-		uint32_t level = reader_.level();
 
 		// get parent path for children
 		std::string new_parent_path = "";
@@ -151,6 +130,25 @@ int YamlFile::ProcessYamlElement(const YamlElement* layout, YamlElement* data)
 			new_parent_path += data->name();
 		}
 
+		// check if the layout supports children
+		if (layout->childs().empty())
+		{
+			throw ProjectSnakeException(kModuleName, "Node: " + new_parent_path + " has no children");
+			//return ERR_NODE_HAS_NO_CHILDREN;
+		}
+
+		// move into children of the element
+		reader_.GetEvent();
+		if (!reader_.is_event_mapping_start())
+		{
+			throw ProjectSnakeException(kModuleName, "Unexpect YAML layout, expected MAPPING event at: " + new_parent_path);
+			//return ERR_YAML_MAPPING_EVENT_DID_NOT_OCCUR;
+		}
+
+		// get level for children
+		uint32_t level = reader_.level();
+
+		// iterate through children
 		while (reader_.GetEvent() && reader_.level() >= level)
 		{
 			if (!reader_.is_event_scalar()) continue;
@@ -169,7 +167,8 @@ int YamlFile::ProcessYamlElement(const YamlElement* layout, YamlElement* data)
 #ifdef YAML_ERROR
 					printf("[YAML ERROR] Unrecognised Key: %s%s%s\n", new_parent_path.c_str(), new_parent_path.empty()? "" : "/", reader_.event_string().c_str());
 #endif
-					return ERR_NODE_HAS_NO_SUCH_CHILD;
+					throw ProjectSnakeException(kModuleName, "Unrecognised Key: " + new_parent_path + (new_parent_path.empty() ? "" : "/") + reader_.event_string());
+					//return ERR_NODE_HAS_NO_SUCH_CHILD;
 				}
 			}
 
@@ -182,11 +181,12 @@ int YamlFile::ProcessYamlElement(const YamlElement* layout, YamlElement* data)
 			}
 
 			// process child
-			int ret = ProcessYamlElement(layout_child, data_child);
-			if (ret != ERR_NOERROR) 
-			{
-				return ret;
-			}
+			ProcessYamlElement(layout_child, data_child);
+			//int ret = ProcessYamlElement(layout_child, data_child);
+			//if (ret != ERR_NOERROR) 
+			//{
+			//	return ret;
+			//}
 		}
 	}
 	else if (data->type() == data->ELEMENT_SINGLE_KEY)
@@ -197,10 +197,7 @@ int YamlFile::ProcessYamlElement(const YamlElement* layout, YamlElement* data)
 		// temporary storage
 		std::string tmp;
 
-		if (reader_.SaveValue(tmp) != reader_.ERR_NOERROR)
-		{
-			return ERR_READER_UNEXPECTED_LAYOUT;
-		}
+		reader_.SaveValue(tmp);
 		data->AddData(tmp);
 	}
 	else if (data->type() == data->ELEMENT_LIST_KEY)
@@ -211,22 +208,16 @@ int YamlFile::ProcessYamlElement(const YamlElement* layout, YamlElement* data)
 		// temporary storage
 		std::vector<std::string> tmp(0);
 
-		if (reader_.SaveValueSequence(tmp) != reader_.ERR_NOERROR)
-		{
-			return ERR_READER_UNEXPECTED_LAYOUT;
-		}
-
+		reader_.SaveValueSequence(tmp);
 		data->AddData(tmp);
 	}
 	else
 	{
-		return ERR_UNKNOWN_ELEMENT_TYPE;
+		throw ProjectSnakeException(kModuleName, "Unknown YAML element type " + data->type());
 	}
-	
-	return ERR_NOERROR;
 }
 
-YamlElement* YamlFile::ResolveElementPath(YamlElement* root, const std::string& path)
+YamlElement* YamlFile::ResolveElementPath(YamlElement* root, const std::string& path) noexcept
 {
 	if (root->name() != kRootParent)
 	{

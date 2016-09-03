@@ -6,14 +6,6 @@
 class YamlElement
 {
 public:
-	enum ErrorCode
-	{
-		ERR_NOERROR,
-		ERR_CHILD_ALREADY_EXISTS,
-		ERR_CHILD_NOT_FOUND,
-	};
-
-
 	enum ElementType
 	{
 		ELEMENT_NODE,
@@ -21,26 +13,26 @@ public:
 		ELEMENT_LIST_KEY,
 	};
 
-	YamlElement();
-	YamlElement(const std::string& parent_path, const std::string& name, ElementType type);
-	YamlElement(const std::string& name, ElementType type);
-	~YamlElement();
+	YamlElement() noexcept;
+	YamlElement(const std::string& parent_path, const std::string& name, ElementType type) noexcept;
+	YamlElement(const std::string& name, ElementType type) noexcept;
+	~YamlElement() noexcept;
 
 	// complex data setters
-	int SetParentPath(const std::string& parent_path);
-	int SetName(const std::string& name);
-	int SetType(ElementType type);
-	int AddChild(const YamlElement& child);
-	int AddChild(const YamlElement& child, bool allow_duplicates);
-	int AddData(const std::string& str);
-	int AddData(const std::vector<std::string>& str);
+	void SetParentPath(const std::string& parent_path) noexcept;
+	void SetName(const std::string& name) noexcept;
+	void SetType(ElementType type) noexcept;
+	void AddChild(const YamlElement& child);
+	void AddChild(const YamlElement& child, bool allow_duplicates);
+	void AddData(const std::string& str);
+	void AddData(const std::vector<std::string>& str);
 
 	// complex data getters
-	size_t GetChildOccurence(const std::string& name) const;
-	const YamlElement* GetChild(const std::string& name) const;
-	const YamlElement* GetChild(const std::string& name, size_t pos) const;
-	YamlElement* EditChild(const std::string& name);
-	YamlElement* EditChild(const std::string& name, size_t pos);
+	size_t GetChildOccurence(const std::string& name) const noexcept;
+	const YamlElement* GetChild(const std::string& name) const noexcept;
+	const YamlElement* GetChild(const std::string& name, size_t pos) const noexcept;
+	YamlElement* EditChild(const std::string& name) noexcept;
+	YamlElement* EditChild(const std::string& name, size_t pos) noexcept;
 
 	// inline simple data getters
 	const std::string& parent_path(void) const { return parent_path_; }
@@ -50,6 +42,8 @@ public:
 	const std::vector<std::string>& data() const { return data_; }
 
 private:
+	const std::string kModuleName = "YAML_ELEMENT";
+
 	std::string parent_path_;
 	std::string name_;
 	ElementType type_;

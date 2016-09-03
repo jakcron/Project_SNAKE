@@ -2,15 +2,8 @@
 SRC_DIR = .
 OBJS = $(foreach dir,$(SRC_DIR),$(subst .cpp,.o,$(wildcard $(dir)/*.cpp))) $(foreach dir,$(SRC_DIR),$(subst .c,.o,$(wildcard $(dir)/*.c)))
 
-#local dependencies
-DEPENDS = ctr keystore oschar es crypto yaml common
-
-LIB_DIR = ../../lib
-
-LIBS = -L"$(LIB_DIR)" $(foreach dep,$(DEPENDS), -l"$(dep)")
-INCS = $(foreach dep,$(DEPENDS), -I"$(LIB_DIR)/$(dep)")
-
-OUTPUT = ../../bin/$(shell basename $(CURDIR))
+INC_DIR = 
+INCS = $(foreach dir,$(INC_DIR), -I"$(dir)")
 
 # Compiler Settings
 CXXFLAGS = -std=c++11 $(INCS) -D__STDC_FORMAT_MACROS -Wall -Wno-unused-but-set-variable -Wno-unused-value
@@ -20,20 +13,21 @@ ifeq ($(OS),Windows_NT)
 	CXX = x86_64-w64-mingw32-g++
 	CFLAGS += 
 	CXXFLAGS += 
-	LIBS += -static
 else
 	# *nix Only Flags/Libs
 	CFLAGS += 
 	CXXFLAGS += 
-	LIBS +=
 endif
 
-all: build
+# Output
+OUTPUT = ../lib$(shell basename $(CURDIR)).a
+
+main: build
 
 rebuild: clean build
 
 build: $(OBJS)
-	$(CXX) $(OBJS) $(LIBS) -o $(OUTPUT)
+	ar cr -o $(OUTPUT) $(OBJS)
 
 clean:
-	rm -rf $(OBJS) $(OUTPUT)
+	rm -rf $(OUTPUT) $(OBJS)

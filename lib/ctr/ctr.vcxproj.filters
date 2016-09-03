@@ -36,9 +36,6 @@
     <ClInclude Include="ncch_header.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ncsd_cardinfo_header.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ncsd_header.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -49,6 +46,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="smdh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cci_builder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ctr_card_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cci_cardinfo_header.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cia_reader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cia_cxi_meta_data.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -74,9 +86,6 @@
     <ClCompile Include="ncch_header.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ncsd_cardinfo_header.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ncsd_header.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -89,10 +98,23 @@
     <ClCompile Include="smdh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cci_builder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ctr_card_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cci_cardinfo_header.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cia_reader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cia_cxi_meta_data.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="makefile">
-      <Filter>Resource Files</Filter>
-    </None>
+    <None Include="makefile" />
   </ItemGroup>
 </Project>

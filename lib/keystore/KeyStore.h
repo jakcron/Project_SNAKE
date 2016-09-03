@@ -28,16 +28,16 @@ public:
 
 	enum FixedKeyId
 	{
-		APP_FIXED_KEY,
-		SYSTEM_FIXED_KEY
+		CTR_APP_FIXED_KEY,
+		CTR_SYSTEM_FIXED_KEY
 	};
 
 	enum EsIdentType
 	{
-		IDENT_ROOT, // Root
-		IDENT_CA, // Certificate Authority
-		IDENT_XS, // Ticket
-		IDENT_CP, // Tmd
+		ES_IDENT_ROOT, // Root
+		ES_IDENT_CA, // Certificate Authority
+		ES_IDENT_XS, // Ticket
+		ES_IDENT_CP, // Tmd
 	};
 
 	enum CtrRsaKeyId
@@ -58,6 +58,7 @@ public:
 	
 	int GetEsCert(EsIdentType id, EsCert& cert);
 	int GetEsRsa2048Key(EsIdentType id, Crypto::sRsa2048Key& rsa_key);
+	int GetEsRsa4096Key(EsIdentType id, Crypto::sRsa4096Key& rsa_key);
 	int GetCommonKey(u8 index, u8* aes_key);
 	
 	int GetCtrRsa2048Key(CtrRsaKeyId id, Crypto::sRsa2048Key& rsa_key);
@@ -97,6 +98,12 @@ private:
 	const std::string kUnfixedKeyStr = "UnfixedKey";
 	
 
+	struct sRsa4096Key
+	{
+		u8 id;
+		Crypto::sRsa4096Key key;
+	};
+
 	struct sRsa2048Key
 	{
 		u8 id;
@@ -118,7 +125,8 @@ private:
 	struct sEsPki 
 	{
 		std::vector<sEsCertificate> certifcates;
-		std::vector<sRsa2048Key> rsa_keys;
+		std::vector<sRsa4096Key> rsa4096_keys;
+		std::vector<sRsa2048Key> rsa2048_keys;
 		std::vector<sAesKey> common_keys;
 	} es_;
 
@@ -143,6 +151,7 @@ private:
 	int SaveCommonKey(const YamlElement* node);
 	int SaveUnfixedKey(const YamlElement* node);
 	int SaveRsa2048Key(const YamlElement* node, Crypto::sRsa2048Key& rsa_key);
+	int SaveRsa4096Key(const YamlElement* node, Crypto::sRsa4096Key& rsa_key);
 	int SaveEsCertificate(const YamlElement* node, EsCert& certificate);
 
 
@@ -150,10 +159,13 @@ private:
 	int GetAesKey(const std::vector<sAesKey>& key_list, u8 id, u8* key_output);
 	int AddRsa2048Key(u8 id, const Crypto::sRsa2048Key& key, std::vector<sRsa2048Key>& key_list);
 	int GetRsa2048Key(const std::vector<sRsa2048Key>& key_list, u8 id, Crypto::sRsa2048Key& key_output);
+	int AddRsa4096Key(u8 id, const Crypto::sRsa4096Key& key, std::vector<sRsa4096Key>& key_list);
+	int GetRsa4096Key(const std::vector<sRsa4096Key>& key_list, u8 id, Crypto::sRsa4096Key& key_output);
 	int AddEsCertificate(u8 id, const EsCert& certificate, std::vector<sEsCertificate>& cert_list);
 	int GetEsCertificate(const std::vector<sEsCertificate>& cert_list, u8 id, EsCert& cert_output);
 
 	int DecodeHexString(const std::string& hex_str, size_t len, u8 *out);
 
+	void PrintElementLoadFailure(const std::string& element_name, const std::string& failure_reason);
 	void SetUpYamlLayout(void);
 };

@@ -6,38 +6,26 @@
 class YamlFile
 {
 public:
-	enum ErrorCode
-	{
-		ERR_NOERROR,
-		ERR_NODE_HAS_NO_CHILDREN,
-		ERR_NODE_HAS_NO_SUCH_CHILD,
-		ERR_UNKNOWN_ELEMENT_TYPE,
-		ERR_READER_UNEXPECTED_LAYOUT,
-		ERR_READER_FAILED_TO_OPEN_FILE,
-		ERR_PATH_FAILED_TO_RESOLVE,
-		ERR_FORBIDDEN_ATTRIBUTE,
-		ERR_CHILD_ALREADY_EXISTS,
-		ERR_YAML_MAPPING_EVENT_DID_NOT_OCCUR,
-	};
+	YamlFile() noexcept;
+	~YamlFile() noexcept;
 
-	YamlFile();
-	~YamlFile();
-
-	int ParseFile(const char* path);
+	void ParseFile(const char* path);
 
 	// configure layout
-	int AddChildToRoot(const std::string& child_name, YamlElement::ElementType child_type);
-	int AddGenericChildToParent(const std::string& parent_path, YamlElement::ElementType child_type);
-	int AddChildToParent(const std::string& parent_path, const std::string& child_name, YamlElement::ElementType child_type);
-	void AllowDuplicateDataChilds(bool allow);
+	void AddChildToRoot(const std::string& child_name, YamlElement::ElementType child_type);
+	void AddGenericChildToParent(const std::string& parent_path, YamlElement::ElementType child_type);
+	void AddChildToParent(const std::string& parent_path, const std::string& child_name, YamlElement::ElementType child_type);
+	void AllowDuplicateDataChilds(bool allow) noexcept;
 
 	// retreve element
 	// GetLayoutElement retrieves the prototype yaml layout data
-	const YamlElement* GetLayoutElement(const std::string& path);
+	const YamlElement* GetLayoutElement(const std::string& path) noexcept;
 
 	// GetDataElement retrieves the processed yaml file data
-	const YamlElement* GetDataElement(const std::string& path);
+	const YamlElement* GetDataElement(const std::string& path) noexcept;
 private:
+	const std::string kModuleName = "YAML_FILE";
+
 	const std::string kRootParent = "#ROOTPARENT#";
 	const std::string kAnyChild = "#ANYCHILD#";
 
@@ -48,8 +36,8 @@ private:
 	YamlElement data_;
 
 
-	int ProcessYamlElement(const YamlElement* layout, YamlElement* data);
+	void ProcessYamlElement(const YamlElement* layout, YamlElement* data);
 
-	YamlElement* ResolveElementPath(YamlElement* root, const std::string& path);
+	YamlElement* ResolveElementPath(YamlElement* root, const std::string& path) noexcept;
 };
 

@@ -67,41 +67,71 @@ int EsCrypto::RsaVerify(const u8* hash, const u8* modulus, const u8* signature)
 
 	// get signature type
 	type = get_sign_type(signature);
-
-	switch (type)
+	
+	if (!IsSignRsa2048(type) && !IsSignRsa4096(type))
 	{
-	case(ES_SIGN_RSA4096_SHA1) :
-	case(ES_SIGN_RSA4096_SHA256) :
-	{
-		rsa.len = Crypto::kRsa4096Size;
-		hash_id = (type == ES_SIGN_RSA4096_SHA1) ? SIG_RSA_SHA1 : SIG_RSA_SHA256;
-		hash_len = (type == ES_SIGN_RSA4096_SHA1) ? Crypto::kSha1HashLen : Crypto::kSha256HashLen;
-		break;
-	}
-	case(ES_SIGN_RSA2048_SHA1) :
-	case(ES_SIGN_RSA2048_SHA256) :
-	{
-		rsa.len = Crypto::kRsa2048Size;
-		hash_id = (type == ES_SIGN_RSA2048_SHA1) ? SIG_RSA_SHA1 : SIG_RSA_SHA256;
-		hash_len = (type == ES_SIGN_RSA2048_SHA1) ? Crypto::kSha1HashLen : Crypto::kSha256HashLen;
-		break;
-	}
-	default:
 		return 1;
 	}
+
+	rsa.len = GetApiSignSize(type);
+	hash_id = GetApiHashId(type);
+	hash_len = GetApiHashLen(type);
 
 	mpi_read_binary(&rsa.E, public_exponent, sizeof(public_exponent));
 	mpi_read_binary(&rsa.N, modulus, rsa.len);
 
-	ret = rsa_rsassa_pkcs1_v15_verify(&rsa, RSA_PRIVATE, hash_id, hash_len, hash, signature + 4);
+	ret = rsa_rsassa_pkcs1_v15_verify(&rsa, RSA_PUBLIC, hash_id, hash_len, hash, signature + 4);
 
 	rsa_free(&rsa);
 
 	return ret;
 }
 
+EsCrypto::EsSignType EsCrypto::GetSignatureType(const void* signed_binary)
+{
+	return get_sign_type(signed_binary);
+}
+
+size_t EsCrypto::GetSignatureSize(const void* signed_binary)
+{
+	if (signed_binary == nullptr)
+	{
+		return 0;
+	}
+	return GetSignatureSize(get_sign_type(signed_binary));
+}
+
+size_t EsCrypto::GetSignatureSize(EsSignType type)
+{
+	size_t size = 0;
+	switch (type)
+	{
+	case (ES_SIGN_RSA4096_SHA1):
+	case (ES_SIGN_RSA4096_SHA256):
+		size = kRsa4096SignLen;
+		break;
+	case (ES_SIGN_RSA2048_SHA1):
+	case (ES_SIGN_RSA2048_SHA256):
+		size = kRsa2048SignLen;
+		break;
+	case (ES_SIGN_ECDSA_SHA1):
+	case (ES_SIGN_ECDSA_SHA256):
+		size = kEcdsaSignLen;
+		break;
+	default:
+		break;
+	}
+	return size;
+}
+
+
 const void* EsCrypto::GetSignedBinaryBody(const void* signed_binary)
 {
+	if (signed_binary == nullptr)
+	{
+		return nullptr;
+	}
+
 	EsSignType sign_type = get_sign_type(signed_binary);
 	size_t signature_size = GetSignatureSize(sign_type);
 
@@ -110,10 +140,44 @@ const void* EsCrypto::GetSignedBinaryBody(const void* signed_binary)
 	return ((const u8*)signed_binary) + signature_size;
 }
 
-size_t EsCrypto::GetSignatureSize(const void* signed_binary)
+bool EsCrypto::IsSignRsa4096(EsSignType type)
 {
-	return GetSignatureSize(get_sign_type(signed_binary));
+	return type == ES_SIGN_RSA4096_SHA1 || type == ES_SIGN_RSA4096_SHA256;
 }
+
+bool EsCrypto::IsSignRsa2048(EsSignType type)
+{
+	return type == ES_SIGN_RSA2048_SHA1 || type == ES_SIGN_RSA2048_SHA256;
+}
+
+bool EsCrypto::IsSignEcdsa(EsSignType type)
+{
+	return type == ES_SIGN_ECDSA_SHA1 || type == ES_SIGN_ECDSA_SHA256;
+}
+
+bool EsCrypto::IsSignHashSha1(EsSignType type)
+{
+	return type == ES_SIGN_ECDSA_SHA1 || type == ES_SIGN_RSA2048_SHA1 || type == ES_SIGN_RSA4096_SHA1;
+}
+
+bool EsCrypto::IsSignHashSha256(EsSignType type)
+{
+	return type == ES_SIGN_ECDSA_SHA256 || type == ES_SIGN_RSA2048_SHA256 || type == ES_SIGN_RSA4096_SHA256;
+}
+
+void EsCrypto::HashData(EsSignType type, const u8 * data, size_t size, u8 * hash)
+{
+	if (EsCrypto::IsSignHashSha1(type))
+	{
+		Crypto::Sha1(data, size, hash);
+	}
+	else if (EsCrypto::IsSignHashSha256(type))
+	{
+		Crypto::Sha256(data, size, hash);
+	}
+}
+
+
 
 void EsCrypto::SetupContentAesIv(u16 index, u8 iv[Crypto::kAesBlockSize])
 {
@@ -122,21 +186,36 @@ void EsCrypto::SetupContentAesIv(u16 index, u8 iv[Crypto::kAesBlockSize])
 	iv[1] = index & 0xff;
 }
 
-size_t EsCrypto::GetSignatureSize(EsSignType type)
+size_t EsCrypto::GetApiSignSize(EsSignType type)
 {
+	size_t size = 0;
 	switch (type)
 	{
 	case (ES_SIGN_RSA4096_SHA1):
 	case (ES_SIGN_RSA4096_SHA256):
-		return kRsa4096SignLen;
+		size = Crypto::kRsa4096Size;
+		break;
 	case (ES_SIGN_RSA2048_SHA1):
 	case (ES_SIGN_RSA2048_SHA256):
-		return kRsa2048SignLen;
+		size = Crypto::kRsa2048Size;
+		break;
 	case (ES_SIGN_ECDSA_SHA1):
 	case (ES_SIGN_ECDSA_SHA256):
-		return kEcdsaSignLen;
+		size = Crypto::kEcdsaSize;
+		break;
 	default:
-		return 0;
+		break;
 	}
-	return 0;
+	return size;
 }
+
+size_t EsCrypto::GetApiHashId(EsSignType type)
+{
+	return IsSignHashSha1(type) ? SIG_RSA_SHA1 : SIG_RSA_SHA256;
+}
+
+size_t EsCrypto::GetApiHashLen(EsSignType type)
+{
+	return IsSignHashSha1(type)? Crypto::kSha1HashLen : Crypto::kSha256HashLen;
+}
+

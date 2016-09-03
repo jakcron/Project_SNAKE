@@ -73,8 +73,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="makefile">
-      <Filter>Resource Files</Filter>
-    </None>
+    <None Include="makefile" />
   </ItemGroup>
 </Project>

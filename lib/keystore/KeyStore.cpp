@@ -1,5 +1,7 @@
 #include "KeyStore.h"
 
+//#define KEYSTORE_DEBUG true
+
 KeyStore::KeyStore()
 {
 	SetUpYamlLayout();
@@ -11,10 +13,7 @@ KeyStore::~KeyStore()
 
 int KeyStore::ParseKeySpecFile(const char* path)
 {
-	if (yaml_.ParseFile(path) != 0) 
-	{
-		return ERR_FAILED_TO_PARSE_KSF;
-	}
+	yaml_.ParseFile(path);
 
 	// process es data
 	SaveCommonKeys();
@@ -29,7 +28,7 @@ int KeyStore::ParseKeySpecFile(const char* path)
 	
 #ifdef KEYSTORE_DEBUG
 	printf("[KEYSTORE DEBUG] IMPORT SUMMARY\n");
-	printf("es rsa keys: %d\n", es_.rsa_keys.size());
+	printf("es rsa keys: %d\n", es_.rsa2048_keys.size() + es_.rsa4096_keys.size());
 	printf("es common keys: %d\n", es_.common_keys.size());
 	printf("es certs: %d\n", es_.certifcates.size());
 
@@ -48,7 +47,12 @@ int KeyStore::GetEsCert(EsIdentType id, EsCert& cert)
 
 int KeyStore::GetEsRsa2048Key(EsIdentType id, Crypto::sRsa2048Key & rsa_key)
 {
-	return GetRsa2048Key(es_.rsa_keys, id, rsa_key);
+	return GetRsa2048Key(es_.rsa2048_keys, id, rsa_key);
+}
+
+int KeyStore::GetEsRsa4096Key(EsIdentType id, Crypto::sRsa4096Key & rsa_key)
+{
+	return GetRsa4096Key(es_.rsa4096_keys, id, rsa_key);
 }
 
 int KeyStore::GetCommonKey(u8 index, u8* aes_key)
@@ -110,6 +114,45 @@ int KeyStore::SaveRsa2048Key(const YamlElement* node, Crypto::sRsa2048Key& rsa_k
 	return ERR_NOERROR;
 }
 
+int KeyStore::SaveRsa4096Key(const YamlElement * node, Crypto::sRsa4096Key & rsa_key)
+{
+	const YamlElement *private_exponent, *modulus;
+
+	if (node == nullptr)
+	{
+		return ERR_KSF_ELEMENT_NOT_PRESENT;
+	}
+
+	modulus = node->GetChild(kModulusStr);
+	private_exponent = node->GetChild(kPrivateExponentStr);
+
+	if (modulus != nullptr && !modulus->data().empty())
+	{
+		if (DecodeHexString(modulus->data()[0], Crypto::kRsa4096Size, rsa_key.modulus) != ERR_NOERROR)
+		{
+			return ERR_DATA_CORRUPT;
+		}
+	}
+	else
+	{
+		return ERR_KSF_ELEMENT_NOT_PRESENT;
+	}
+
+	if (private_exponent != nullptr && !private_exponent->data().empty())
+	{
+		if (DecodeHexString(private_exponent->data()[0], Crypto::kRsa4096Size, rsa_key.priv_exponent) != ERR_NOERROR)
+		{
+			return ERR_DATA_CORRUPT;
+		}
+	}
+	else
+	{
+		memset(rsa_key.priv_exponent, 0, Crypto::kRsa4096Size);
+	}
+
+	return ERR_NOERROR;
+}
+
 int KeyStore::SaveEsCertificate(const YamlElement* node, EsCert& certificate)
 {
 	if (node == nullptr)
@@ -126,8 +169,14 @@ int KeyStore::SaveEsCertificate(const YamlElement* node, EsCert& certificate)
 			return ERR_DATA_CORRUPT;
 		}
 
-		return certificate.ImportCert(tmp.data_const());
-
+		try {
+			certificate.DeserialiseCert(tmp.data_const());
+		}
+		catch (const ProjectSnakeException& error) {
+			PrintElementLoadFailure(node->name(), error.what());
+			return ERR_DATA_CORRUPT;
+		}
+		return ERR_NOERROR;
 	}
 
 	return ERR_DATA_CORRUPT;
@@ -135,19 +184,24 @@ int KeyStore::SaveEsCertificate(const YamlElement* node, EsCert& certificate)
 
 int KeyStore::SaveEsRsaKeys()
 {
-	Crypto::sRsa2048Key rsa_key;
+	Crypto::sRsa4096Key rsa4096_key;
+	Crypto::sRsa2048Key rsa2048_key;
 
-	if (SaveRsa2048Key(yaml_.GetDataElement(kEsNodeStr + "/" + kCaKeyStr), rsa_key) == ERR_NOERROR)
+	if (SaveRsa4096Key(yaml_.GetDataElement(kEsNodeStr + "/" + kRootKeyStr), rsa4096_key) == ERR_NOERROR)
 	{
-		AddRsa2048Key(IDENT_CA, rsa_key, es_.rsa_keys);
+		AddRsa4096Key(ES_IDENT_ROOT, rsa4096_key, es_.rsa4096_keys);
 	}
-	if (SaveRsa2048Key(yaml_.GetDataElement(kEsNodeStr + "/" + kXsKeyStr), rsa_key) == ERR_NOERROR)
+	if (SaveRsa2048Key(yaml_.GetDataElement(kEsNodeStr + "/" + kCaKeyStr), rsa2048_key) == ERR_NOERROR)
 	{
-		AddRsa2048Key(IDENT_XS, rsa_key, es_.rsa_keys);
+		AddRsa2048Key(ES_IDENT_CA, rsa2048_key, es_.rsa2048_keys);
 	}
-	if (SaveRsa2048Key(yaml_.GetDataElement(kEsNodeStr + "/" + kCpKeyStr), rsa_key) == ERR_NOERROR)
+	if (SaveRsa2048Key(yaml_.GetDataElement(kEsNodeStr + "/" + kXsKeyStr), rsa2048_key) == ERR_NOERROR)
 	{
-		AddRsa2048Key(IDENT_CP, rsa_key, es_.rsa_keys);
+		AddRsa2048Key(ES_IDENT_XS, rsa2048_key, es_.rsa2048_keys);
+	}
+	if (SaveRsa2048Key(yaml_.GetDataElement(kEsNodeStr + "/" + kCpKeyStr), rsa2048_key) == ERR_NOERROR)
+	{
+		AddRsa2048Key(ES_IDENT_CP, rsa2048_key, es_.rsa2048_keys);
 	}
 
 	return ERR_NOERROR;
@@ -158,15 +212,15 @@ int KeyStore::SaveEsCertificates()
 	EsCert certificate;
 	if (SaveEsCertificate(yaml_.GetDataElement(kEsNodeStr + "/" + kCaCertStr), certificate) == ERR_NOERROR)
 	{
-		AddEsCertificate(IDENT_CA, certificate, es_.certifcates);
+		AddEsCertificate(ES_IDENT_CA, certificate, es_.certifcates);
 	}
 	if (SaveEsCertificate(yaml_.GetDataElement(kEsNodeStr + "/" + kXsCertStr), certificate) == ERR_NOERROR)
 	{
-		AddEsCertificate(IDENT_XS, certificate, es_.certifcates);
+		AddEsCertificate(ES_IDENT_XS, certificate, es_.certifcates);
 	}
 	if (SaveEsCertificate(yaml_.GetDataElement(kEsNodeStr + "/" + kCpCertStr), certificate) == ERR_NOERROR)
 	{
-		AddEsCertificate(IDENT_CP, certificate, es_.certifcates);
+		AddEsCertificate(ES_IDENT_CP, certificate, es_.certifcates);
 	}
 
 	return ERR_NOERROR;
@@ -252,7 +306,7 @@ int KeyStore::SaveFixedKeys()
 		{
 			return ERR_DATA_CORRUPT;
 		}
-		if (AddAesKey(APP_FIXED_KEY, aes_key, ctr_.fixed_keys))
+		if (AddAesKey(CTR_APP_FIXED_KEY, aes_key, ctr_.fixed_keys))
 		{
 			return ERR_DATA_ALREADY_EXIST;
 		}
@@ -265,7 +319,7 @@ int KeyStore::SaveFixedKeys()
 		{
 			return ERR_DATA_CORRUPT;
 		}
-		if (AddAesKey(SYSTEM_FIXED_KEY, aes_key, ctr_.fixed_keys) != ERR_NOERROR)
+		if (AddAesKey(CTR_SYSTEM_FIXED_KEY, aes_key, ctr_.fixed_keys) != ERR_NOERROR)
 		{
 			return ERR_DATA_ALREADY_EXIST;
 		}
@@ -395,33 +449,64 @@ int KeyStore::GetRsa2048Key(const std::vector<sRsa2048Key>& key_list, u8 id, Cry
 	return ERR_DATA_NOT_EXIST;
 }
 
+int KeyStore::AddRsa4096Key(u8 id, const Crypto::sRsa4096Key & key, std::vector<sRsa4096Key>& key_list)
+{
+	for (const auto& key : key_list)
+	{
+		if (key.id == id)
+		{
+			return ERR_DATA_ALREADY_EXIST;
+		}
+	}
+	sRsa4096Key new_key;
+
+	new_key.id = id;
+	memcpy(new_key.key.modulus, key.modulus, Crypto::kRsa4096Size);
+	memcpy(new_key.key.priv_exponent, key.priv_exponent, Crypto::kRsa4096Size);
+
+	key_list.push_back(new_key);
+
+	return ERR_NOERROR;
+}
+
+int KeyStore::GetRsa4096Key(const std::vector<sRsa4096Key>& key_list, u8 id, Crypto::sRsa4096Key& key_output)
+{
+	for (const auto& key : key_list)
+	{
+		if (key.id == id)
+		{
+			memcpy(key_output.modulus, key.key.modulus, Crypto::kRsa4096Size);
+			memcpy(key_output.priv_exponent, key.key.priv_exponent, Crypto::kRsa4096Size);
+			return ERR_NOERROR;
+		}
+	}
+	return ERR_DATA_NOT_EXIST;
+}
+
 int KeyStore::AddEsCertificate(u8 id, const EsCert& certificate, std::vector<sEsCertificate>& cert_list)
 {
-	for (const auto& cert : cert_list)
+	for (size_t i = 0; i < cert_list.size(); i++)
 	{
-		if (cert.id == id)
+		if (cert_list[i].id == id)
 		{
 			return ERR_DATA_ALREADY_EXIST;
 		}
 	}
 
-	sEsCertificate new_cert;
 
-	new_cert.id = id;
-	new_cert.certificate.ImportCert(certificate.data_blob());
-
-	cert_list.push_back(new_cert);
+	cert_list.push_back(sEsCertificate{ id });
+	cert_list[cert_list.size() - 1].certificate = certificate;
 
 	return ERR_NOERROR;
 }
 
 int KeyStore::GetEsCertificate(const std::vector<sEsCertificate>& cert_list, u8 id, EsCert & cert_output)
 {
-	for (const auto& cert : cert_list)
+	for (size_t i = 0; i < cert_list.size(); i++)
 	{
-		if (cert.id == id)
+		if (cert_list[i].id == id)
 		{
-			cert_output.ImportCert(cert.certificate.data_blob());
+			cert_output = cert_list[i].certificate;
 			return ERR_NOERROR;
 		}
 	}
@@ -445,6 +530,11 @@ int KeyStore::DecodeHexString(const std::string& hex_str, size_t len, u8* out)
 	}
 
 	return ERR_NOERROR;
+}
+
+void KeyStore::PrintElementLoadFailure(const std::string & element_name, const std::string & failure_reason)
+{
+	printf("[KEYSTORE ERROR] Failed to load %s, reason: %s\n", element_name.c_str(), failure_reason.c_str());
 }
 
 void KeyStore::SetUpYamlLayout(void)
@@ -482,7 +572,6 @@ void KeyStore::SetUpYamlLayout(void)
 	yaml_.AddChildToParent(kCtrNodeStr + "/" + kCrrStr, kModulusStr, YamlElement::ELEMENT_SINGLE_KEY);
 	yaml_.AddChildToParent(kCtrNodeStr + "/" + kCrrStr, kPrivateExponentStr, YamlElement::ELEMENT_SINGLE_KEY);
 
-	yaml_.AddChildToRoot(kCtrNodeStr, YamlElement::ELEMENT_NODE);
 	yaml_.AddChildToParent(kCtrNodeStr, kAppFixedKeyStr, YamlElement::ELEMENT_SINGLE_KEY);
 	yaml_.AddChildToParent(kCtrNodeStr, kSysFixedKeyStr, YamlElement::ELEMENT_SINGLE_KEY);
 	yaml_.AddChildToParent(kCtrNodeStr, kUnfixedKeyStr, YamlElement::ELEMENT_NODE);

@@ -3,31 +3,8 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include <exception>
+#include "project_snake_exception.h"
 #include "libyaml/yaml.h"
-
-/*
-class YamlException : public std::exception
-{
-public:
-	YamlException(const std::string& error) throw()
-	{
-		what_ = error;
-	}
-	
-	~YamlException() throw()
-	{
-
-	}
-	
-	virtual const char* what() const throw()
-	{
-		return what_.c_str();
-	}
-private:
-	std::string what_;
-};
-*/
 
 class YamlReader
 {
@@ -39,8 +16,8 @@ public:
 		ERR_UNEXPECTED_LAYOUT
 	};
 
-	YamlReader();
-	~YamlReader();
+	YamlReader() noexcept;
+	~YamlReader() noexcept;
 
 	int LoadFile(const char* path);
 
@@ -72,6 +49,8 @@ public:
 	inline bool is_key() const { return is_key_; }
 
 private:
+	const std::string kModuleName = "YAML_READER";
+
 	// for libyaml
 	FILE *yaml_file_ptr_;
 	yaml_parser_t parser_;
@@ -86,5 +65,5 @@ private:
 
 	std::string event_str_;
 
-	void Cleanup();
+	void Cleanup() noexcept;
 };

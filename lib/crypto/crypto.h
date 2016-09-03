@@ -8,9 +8,12 @@ public:
 	static const int kSha256HashLen = 32;
 	static const int kAes128KeySize = 0x10;
 	static const int kAesBlockSize = 0x10;
+	static const int KAesCcmNonceSize = 0xc;
 	static const int kRsa1024Size = 0x80;
 	static const int kRsa2048Size = 0x100;
 	static const int kRsa4096Size = 0x200;
+	static const int kRsaPublicExponentSize = 4;
+	static const int kEcdsaSize = 0x3C;
 
 	enum HashType
 	{
@@ -48,7 +51,7 @@ public:
 
 	struct sEcdsaKey
 	{
-		uint8_t key[0x3C];
+		uint8_t key[kEcdsaSize];
 	};
 
 	static void Sha1(const u8* in, u32 size, u8 hash[kSha1HashLen]);

@@ -112,6 +112,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="es_cert.h" />
+    <ClInclude Include="es_cert_chain.h" />
     <ClInclude Include="es_crypto.h" />
     <ClInclude Include="es_ticket.h" />
     <ClInclude Include="es_tmd.h" />
@@ -119,6 +120,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="es_cert.cpp" />
+    <ClCompile Include="es_cert_chain.cpp" />
     <ClCompile Include="es_crypto.cpp" />
     <ClCompile Include="es_ticket.cpp" />
     <ClCompile Include="es_tmd.cpp" />

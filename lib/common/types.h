@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include "project_snake_exception.h"
 
 typedef uint64_t dword_t;
 typedef uint32_t word_t;

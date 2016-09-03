@@ -1,19 +1,19 @@
 #include "YamlElement.h"
+#include "project_snake_exception.h"
 
 
-
-YamlElement::YamlElement()
+YamlElement::YamlElement() noexcept
 {
 }
 
-YamlElement::YamlElement(const std::string & parent_path, const std::string & name, ElementType type)
+YamlElement::YamlElement(const std::string & parent_path, const std::string & name, ElementType type) noexcept
 {
 	SetParentPath(parent_path);
 	SetName(name);
 	SetType(type);
 }
 
-YamlElement::YamlElement(const std::string & name, ElementType type)
+YamlElement::YamlElement(const std::string & name, ElementType type) noexcept
 {
 	SetParentPath("");
 	SetName(name);
@@ -21,34 +21,31 @@ YamlElement::YamlElement(const std::string & name, ElementType type)
 }
 
 
-YamlElement::~YamlElement()
+YamlElement::~YamlElement() noexcept
 {
 }
 
-int YamlElement::SetParentPath(const std::string & parent_path)
+void YamlElement::SetParentPath(const std::string & parent_path) noexcept
 {
 	parent_path_ = parent_path;
-	return ERR_NOERROR;
 }
 
-int YamlElement::SetName(const std::string & name)
+void YamlElement::SetName(const std::string & name) noexcept
 {
 	name_ = name;
-	return ERR_NOERROR;
 }
 
-int YamlElement::SetType(ElementType type)
+void YamlElement::SetType(ElementType type) noexcept
 {
 	type_ = type;
-	return ERR_NOERROR;
 }
 
-int YamlElement::AddChild(const YamlElement & child)
+void YamlElement::AddChild(const YamlElement & child)
 {
-	return AddChild(child, false);
+	AddChild(child, false);
 }
 
-int YamlElement::AddChild(const YamlElement & child, bool allow_duplicates)
+void YamlElement::AddChild(const YamlElement & child, bool allow_duplicates)
 {
 	if (!allow_duplicates)
 	{
@@ -56,41 +53,37 @@ int YamlElement::AddChild(const YamlElement & child, bool allow_duplicates)
 		{
 			if (i.name() == child.name())
 			{
-				return ERR_CHILD_ALREADY_EXISTS;
+				throw ProjectSnakeException(kModuleName, "Child(" + child.name() + ") already exists in parent(" + parent_path_ + ")");
 			}
 		}
 	}
 
 	childs_.push_back(child);
-
-	return ERR_NOERROR;
 }
 
-int YamlElement::AddData(const std::string& str)
+void YamlElement::AddData(const std::string& str)
 {
 	// prevent multiple data from being set to a SINGLE_KEY
 	// TODO decide whether correct behavior is to override rather than ignore
 	if (!data_.empty() && type_ == ELEMENT_SINGLE_KEY)
 	{
-		return ERR_NOERROR;
+		//throw ProjectSnakeException(kModuleName, "Attempted to overwrite to an existing data element");
+		return;
 	}
 
 	data_.push_back(str);
-	return ERR_NOERROR;
 }
 
-int YamlElement::AddData(const std::vector<std::string>& str)
+void YamlElement::AddData(const std::vector<std::string>& str)
 {
 	for (const auto& sub_str : str)
 	{
 		AddData(sub_str);
 	}
-
-	return 0;
 }
 
 
-size_t YamlElement::GetChildOccurence(const std::string & name) const
+size_t YamlElement::GetChildOccurence(const std::string & name) const noexcept
 {
 	size_t num = 0;
 	for (const auto& child : childs_)
@@ -104,12 +97,12 @@ size_t YamlElement::GetChildOccurence(const std::string & name) const
 	return num;
 }
 
-const YamlElement* YamlElement::GetChild(const std::string & name) const
+const YamlElement* YamlElement::GetChild(const std::string & name) const noexcept
 {
 	return GetChild(name, 0);
 }
 
-const YamlElement * YamlElement::GetChild(const std::string & name, size_t pos) const
+const YamlElement * YamlElement::GetChild(const std::string & name, size_t pos) const noexcept
 {
 	size_t num = 0;
 	for (const auto& child : childs_)
@@ -129,12 +122,12 @@ const YamlElement * YamlElement::GetChild(const std::string & name, size_t pos) 
 	return nullptr;
 }
 
-YamlElement* YamlElement::EditChild(const std::string& name)
+YamlElement* YamlElement::EditChild(const std::string& name) noexcept
 {
 	return EditChild(name, 0);
 }
 
-YamlElement * YamlElement::EditChild(const std::string & name, size_t pos)
+YamlElement * YamlElement::EditChild(const std::string & name, size_t pos) noexcept
 {
 	size_t num = 0;
 	for (auto& child : childs_)

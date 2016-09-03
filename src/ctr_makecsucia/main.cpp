@@ -8,8 +8,7 @@
 
 #include "cia_builder.h"
 
-#define die(msg) do { fputs(msg "\n\n", stderr); return 1; } while(0)
-#define safe_call(a) do { int rc = a; if(rc != 0) return rc; } while(0)
+#include "project_snake_exception.h"
 
 // keys
 static const Crypto::sRsa2048Key es_tik_key =
@@ -105,47 +104,54 @@ int main(int argc, char** argv)
 	// Configure CIA
 	CiaBuilder cia;
 	static const u8 title_key[Crypto::kAes128KeySize] = { 0 };
+	try {
+		cia.SetCaCert(es_ca_cert);
+		cia.SetTicketSigner(es_tik_key, es_tik_cert);
+		cia.SetTmdSigner(es_tmd_key, es_tmd_cert);
 
-	cia.SetCaCert(es_ca_cert);
-	cia.SetTicketSigner(es_tik_key, es_tik_cert);
-	cia.SetTmdSigner(es_tmd_key, es_tmd_cert);
+		cia.SetTitleId(hdr.title_id());
+		cia.SetVersion(0);
 
-	cia.SetTitleId(hdr.title_id());
-	cia.SetVersion(0);
+		// provide appriate save data size, based on card configuration
+		if (hdr.card_device() == NcsdHeader::CARD_DEVICE_NOR_FLASH) {
+			cia.SetCxiSaveDataSize(512 * 1024); // 512KB
+		}
+		else if (hdr.card_device() == NcsdHeader::CARD_DEVICE_NONE && hdr.media_type() == NcsdHeader::MEDIA_TYPE_CARD2) {
+			cia.SetCxiSaveDataSize(2 * 1024 * 1024); // 2MB
+		}
+		else {
+			cia.SetCxiSaveDataSize(0); // no save data
+		}
 
-	if (hdr.card_device() == NcsdHeader::CARD_DEVICE_NOR_FLASH) {
-		cia.SetCxiSaveDataSize(512 * 1024);
+		cia.SetCommonKey(es_commonkey_dev[0], 0);
+		cia.SetTitleKey(title_key);
+		cia.SetTicketId(0);
+
+		// Add only executable/emanual/dlpchild from csu to cia
+		for (int i = 0; i < NcsdHeader::kSectionNum; i++)
+		{
+			if (hdr.section_size(i) == 0) continue;
+
+			if (i != NcsdHeader::SECTION_EXEC && i != NcsdHeader::SECTION_EMANUAL && i != NcsdHeader::SECTION_DLP_CHILD) continue;
+
+			cia.AddContent(i, i, EsTmd::ES_CONTENT_TYPE_ENCRYPTED, ncsd.data_const() + hdr.section_offset(i), hdr.section_size(i));
+		}
+
+
+		// Create CIA
+		cia.CreateCia();
+
+		// Create outpath
+		std::string path(argv[1]);
+		ReplaceFileExtention(path, ".cia");
+
+		cia.WriteToFile(path.c_str());
 	}
-	else {
-		cia.SetCxiSaveDataSize(0);
-	}
-
-	cia.SetCommonKey(es_commonkey_dev[0], 0);
-	cia.SetTitleKey(title_key);
-	cia.SetTicketId(0);
-
-	// Add only executable/emanual/dlpchild from csu to cia
-	for (int i = 0; i < NcsdHeader::kSectionNum; i++)
-	{
-		if (i != NcsdHeader::SECTION_EXEC && i != NcsdHeader::SECTION_EMANUAL && i != NcsdHeader::SECTION_DLP_CHILD) continue;
-
-		if (hdr.section_size(i) == 0) continue;
-
-		cia.AddContent(i, i, EsTmd::ES_CONTENT_TYPE_ENCRYPTED, ncsd.data_const() + hdr.section_offset(i), hdr.section_size(i));
-	}
-
-
-	// Create CIA
-	if (cia.CreateCia() != 0) {
-		printf("[ERROR] Failed to generate CIA\n");
+	catch (const ProjectSnakeException& except) {
+		printf("[MAKECSUCIA ERROR][%s] %s\n", except.module(), except.what());
 		return 1;
 	}
-
-	// Create outpath
-	std::string path(argv[1]);
-	ReplaceFileExtention(path, ".cia");
-
-	cia.WriteToFile(path.c_str());
+	
 
 	return 0;
 }

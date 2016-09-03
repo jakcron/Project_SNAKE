@@ -1,36 +1,52 @@
 #include "cia_builder.h"
 #include "es_version.h"
 
-#define die(msg) do { fputs(msg "\n\n", stderr); return 1; } while(0)
-#define safe_call(a) do { int rc = a; if(rc != 0) return rc; } while(0)
+#include "program_id.h"
 
-int CiaBuilder::MakeCertificateChain()
+void CiaBuilder::MakeCertificateChain()
 {
-	certs_.alloc(ca_cert_.data_size() + tik_sign_.cert.data_size() + tmd_sign_.cert.data_size());
-	memcpy(certs_.data() + 0, ca_cert_.data_blob(), ca_cert_.data_size());
-	memcpy(certs_.data() + ca_cert_.data_size(), tik_sign_.cert.data_blob(), tik_sign_.cert.data_size());
-	memcpy(certs_.data() + ca_cert_.data_size() + tik_sign_.cert.data_size(), tmd_sign_.cert.data_blob(), tmd_sign_.cert.data_size());
-
-	return 0;
+	certs_.AddCertificate(ca_cert_);
+	certs_.AddCertificate(tik_sign_.cert);
+	certs_.AddCertificate(tmd_sign_.cert);
+	certs_.SerialiseCertChain();
 }
 
-int CiaBuilder::MakeTicket()
+void CiaBuilder::MakeTicket()
 {
-	
 	tik_.SetTicketId(ticket_id_);
 	tik_.SetTitleVersion(title_version_);
 	tik_.SetTitleId(title_id_);
-	tik_.SetContentMask(content_index_);
 	tik_.SetLicenseType(EsTicket::ES_LICENSE_PERMANENT);
-	tik_.SetTitleKey(titlekey_, commonkey_, commonkey_index_);
-	return tik_.CreateTicket(tik_sign_.cert.chlid_issuer(), tik_sign_.rsa_key.modulus, tik_sign_.rsa_key.priv_exponent);
+	
+	// enable all contents' indexes
+	for (auto& content : content_)
+	{
+		tik_.EnableContent(content.index);
+	}
+
+	// enable demo launch restriction
+	if (launch_num_ > 0 && ProgramId::get_category(title_id_) == ProgramId::CATEGORY_DEMO)
+	{
+		tik_.AddLimit(tik_.ES_LC_NUM_LAUNCH, launch_num_);
+	}
+
+	// set title key data
+	tik_.SetTitleKey(titlekey_, commonkey_);
+	tik_.SetCommonKeyIndex(commonkey_index_);
+	
+	// set signature/format data + serialise
+	tik_.SetIssuer(tik_sign_.cert.GetChildIssuer());
+	tik_.SetFormatVersion(1);
+	tik_.SetCaCrlVersion(0);
+	tik_.SetSignerCrlVersion(0);
+	tik_.SerialiseTicket(tik_sign_.rsa_key);
 }
 
-int CiaBuilder::MakeTmd()
+void CiaBuilder::MakeTmd()
 {
 	tmd_.SetTitleId(title_id_);
 	tmd_.SetTitleVersion(title_version_);
-	tmd_.SetCxiData(save_data_size_);
+	tmd_.SetCtrSaveSize(save_data_size_);
 	tmd_.SetTitleType(EsTmd::ES_TITLE_TYPE_CTR);
 
 
@@ -40,18 +56,26 @@ int CiaBuilder::MakeTmd()
 		tmd_.AddContent(content_[i].id, content_[i].index, content_[i].flag, content_[i].size, content_[i].hash);
 	}
 
-	return tmd_.CreateTitleMetadata(tmd_sign_.cert.chlid_issuer(), tmd_sign_.rsa_key.modulus, tmd_sign_.rsa_key.priv_exponent);
+	tmd_.SetIssuer(tmd_sign_.cert.GetChildIssuer());
+	tmd_.SetFormatVersion(1);
+	tmd_.SetCaCrlVersion(0);
+	tmd_.SetSignerCrlVersion(0);
+	tmd_.SerialiseTmd(tmd_sign_.rsa_key);
 }
 
-int CiaBuilder::MakeHeader()
+void CiaBuilder::MakeHeader()
 {	
-	header_.SetCertificateSize(certs_.size());
-	header_.SetTicketSize(tik_.data_size());
-	header_.SetTmdSize(tmd_.data_size());
-	header_.SetMetaSize(cxi_meta_.size());
+	header_.SetCertificateChainSize(certs_.GetSerialisedDataSize());
+	header_.SetTicketSize(tik_.GetSerialisedDataSize());
+	header_.SetTmdSize(tmd_.GetSerialisedDataSize());
+	header_.SetCxiMetaDataSize(cxi_meta_.size());
 	header_.SetContentSize(total_content_size_);
-	header_.SetContentMask(content_index_);
-	return header_.CreateCiaHeader();
+	// enable all contents' indexes
+	for (auto& content : content_)
+	{
+		header_.EnableContent(content.index);
+	}
+	header_.SerialiseHeader();
 }
 
 void CiaBuilder::WriteContentBlockToFile(const u8* data, size_t size, bool encrypted, FILE * fp)
@@ -65,7 +89,6 @@ void CiaBuilder::WriteContentBlockToFile(const u8* data, size_t size, bool encry
 	else {
 		fwrite(data, size, 1, fp);
 	}
-
 }
 
 
@@ -77,39 +100,41 @@ CiaBuilder::~CiaBuilder()
 {
 }
 
-int CiaBuilder::CreateCia()
+void CiaBuilder::CreateCia()
 {
-	safe_call(MakeCertificateChain());
-	safe_call(MakeTicket());
-	safe_call(MakeTmd());
-	safe_call(MakeHeader());
-
-	return 0;
+	MakeCertificateChain();
+	MakeTicket();
+	MakeTmd();
+	MakeHeader();
 }
 
-int CiaBuilder::WriteToFile(const std::string & path)
+void CiaBuilder::WriteToFile(const std::string & path)
 {
 	FILE* fp;
 
 	fp = fopen(path.c_str(), "wb");
+	if (fp == NULL)
+	{
+		throw ProjectSnakeException(kModuleName, "Failed to open " + path + " for writing");
+	}
 
 	u8 padding[0x400] = { 0 };
 
 	// header
-	fwrite(header_.data_blob(), header_.data_size(), 1, fp);
-	fwrite(padding, header_.certificate_offset() - header_.data_size(), 1, fp);
+	fwrite(header_.GetSerialisedData(), header_.GetSerialisedDataSize(), 1, fp);
+	fwrite(padding, header_.GetCertificateChainOffset() - header_.GetSerialisedDataSize(), 1, fp);
 
 	// certificates
-	fwrite(certs_.data_const(), certs_.size(), 1, fp);
-	fwrite(padding, header_.ticket_offset() - (header_.certificate_offset() + header_.certificate_size()), 1, fp);
+	fwrite(certs_.GetSerialisedData(), certs_.GetSerialisedDataSize(), 1, fp);
+	fwrite(padding, header_.GetTicketOffset() - (header_.GetCertificateChainOffset() + header_.GetCertificateChainSize()), 1, fp);
 
 	// ticket
-	fwrite(tik_.data_blob(), tik_.data_size(), 1, fp);
-	fwrite(padding, header_.title_metadata_offset() - (header_.ticket_offset() + header_.ticket_size()), 1, fp);
+	fwrite(tik_.GetSerialisedData(), tik_.GetSerialisedDataSize(), 1, fp);
+	fwrite(padding, header_.GetTmdOffset() - (header_.GetTicketOffset() + header_.GetTicketSize()), 1, fp);
 
 	// tmd
-	fwrite(tmd_.data_blob(), tmd_.data_size(), 1, fp);
-	fwrite(padding, header_.content_offset() - (header_.title_metadata_offset() + header_.title_metadata_size()), 1, fp);
+	fwrite(tmd_.GetSerialisedData(), tmd_.GetSerialisedDataSize(), 1, fp);
+	fwrite(padding, header_.GetContentOffset() - (header_.GetTmdOffset() + header_.GetTmdSize()), 1, fp);
 
 	// content
 	for (size_t i = 0; i < content_.size(); i++) {
@@ -129,27 +154,28 @@ int CiaBuilder::WriteToFile(const std::string & path)
 	}
 
 	// meta
-	if (header_.cxi_metadata_size() > 0) {
-		fwrite(padding, header_.cxi_metadata_offset() - (header_.content_offset() + header_.content_size()), 1, fp);
+	if (header_.GetCxiMetaDataSize() > 0) {
+		fwrite(padding, header_.GetCxiMetaDataOffset() - (header_.GetContentOffset() + header_.GetContentSize()), 1, fp);
 		fwrite(cxi_meta_.data_const(), cxi_meta_.size(), 1, fp);
 	}
-
-	return 0;
 }
 
-int CiaBuilder::WriteToBuffer(ByteBuffer& out)
+void CiaBuilder::WriteToBuffer(ByteBuffer& out)
 {
 	// allocate projected CIA size
-	safe_call(out.alloc(header_.cia_size()));
+	if (out.alloc(header_.GetPredictedCiaSize()) != out.ERR_NONE)
+	{
+		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for CIA");
+	}
 
 	// copy data to buffer
-	memcpy(out.data() + 0x0, header_.data_blob(), header_.data_size());
-	memcpy(out.data() + header_.certificate_offset(), certs_.data_const(), certs_.size());
-	memcpy(out.data() + header_.ticket_offset(), tik_.data_blob(), tik_.data_size());
-	memcpy(out.data() + header_.title_metadata_offset(), tmd_.data_blob(), tmd_.data_size());
-	memcpy(out.data() + header_.cxi_metadata_offset(), cxi_meta_.data_const(), cxi_meta_.size());
+	memcpy(out.data() + 0x0, header_.GetSerialisedData(), header_.GetSerialisedDataSize());
+	memcpy(out.data() + header_.GetCertificateChainOffset(), certs_.GetSerialisedData(), certs_.GetSerialisedDataSize());
+	memcpy(out.data() + header_.GetTicketOffset(), tik_.GetSerialisedData(), tik_.GetSerialisedDataSize());
+	memcpy(out.data() + header_.GetTmdOffset(), tmd_.GetSerialisedData(), tmd_.GetSerialisedDataSize());
+	memcpy(out.data() + header_.GetCxiMetaDataOffset(), cxi_meta_.data_const(), cxi_meta_.size());
 
-	u64 pos = header_.content_offset();
+	u64 pos = header_.GetContentOffset();
 	for (size_t i = 0; i < content_.size(); i++) {
 		if (content_[i].flag & EsTmd::ES_CONTENT_TYPE_ENCRYPTED) {
 			EsCrypto::SetupContentAesIv(content_[i].index, content_iv_);
@@ -162,33 +188,29 @@ int CiaBuilder::WriteToBuffer(ByteBuffer& out)
 
 		pos += content_[i].size;
 	}
-
-	return 0;
 }
 
 
-int CiaBuilder::SetCaCert(const u8 * cert)
+void CiaBuilder::SetCaCert(const u8 * cert)
 {
-	return ca_cert_.ImportCert(cert);
+	ca_cert_.DeserialiseCert(cert);
 }
 
-int CiaBuilder::SetTicketSigner(const Crypto::sRsa2048Key & rsa_key, const u8 * cert)
+void CiaBuilder::SetTicketSigner(const Crypto::sRsa2048Key & rsa_key, const u8 * cert)
 {
-	tik_sign_.cert.ImportCert(cert);
+	tik_sign_.cert.DeserialiseCert(cert);
 	memcpy(tik_sign_.rsa_key.modulus, rsa_key.modulus, Crypto::kRsa2048Size);
 	memcpy(tik_sign_.rsa_key.priv_exponent, rsa_key.priv_exponent, Crypto::kRsa2048Size);
-	return 0;
 }
 
-int CiaBuilder::SetTmdSigner(const Crypto::sRsa2048Key & rsa_key, const u8 * cert)
+void CiaBuilder::SetTmdSigner(const Crypto::sRsa2048Key & rsa_key, const u8 * cert)
 {
-	tmd_sign_.cert.ImportCert(cert);
+	tmd_sign_.cert.DeserialiseCert(cert);
 	memcpy(tmd_sign_.rsa_key.modulus, rsa_key.modulus, Crypto::kRsa2048Size);
 	memcpy(tmd_sign_.rsa_key.priv_exponent, rsa_key.priv_exponent, Crypto::kRsa2048Size);
-	return 0;
 }
 
-int CiaBuilder::AddContent(u32 id, u16 index, u16 flags, const u8* data, u64 size)
+void CiaBuilder::AddContent(u32 id, u16 index, u16 flags, const u8* data, u64 size)
 {
 	ContentInfo info;
 	info.id = id;
@@ -200,49 +222,45 @@ int CiaBuilder::AddContent(u32 id, u16 index, u16 flags, const u8* data, u64 siz
 
 	content_index_.push_back(info.index);
 	content_.push_back(info);
-
-	return 0;
 }
 
-int CiaBuilder::SetTitleKey(const u8 * key)
+void CiaBuilder::SetTitleKey(const u8 * key)
 {
 	memcpy(titlekey_, key, Crypto::kAes128KeySize);
-	return 0;
 }
 
-int CiaBuilder::SetCommonKey(const u8 * key, u8 index)
+void CiaBuilder::SetCommonKey(const u8 * key, u8 index)
 {
 	commonkey_index_ = index;
 	memcpy(commonkey_, key, Crypto::kAes128KeySize);
-	return 0;
 }
 
-int CiaBuilder::SetTitleId(u64 title_id)
+void CiaBuilder::SetTitleId(u64 title_id)
 {
 	title_id_ = title_id;
-	return 0;
 }
 
-int CiaBuilder::SetTicketId(u64 ticket_id)
+void CiaBuilder::SetTicketId(u64 ticket_id)
 {
 	ticket_id_ = ticket_id;
-	return 0;
 }
 
-int CiaBuilder::SetCxiSaveDataSize(u32 size)
+void CiaBuilder::SetCxiSaveDataSize(u32 size)
 {
 	save_data_size_ = size;
-	return 0;
 }
 
-int CiaBuilder::SetVersion(u8 major, u8 minor, u8 build)
+void CiaBuilder::SetDemoLaunchLimit(u32 launch_num)
 {
-	title_version_ = EsVersion::make_version(major, minor, build);
-	return 0;
+	launch_num_ = launch_num;
 }
 
-int CiaBuilder::SetVersion(u16 version)
+void CiaBuilder::SetVersion(u8 major, u8 minor, u8 build)
+{
+	SetVersion(EsVersion::make_version(major, minor, build));
+}
+
+void CiaBuilder::SetVersion(u16 version)
 {
 	title_version_ = version;
-	return 0;
 }

@@ -1,6 +1,6 @@
 #include "YamlReader.h"
 
-YamlReader::YamlReader() :
+YamlReader::YamlReader() noexcept :
 	yaml_file_ptr_(NULL),
 	is_done_(false),
 	is_api_error_(false),
@@ -9,7 +9,7 @@ YamlReader::YamlReader() :
 {
 }
 
-YamlReader::~YamlReader()
+YamlReader::~YamlReader() noexcept
 {
 	Cleanup();
 }
@@ -26,8 +26,7 @@ int YamlReader::LoadFile(const char * path)
 	yaml_file_ptr_ = fopen(path, "rb");
 	if (yaml_file_ptr_ == NULL) 
 	{
-		//throw YamlException("Failed to open: " + std::string(path));
-		return ERR_FAILED_TO_OPEN_FILE;
+		throw ProjectSnakeException(kModuleName, "Failed to open " + std::string(path));
 	}
 
 	// Associate file with parser object
@@ -50,7 +49,7 @@ int YamlReader::SaveValue(std::string & dst)
 
 	if (!GetEvent() || !is_event_scalar()) 
 	{
-		return ERR_UNEXPECTED_LAYOUT;
+		throw ProjectSnakeException(kModuleName, "Unexpect YAML layout, expected SCALAR event");
 	}
 
 	dst = std::string(event_string());
@@ -62,7 +61,7 @@ int YamlReader::SaveValueSequence(std::vector<std::string>& dst)
 {
 	if (!GetEvent() || !is_event_sequence_start())
 	{
-		return ERR_UNEXPECTED_LAYOUT;
+		throw ProjectSnakeException(kModuleName, "Unexpect YAML layout, expected SEQUENCE event");
 	}
 
 	dst.clear();
@@ -98,10 +97,10 @@ bool YamlReader::GetEvent()
 	/* Get new event */
 	if (yaml_parser_parse(&parser_, &event_) != 1)
 	{
-		fprintf(stderr, "[ERROR] (libyaml) %s, %s\n", parser_.context, parser_.problem);
 		yaml_event_delete(&event_);
 		is_api_error_ = true;
-		return false;
+		throw ProjectSnakeException(kModuleName, "(libyaml) " + std::string(parser_.context) + ", " + std::string(parser_.problem));
+		//return false;
 	}
 
 	/* Clean string */
@@ -179,7 +178,7 @@ bool YamlReader::GetEvent()
 	return !is_done() && !is_error();
 }
 
-void YamlReader::Cleanup()
+void YamlReader::Cleanup() noexcept
 {
 	if (yaml_file_ptr_ != NULL)
 	{

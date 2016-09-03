@@ -1,4 +1,4 @@
-LIBS = crypto yaml es oschar ctr ctr_icon keystore
+LIBS = common crypto yaml es oschar ctr ctr_icon keystore
 main: build
 
 rebuild: clean build

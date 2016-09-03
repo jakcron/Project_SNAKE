@@ -32,12 +32,18 @@
     <ClCompile Include="RsfSettings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FileTypeA.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="UserSettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RsfSettings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FileTypeA.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

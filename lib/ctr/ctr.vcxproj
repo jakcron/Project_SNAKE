@@ -111,28 +111,36 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="cci_builder.h" />
     <ClInclude Include="cia_builder.h" />
+    <ClInclude Include="cia_cxi_meta_data.h" />
     <ClInclude Include="cia_header.h" />
+    <ClInclude Include="cia_reader.h" />
+    <ClInclude Include="ctr_card_utils.h" />
     <ClInclude Include="cxi_extended_header.h" />
     <ClInclude Include="exefs.h" />
     <ClInclude Include="exefs_code.h" />
     <ClInclude Include="ivfc.h" />
     <ClInclude Include="ncch_header.h" />
-    <ClInclude Include="ncsd_cardinfo_header.h" />
+    <ClInclude Include="cci_cardinfo_header.h" />
     <ClInclude Include="ncsd_header.h" />
     <ClInclude Include="romfs.h" />
     <ClInclude Include="romfs_dir_scanner.h" />
     <ClInclude Include="smdh.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="cci_builder.cpp" />
     <ClCompile Include="cia_builder.cpp" />
+    <ClCompile Include="cia_cxi_meta_data.cpp" />
     <ClCompile Include="cia_header.cpp" />
+    <ClCompile Include="cia_reader.cpp" />
+    <ClCompile Include="ctr_card_utils.cpp" />
     <ClCompile Include="cxi_extended_header.cpp" />
     <ClCompile Include="exefs.cpp" />
     <ClCompile Include="exefs_code.cpp" />
     <ClCompile Include="ivfc.cpp" />
     <ClCompile Include="ncch_header.cpp" />
-    <ClCompile Include="ncsd_cardinfo_header.cpp" />
+    <ClCompile Include="cci_cardinfo_header.cpp" />
     <ClCompile Include="ncsd_header.cpp" />
     <ClCompile Include="romfs.cpp" />
     <ClCompile Include="romfs_dir_scanner.cpp" />

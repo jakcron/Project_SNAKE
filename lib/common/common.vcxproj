@@ -113,7 +113,15 @@
     <ClInclude Include="ByteBuffer.h" />
     <ClInclude Include="elf.h" />
     <ClInclude Include="program_id.h" />
+    <ClInclude Include="project_snake_exception.h" />
     <ClInclude Include="types.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ByteBuffer.cpp" />
+    <ClCompile Include="project_snake_exception.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="makefile" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
