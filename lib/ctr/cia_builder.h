@@ -11,6 +11,7 @@
 #include "es_cert_chain.h"
 #include "es_ticket.h"
 #include "es_tmd.h"
+#include "cia_cxi_meta_data.h"
 
 class CiaBuilder
 {
@@ -37,6 +38,8 @@ public:
 	void SetDemoLaunchLimit(u32 launch_num);
 	void SetVersion(u8 major, u8 minor, u8 build);
 	void SetVersion(u16 version);
+
+	void SetCxiMetaData(const std::vector<u64>& dependency_list, u64 firmware_title_id, const u8* icon_data, size_t icon_size);
 	
 	
 private:
@@ -68,7 +71,7 @@ private:
 	EsCertChain certs_;
 	EsTicket tik_;
 	EsTmd tmd_;
-	ByteBuffer cxi_meta_;
+	CiaCxiMetaData cxi_meta_;
 
 	u64 total_content_size_;
 

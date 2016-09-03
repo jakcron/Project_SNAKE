@@ -68,7 +68,7 @@ void CiaBuilder::MakeHeader()
 	header_.SetCertificateChainSize(certs_.GetSerialisedDataSize());
 	header_.SetTicketSize(tik_.GetSerialisedDataSize());
 	header_.SetTmdSize(tmd_.GetSerialisedDataSize());
-	header_.SetCxiMetaDataSize(cxi_meta_.size());
+	header_.SetCxiMetaDataSize(cxi_meta_.GetSerialisedDataSize());
 	header_.SetContentSize(total_content_size_);
 	// enable all contents' indexes
 	for (auto& content : content_)
@@ -156,7 +156,7 @@ void CiaBuilder::WriteToFile(const std::string & path)
 	// meta
 	if (header_.GetCxiMetaDataSize() > 0) {
 		fwrite(padding, header_.GetCxiMetaDataOffset() - (header_.GetContentOffset() + header_.GetContentSize()), 1, fp);
-		fwrite(cxi_meta_.data_const(), cxi_meta_.size(), 1, fp);
+		fwrite(cxi_meta_.GetSerialisedData(), cxi_meta_.GetSerialisedDataSize(), 1, fp);
 	}
 }
 
@@ -173,7 +173,7 @@ void CiaBuilder::WriteToBuffer(ByteBuffer& out)
 	memcpy(out.data() + header_.GetCertificateChainOffset(), certs_.GetSerialisedData(), certs_.GetSerialisedDataSize());
 	memcpy(out.data() + header_.GetTicketOffset(), tik_.GetSerialisedData(), tik_.GetSerialisedDataSize());
 	memcpy(out.data() + header_.GetTmdOffset(), tmd_.GetSerialisedData(), tmd_.GetSerialisedDataSize());
-	memcpy(out.data() + header_.GetCxiMetaDataOffset(), cxi_meta_.data_const(), cxi_meta_.size());
+	memcpy(out.data() + header_.GetCxiMetaDataOffset(), cxi_meta_.GetSerialisedData(), cxi_meta_.GetSerialisedDataSize());
 
 	u64 pos = header_.GetContentOffset();
 	for (size_t i = 0; i < content_.size(); i++) {
@@ -263,4 +263,15 @@ void CiaBuilder::SetVersion(u8 major, u8 minor, u8 build)
 void CiaBuilder::SetVersion(u16 version)
 {
 	title_version_ = version;
+}
+
+void CiaBuilder::SetCxiMetaData(const std::vector<u64>& dependency_list, u64 firmware_title_id, const u8* icon_data, size_t icon_size)
+{
+	cxi_meta_.SetDependencyList(dependency_list);
+	cxi_meta_.SetFirmwareTitleId(firmware_title_id);
+	if (icon_size > 0 && icon_data != NULL)
+	{
+		cxi_meta_.SetIcon(icon_data, icon_size);
+	}
+	cxi_meta_.SerialiseMetaData();
 }
