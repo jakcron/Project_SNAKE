@@ -31,7 +31,7 @@ public:
 	void SetUniqueId(u32 id);
 	void SetPublicKey(const Crypto::sRsa4096Key& key);
 	void SetPublicKey(const Crypto::sRsa2048Key& key);
-	void SetEcdsaPublicKey(const Crypto::sEcdsaKey& key);
+	void SetPublicKey(const Crypto::sEccPoint& key);
 
 	// Cert Deserialisation
 	void DeserialiseCert(const u8* cert_data);
@@ -45,7 +45,7 @@ public:
 	PublicKeyType GetPublicKeyType() const;
 	void GetPublicKey(Crypto::sRsa4096Key& key) const;
 	void GetPublicKey(Crypto::sRsa2048Key& key) const;
-	void GetPublicKey(Crypto::sEcdsaKey& key) const;
+	void GetPublicKey(Crypto::sEccPoint& key) const;
 
 private:
 	const std::string kModuleName = "ES_CERT";
@@ -80,7 +80,7 @@ private:
 	struct sEcdsaPublicKeyBody
 	{
 		u8 public_key[Crypto::kEcdsaSize];
-		u8 padding[0x34];
+		u8 padding[0x3C];
 	};
 #pragma pack (pop)
 

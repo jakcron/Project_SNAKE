@@ -45,7 +45,6 @@ int EsCrypto::RsaSign(EsSignType type, const u8* hash, const u8* modulus, const 
 	// set signature id
 	set_sign_type(type, signature);
 	ret = rsa_rsassa_pkcs1_v15_sign(&rsa, RSA_PRIVATE, hash_id, hash_len, hash, (signature + 4));
-	
 	rsa_free(&rsa);
 
 	return ret;

@@ -108,10 +108,11 @@ void EsCert::SetPublicKey(const Crypto::sRsa2048Key & key)
 	memcpy(public_key_, key.modulus, Crypto::kRsa2048Size);
 }
 
-void EsCert::SetEcdsaPublicKey(const Crypto::sEcdsaKey & key)
+void EsCert::SetPublicKey(const Crypto::sEccPoint & key)
 {
 	public_key_type_ = ECDSA;
-	memcpy(public_key_, key.key, Crypto::kEcdsaSize);
+	memcpy(public_key_, key.r, 0x1e);
+	memcpy(public_key_ + 0x1e, key.s, 0x1e);
 }
 
 void EsCert::ClearDeserialisedVariables()
@@ -378,12 +379,13 @@ void EsCert::GetPublicKey(Crypto::sRsa2048Key & key) const
 	memcpy(key.modulus, public_key_, Crypto::kRsa2048Size);
 }
 
-void EsCert::GetPublicKey(Crypto::sEcdsaKey & key) const
+void EsCert::GetPublicKey(Crypto::sEccPoint & key) const
 {
 	if (public_key_type_ != ECDSA)
 	{
 		throw ProjectSnakeException(kModuleName, "Public key inconsistent with public key type");
 	}
 
-	memcpy(key.key, public_key_, Crypto::kEcdsaSize);
+	memcpy(key.r, public_key_, 0x1e);
+	memcpy(key.s, public_key_ + 0x1e, 0x1e);
 }

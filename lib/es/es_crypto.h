@@ -20,6 +20,13 @@ public:
 	static const size_t kRsa2048SignLen = 0x140;
 	static const size_t kEcdsaSignLen = 0x80;
 
+	static int GenerateSignature(EsSignType type, const u8* hash, const Crypto::sRsa2048Key& private_key, u8* signature);
+	static int VerifySignature(const u8* hash, const Crypto::sRsa2048Key& public_key, const u8* signature);
+	static int GenerateSignature(EsSignType type, const u8* hash, const Crypto::sRsa4096Key& private_key, u8* signature);
+	static int VerifySignature(const u8* hash, const Crypto::sRsa4096Key& public_key, const u8* signature);
+	static int GenerateSignature(EsSignType type, const u8* hash, const Crypto::sEccPrivateKey& private_key, u8* signature);
+	static int VerifySignature(const u8* hash, const Crypto::sEccPoint& public_key, const u8* signature);
+
 	static int RsaSign(EsSignType type, const u8* hash, const u8* modulus, const u8* priv_exp, u8* signature);
 	static int RsaVerify(const u8* hash, const u8* modulus, const u8* signature);
 

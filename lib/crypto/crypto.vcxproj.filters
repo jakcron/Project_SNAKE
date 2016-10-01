@@ -48,6 +48,9 @@
     <ClInclude Include="crypto.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ecdsa.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="polarssl\aes.c">
@@ -69,6 +72,9 @@
       <Filter>Source Files\polarssl</Filter>
     </ClCompile>
     <ClCompile Include="crypto.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ecdsa.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

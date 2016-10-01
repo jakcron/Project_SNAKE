@@ -38,7 +38,7 @@ void Crypto::AesCbcEncrypt(const u8* in, u32 size, const u8 key[kAes128KeySize],
 	aes_crypt_cbc(&ctx, AES_ENCRYPT, size, iv, in, out);
 }
 
-int Crypto::SignRsa1024(const sRsa1024Key & key, HashType hash_type, const uint8_t * hash, uint8_t signature[kRsa1024Size])
+int Crypto::RsaSign(const sRsa1024Key & key, HashType hash_type, const uint8_t * hash, uint8_t signature[kRsa1024Size])
 {
 	int ret;
 	rsa_context ctx;
@@ -55,7 +55,7 @@ int Crypto::SignRsa1024(const sRsa1024Key & key, HashType hash_type, const uint8
 	return ret;
 }
 
-int Crypto::VerifyRsa1024(const sRsa1024Key & key, HashType hash_type, const uint8_t * hash, const uint8_t signature[kRsa1024Size])
+int Crypto::RsaVerify(const sRsa1024Key & key, HashType hash_type, const uint8_t * hash, const uint8_t signature[kRsa1024Size])
 {
 	static const u8 public_exponent[3] = { 0x01, 0x00, 0x01 };
 
@@ -74,7 +74,7 @@ int Crypto::VerifyRsa1024(const sRsa1024Key & key, HashType hash_type, const uin
 	return ret;
 }
 
-int Crypto::SignRsa2048(const sRsa2048Key & key, HashType hash_type, const uint8_t * hash, uint8_t signature[kRsa2048Size])
+int Crypto::RsaSign(const sRsa2048Key & key, HashType hash_type, const uint8_t * hash, uint8_t signature[kRsa2048Size])
 {
 	int ret;
 	rsa_context ctx;
@@ -91,7 +91,7 @@ int Crypto::SignRsa2048(const sRsa2048Key & key, HashType hash_type, const uint8
 	return ret;
 }
 
-int Crypto::VerifyRsa2048(const sRsa2048Key & key, HashType hash_type, const uint8_t * hash, const uint8_t signature[kRsa2048Size])
+int Crypto::RsaVerify(const sRsa2048Key & key, HashType hash_type, const uint8_t * hash, const uint8_t signature[kRsa2048Size])
 {
 	static const u8 public_exponent[3] = { 0x01, 0x00, 0x01 };
 
@@ -110,7 +110,7 @@ int Crypto::VerifyRsa2048(const sRsa2048Key & key, HashType hash_type, const uin
 	return ret;
 }
 
-int Crypto::SignRsa4096(const sRsa4096Key & key, HashType hash_type, const uint8_t * hash, uint8_t signature[kRsa4096Size])
+int Crypto::RsaSign(const sRsa4096Key & key, HashType hash_type, const uint8_t * hash, uint8_t signature[kRsa4096Size])
 {
 	int ret;
 	rsa_context ctx;
@@ -127,7 +127,7 @@ int Crypto::SignRsa4096(const sRsa4096Key & key, HashType hash_type, const uint8
 	return ret;
 }
 
-int Crypto::VerifyRsa4096(const sRsa4096Key & key, HashType hash_type, const uint8_t * hash, const uint8_t signature[kRsa4096Size])
+int Crypto::RsaVerify(const sRsa4096Key & key, HashType hash_type, const uint8_t * hash, const uint8_t signature[kRsa4096Size])
 {
 	static const u8 public_exponent[3] = { 0x01, 0x00, 0x01 };
 
@@ -146,40 +146,14 @@ int Crypto::VerifyRsa4096(const sRsa4096Key & key, HashType hash_type, const uin
 	return ret;
 }
 
-int Crypto::SignRsa2048Sha256(const u8 modulus[kRsa2048Size], const u8 private_exponent[kRsa2048Size], const u8 hash[kSha256HashLen], u8 signature[kRsa2048Size])
+int Crypto::EcdsaSign(const sEccPrivateKey & key, HashType hash_type, const uint8_t * hash, sEccPoint & signature)
 {
-	int ret;
-	rsa_context ctx;
-	rsa_init(&ctx, RSA_PKCS_V15, 0);
-
-	ctx.len = kRsa2048Size;
-	mpi_read_binary(&ctx.D, private_exponent, ctx.len);
-	mpi_read_binary(&ctx.N, modulus, ctx.len);
-
-	ret = rsa_rsassa_pkcs1_v15_sign(&ctx, RSA_PRIVATE, SIG_RSA_SHA256, kSha256HashLen, hash, signature);
-
-	rsa_free(&ctx);
-
-	return ret;
+	return 1;
 }
 
-int Crypto::VerifyRsa2048Sha256(const u8 modulus[kRsa2048Size], const u8 hash[kSha256HashLen], const u8 signature[kRsa2048Size])
+int Crypto::EcdsaVerify(const sEccPoint& key, HashType hash_type, const uint8_t* hash, const sEccPoint& signature)
 {
-	static const u8 public_exponent[3] = { 0x01, 0x00, 0x01 };
-
-	int ret;
-	rsa_context ctx;
-	rsa_init(&ctx, RSA_PKCS_V15, 0);
-
-	ctx.len = kRsa2048Size;
-	mpi_read_binary(&ctx.E, public_exponent, sizeof(public_exponent));
-	mpi_read_binary(&ctx.N, modulus, ctx.len);
-
-	ret = rsa_rsassa_pkcs1_v15_verify(&ctx, RSA_PUBLIC, SIG_RSA_SHA256, kSha256HashLen, hash, signature);
-
-	rsa_free(&ctx);
-
-	return ret;
+	return 1;
 }
 
 int Crypto::GetWrappedHashType(HashType type)
@@ -201,17 +175,18 @@ int Crypto::GetWrappedHashType(HashType type)
 
 uint32_t Crypto::GetWrappedHashSize(HashType type)
 {
+	uint32_t size = 0;
+
 	switch (type)
 	{
 	case Crypto::HASH_SHA1:
-		return kSha1HashLen;
+		size = kSha1HashLen;
 		break;
 	case Crypto::HASH_SHA256:
-		return kSha256HashLen;
+		size = kSha256HashLen;
 		break;
 	default:
-		return 0;
 		break;
 	}
-	return 0;
+	return size;
 }
