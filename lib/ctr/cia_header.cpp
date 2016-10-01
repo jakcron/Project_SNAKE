@@ -44,14 +44,14 @@ void CiaHeader::SerialiseHeader()
 	CalculateCiaSize();
 
 	// serialise header
-	memset((u8*)&header_, 0, sizeof(struct sCiaHeader));
+	memset((u8*)&header_, 0, sizeof(sCiaHeader));
 	set_header_size(sizeof(sCiaHeader));
 	set_type(type_);
 	set_version(version_);
-	set_certificate_size(cert_.size);
+	set_certificate_size(certs_.size);
 	set_ticket_size(tik_.size);
-	set_title_metadata_size(tmd_.size);
-	set_cxi_metadata_size(meta_data_.size);
+	set_tmd_size(tmd_.size);
+	set_footer_size(footer_.size);
 	set_content_size(content_.size);
 	for (u16 index : enabled_content_)
 	{
@@ -70,7 +70,7 @@ void CiaHeader::SerialiseHeader()
 
 void CiaHeader::SetCertificateChainSize(size_t size)
 {
-	cert_.size = size;
+	certs_.size = size;
 }
 
 void CiaHeader::SetTicketSize(size_t size)
@@ -83,9 +83,9 @@ void CiaHeader::SetTmdSize(size_t size)
 	tmd_.size = size;
 }
 
-void CiaHeader::SetCxiMetaDataSize(size_t size)
+void CiaHeader::SetFooterSize(size_t size)
 {
-	meta_data_.size = size;
+	footer_.size = size;
 }
 
 void CiaHeader::SetContentSize(size_t size)
@@ -130,10 +130,10 @@ void CiaHeader::DeserialiseHeader(const u8* cia_data)
 	// deserialise header
 	type_ = type();
 	version_ = version();
-	cert_.size = certificate_size();
+	certs_.size = certificate_size();
 	tik_.size = ticket_size();
-	tmd_.size = title_metadata_size();
-	meta_data_.size = cxi_metadata_size();
+	tmd_.size = tmd_size();
+	footer_.size = footer_size();
 	content_.size = content_size();
 	for (u32 i = 0; i <= 0xffff; i++)
 	{
@@ -150,12 +150,12 @@ void CiaHeader::DeserialiseHeader(const u8* cia_data)
 
 size_t CiaHeader::GetCertificateChainOffset() const
 {
-	return cert_.offset;
+	return certs_.offset;
 }
 
 size_t CiaHeader::GetCertificateChainSize() const
 {
-	return cert_.size;
+	return certs_.size;
 }
 
 size_t CiaHeader::GetTicketOffset() const
@@ -178,14 +178,14 @@ size_t CiaHeader::GetTmdSize() const
 	return tmd_.size;
 }
 
-size_t CiaHeader::GetCxiMetaDataOffset() const
+size_t CiaHeader::GetFooterOffset() const
 {
-	return meta_data_.offset;
+	return footer_.offset;
 }
 
-size_t CiaHeader::GetCxiMetaDataSize() const
+size_t CiaHeader::GetFooterSize() const
 {
-	return meta_data_.size;
+	return footer_.size;
 }
 
 size_t CiaHeader::GetContentOffset() const
@@ -224,18 +224,18 @@ const std::vector<u16>& CiaHeader::GetEnabledContentList() const
 
 void CiaHeader::CalculateSectionOffsets()
 {
-	cert_.offset = cert_.size == 0 ? 0 : align(sizeof(sCiaHeader), kCiaSizeAlign);
+	certs_.offset = certs_.size == 0 ? 0 : align(sizeof(sCiaHeader), kCiaSizeAlign);
 	tik_.offset = tik_.size == 0 ? 0 : align(sizeof(sCiaHeader), kCiaSizeAlign) \
-		+ align(cert_.size, kCiaSizeAlign);
+		+ align(certs_.size, kCiaSizeAlign);
 	tmd_.offset = tmd_.size == 0 ? 0 : align(sizeof(sCiaHeader), kCiaSizeAlign) \
-		+ align(cert_.size, kCiaSizeAlign) \
+		+ align(certs_.size, kCiaSizeAlign) \
 		+ align(tik_.size, kCiaSizeAlign);
 	content_.offset = content_.size == 0 ? 0 : align(sizeof(sCiaHeader), kCiaSizeAlign) \
-		+ align(cert_.size, kCiaSizeAlign) \
+		+ align(certs_.size, kCiaSizeAlign) \
 		+ align(tik_.size, kCiaSizeAlign) \
 		+ align(tmd_.size, kCiaSizeAlign);
-	meta_data_.offset = meta_data_.size == 0 ? 0 : align(sizeof(sCiaHeader), kCiaSizeAlign) \
-		+ align(cert_.size, kCiaSizeAlign) \
+	footer_.offset = footer_.size == 0 ? 0 : align(sizeof(sCiaHeader), kCiaSizeAlign) \
+		+ align(certs_.size, kCiaSizeAlign) \
 		+ align(tik_.size, kCiaSizeAlign) \
 		+ align(tmd_.size, kCiaSizeAlign) \
 		+ align(content_.size, kCiaSizeAlign);
@@ -244,13 +244,13 @@ void CiaHeader::CalculateSectionOffsets()
 void CiaHeader::CalculateCiaSize()
 {
 	predicted_cia_size_ = align(sizeof(sCiaHeader), kCiaSizeAlign) \
-		+ align(cert_.size, kCiaSizeAlign) \
+		+ align(certs_.size, kCiaSizeAlign) \
 		+ align(tik_.size, kCiaSizeAlign) \
 		+ align(tmd_.size, kCiaSizeAlign);
 
-	if (meta_data_.size)
+	if (footer_.size)
 	{
-		predicted_cia_size_ += align(content_.size, kCiaSizeAlign) + meta_data_.size;
+		predicted_cia_size_ += align(content_.size, kCiaSizeAlign) + footer_.size;
 	}
 	else
 	{
@@ -272,16 +272,16 @@ void CiaHeader::ClearDeserialisedVariables()
 {
 	type_ = 0;
 	version_ = 0;
-	cert_.offset = 0;
-	cert_.size = 0;
+	certs_.offset = 0;
+	certs_.size = 0;
 	tik_.offset = 0;
 	tik_.size = 0;
 	tmd_.offset = 0;
 	tmd_.size = 0;
 	content_.offset = 0;
 	content_.size = 0;
-	meta_data_.offset = 0;
-	meta_data_.size = 0;
+	footer_.offset = 0;
+	footer_.size = 0;
 	enabled_content_.clear();
 	predicted_cia_size_ = 0;
 }

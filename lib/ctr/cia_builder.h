@@ -11,7 +11,7 @@
 #include "es_cert_chain.h"
 #include "es_ticket.h"
 #include "es_tmd.h"
-#include "cia_cxi_meta_data.h"
+#include "cia_footer.h"
 
 class CiaBuilder
 {
@@ -71,7 +71,7 @@ private:
 	EsCertChain certs_;
 	EsTicket tik_;
 	EsTmd tmd_;
-	CiaCxiMetaData cxi_meta_;
+	CiaFooter cxi_meta_;
 
 	u64 total_content_size_;
 

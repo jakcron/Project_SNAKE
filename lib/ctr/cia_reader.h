@@ -9,7 +9,7 @@
 #include "es_cert_chain.h"
 #include "es_ticket.h"
 #include "es_tmd.h"
-#include "cia_cxi_meta_data.h"
+#include "cia_footer.h"
 
 class CiaReader
 {
@@ -42,7 +42,7 @@ public:
 	const EsCertChain& GetCertificateChain() const;
 	const EsTicket& GetTicket() const;
 	const EsTmd& GetTmd() const;
-	const CiaCxiMetaData& GetCxiMetaData() const;
+	const CiaFooter& GetFooter() const;
 
 	// Access content
 	const std::vector<sContentInfo>& GetContentList() const;
@@ -63,7 +63,7 @@ private:
 	EsTicket tik_;
 	EsTmd tmd_;
 	std::vector<sContentInfo> content_list_;
-	CiaCxiMetaData meta_data_;
+	CiaFooter footer_;
 
 	u8 title_key_[Crypto::kAes128KeySize];
 };

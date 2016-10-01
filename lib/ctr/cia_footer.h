@@ -5,37 +5,37 @@
 #include "ByteBuffer.h"
 #include "program_id.h"
 
-class CiaCxiMetaData
+class CiaFooter
 {
 public:
-	CiaCxiMetaData();
-	~CiaCxiMetaData();
+	CiaFooter();
+	~CiaFooter();
 
 	// Export serialised data
 	const u8* GetSerialisedData() const;
 	size_t GetSerialisedDataSize() const;
 
 	// Ticket Serialisation
-	void SerialiseMetaData();
+	void SerialiseFooter();
 	void SetDependencyList(const std::vector<u64>& dependency_list);
 	void SetFirmwareTitleId(u64 title_id);
 	void SetIcon(const u8* data, size_t size);
 
 	// Ticket Deserialisation
-	void DeserialiseMetaData(const u8* data, size_t size);
+	void DeserialiseFooter(const u8* data, size_t size);
 	const std::vector<u64>& GetDependencyList() const;
 	u64 GetFirmwareTitleId() const;
 	const u8* GetIcon() const;
 	size_t GetIconSize() const;
 
 private:
-	const std::string kModuleName = "CIA_CXI_METADATA";
+	const std::string kModuleName = "CIA_FOOTER";
 
-	static const int kMaxDependencyNum = 0x30;
+	static const size_t kMaxDependencyNum = 0x30;
 
 	// private structures
 #pragma pack (push, 1)
-	struct sMetaDataBody
+	struct sCiaFooterBody
 	{
 		struct sDependencyList
 		{
@@ -54,7 +54,7 @@ private:
 	ByteBuffer serialised_data_;
 
 	// serialised data staging ground
-	sMetaDataBody body_;
+	sCiaFooterBody body_;
 
 	// serialised data get interface
 	inline u64 dependency_title_id(int index) const { return le_dword(body_.dependency_list.title_id[index]); }

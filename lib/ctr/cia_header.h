@@ -22,7 +22,7 @@ public:
 	void SetCertificateChainSize(size_t size);
 	void SetTicketSize(size_t size);
 	void SetTmdSize(size_t size);
-	void SetCxiMetaDataSize(size_t size);
+	void SetFooterSize(size_t size);
 	void SetContentSize(size_t size);
 	void EnableContent(u16 index);
 
@@ -34,8 +34,8 @@ public:
 	size_t GetTicketSize() const;
 	size_t GetTmdOffset() const;
 	size_t GetTmdSize() const;
-	size_t GetCxiMetaDataOffset() const;
-	size_t GetCxiMetaDataSize() const;
+	size_t GetFooterOffset() const;
+	size_t GetFooterSize() const;
 	size_t GetContentOffset() const;
 	size_t GetContentSize() const;
 	size_t GetPredictedCiaSize() const;
@@ -59,9 +59,9 @@ private:
 		u16 version;
 		u32 certificate_size;
 		u32 ticket_size;
-		u32 title_metadata_size;
-		u32 cxi_metadata_size;
-		u64 content_total_size;
+		u32 tmd_size;
+		u32 footer_size;
+		u64 content_size;
 		u8 content_mask[kCiaContentMaskSize];
 	};
 #pragma pack (pop)
@@ -78,9 +78,9 @@ private:
 	inline u16 version() const { return le_hword(header_.version); }
 	inline u32 certificate_size() const { return le_word(header_.certificate_size); }
 	inline u32 ticket_size() const { return le_word(header_.ticket_size); }
-	inline u32 title_metadata_size() const { return le_word(header_.title_metadata_size); }
-	inline u32 cxi_metadata_size() const { return le_word(header_.cxi_metadata_size); }
-	inline u64 content_size() const { return le_dword(header_.content_total_size); }
+	inline u32 tmd_size() const { return le_word(header_.tmd_size); }
+	inline u32 footer_size() const { return le_word(header_.footer_size); }
+	inline u64 content_size() const { return le_dword(header_.content_size); }
 	inline bool is_content_index_set(u16 index) const { return ((header_.content_mask[index / 8] & BIT(7 - (index % 8))) != 0); }
 
 	// serialised data set interface
@@ -89,9 +89,9 @@ private:
 	inline void set_version(u16 version) { header_.version = le_hword(version); }
 	inline void set_certificate_size(u32 certificate_size) { header_.certificate_size = le_word(certificate_size); }
 	inline void set_ticket_size(u32 ticket_size) { header_.ticket_size = le_word(ticket_size); }
-	inline void set_title_metadata_size(u32 title_metadata_size) { header_.title_metadata_size = le_word(title_metadata_size); }
-	inline void set_cxi_metadata_size(u32 cxi_metadata_size) { header_.cxi_metadata_size = le_word(cxi_metadata_size); }
-	inline void set_content_size(u64 content_size) { header_.content_total_size = le_dword(content_size); }
+	inline void set_tmd_size(u32 tmd_size) { header_.tmd_size = le_word(tmd_size); }
+	inline void set_footer_size(u32 footer_size) { header_.footer_size = le_word(footer_size); }
+	inline void set_content_size(u64 content_size) { header_.content_size = le_dword(content_size); }
 	inline void set_content_index(u16 index) { header_.content_mask[index / 8] |= BIT(7 - (index % 8)); }
 
 	// members for deserialised data
@@ -103,10 +103,10 @@ private:
 	
 	u16 type_;
 	u16 version_;
-	sSectionGeometry cert_;
+	sSectionGeometry certs_;
 	sSectionGeometry tik_;
 	sSectionGeometry tmd_;
-	sSectionGeometry meta_data_;
+	sSectionGeometry footer_;
 	sSectionGeometry content_;
 	std::vector<u16> enabled_content_;
 	size_t predicted_cia_size_;

@@ -68,7 +68,7 @@ void CiaBuilder::MakeHeader()
 	header_.SetCertificateChainSize(certs_.GetSerialisedDataSize());
 	header_.SetTicketSize(tik_.GetSerialisedDataSize());
 	header_.SetTmdSize(tmd_.GetSerialisedDataSize());
-	header_.SetCxiMetaDataSize(cxi_meta_.GetSerialisedDataSize());
+	header_.SetFooterSize(cxi_meta_.GetSerialisedDataSize());
 	header_.SetContentSize(total_content_size_);
 	// enable all contents' indexes
 	for (auto& content : content_)
@@ -154,8 +154,8 @@ void CiaBuilder::WriteToFile(const std::string & path)
 	}
 
 	// meta
-	if (header_.GetCxiMetaDataSize() > 0) {
-		fwrite(padding, header_.GetCxiMetaDataOffset() - (header_.GetContentOffset() + header_.GetContentSize()), 1, fp);
+	if (header_.GetFooterSize() > 0) {
+		fwrite(padding, header_.GetFooterOffset() - (header_.GetContentOffset() + header_.GetContentSize()), 1, fp);
 		fwrite(cxi_meta_.GetSerialisedData(), cxi_meta_.GetSerialisedDataSize(), 1, fp);
 	}
 }
@@ -173,7 +173,7 @@ void CiaBuilder::WriteToBuffer(ByteBuffer& out)
 	memcpy(out.data() + header_.GetCertificateChainOffset(), certs_.GetSerialisedData(), certs_.GetSerialisedDataSize());
 	memcpy(out.data() + header_.GetTicketOffset(), tik_.GetSerialisedData(), tik_.GetSerialisedDataSize());
 	memcpy(out.data() + header_.GetTmdOffset(), tmd_.GetSerialisedData(), tmd_.GetSerialisedDataSize());
-	memcpy(out.data() + header_.GetCxiMetaDataOffset(), cxi_meta_.GetSerialisedData(), cxi_meta_.GetSerialisedDataSize());
+	memcpy(out.data() + header_.GetFooterOffset(), cxi_meta_.GetSerialisedData(), cxi_meta_.GetSerialisedDataSize());
 
 	u64 pos = header_.GetContentOffset();
 	for (size_t i = 0; i < content_.size(); i++) {
@@ -273,5 +273,5 @@ void CiaBuilder::SetCxiMetaData(const std::vector<u64>& dependency_list, u64 fir
 	{
 		cxi_meta_.SetIcon(icon_data, icon_size);
 	}
-	cxi_meta_.SerialiseMetaData();
+	cxi_meta_.SerialiseFooter();
 }

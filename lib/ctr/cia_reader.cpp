@@ -16,6 +16,7 @@ void CiaReader::ImportCia(const u8 * cia_data)
 	// get header
 	header_.DeserialiseHeader(cia_data);
 
+	// check more sections? remove legacy support for older formats?
 	if (header_.GetContentSize() == 0)
 	{
 		throw ProjectSnakeException(kModuleName, "Cia has no content");
@@ -37,15 +38,15 @@ void CiaReader::ImportCia(const u8 * cia_data)
 		tmd_.DeserialiseTmd(cia_data + header_.GetTmdOffset());
 	}
 
-	if (header_.GetCxiMetaDataSize() > 0)
+	if (header_.GetFooterSize() > 0)
 	{
-		meta_data_.DeserialiseMetaData(cia_data + header_.GetCxiMetaDataOffset(), header_.GetCxiMetaDataSize());
+		footer_.DeserialiseFooter(cia_data + header_.GetFooterOffset(), header_.GetFooterSize());
 	}
 
 	// corruption check
 	if (tmd_.GetTitleId() != tik_.GetTitleId())
 	{
-		throw ProjectSnakeException(kModuleName, "Cia is corrupt, ticket and tmd has mismatching title ids");
+		throw ProjectSnakeException(kModuleName, "Cia is corrupt, ticket and tmd have mismatching title ids");
 	}
 
 	// save info about
@@ -117,9 +118,9 @@ const EsTmd & CiaReader::GetTmd() const
 	return tmd_;
 }
 
-const CiaCxiMetaData & CiaReader::GetCxiMetaData() const
+const CiaFooter & CiaReader::GetFooter() const
 {
-	return meta_data_;
+	return footer_;
 }
 
 const std::vector<CiaReader::sContentInfo>& CiaReader::GetContentList() const
