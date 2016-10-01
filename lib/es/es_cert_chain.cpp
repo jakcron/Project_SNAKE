@@ -31,7 +31,7 @@ const EsCert & EsCertChain::operator[](const std::string & signer) const
 		}
 	}
 
-	throw ProjectSnakeException(kModuleName, "Certificate does not exist");
+	throw ProjectSnakeException(kModuleName, "Certificate (" + signer + ") does not exist");
 }
 
 const u8* EsCertChain::GetSerialisedData() const
