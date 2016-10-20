@@ -27,7 +27,7 @@ int NcsdHeader::CreateHeader(const Crypto::sRsa2048Key & ncsd_rsa_key)
 	// hash header
 	Crypto::Sha256((u8*)header_.magic, sizeof(struct sNcsdHeader) - 0x100, hash);
 	// sign header
-	if (Crypto::SignRsa2048(ncsd_rsa_key, Crypto::HASH_SHA256, hash, header_.signature))
+	if (Crypto::RsaSign(ncsd_rsa_key, Crypto::HASH_SHA256, hash, header_.signature))
 	{
 		return ERR_SIGN_FAIL;
 	}
@@ -54,7 +54,7 @@ int NcsdHeader::ValidateHeaderSignature(const Crypto::sRsa2048Key & ncsd_rsa_key
 	u8 hash[Crypto::kSha256HashLen];
 	Crypto::Sha256((u8*)header_.magic, sizeof(struct sNcsdHeader) - 0x100, hash);
 	// sign header
-	if (Crypto::VerifyRsa2048(ncsd_rsa_key, Crypto::HASH_SHA256, hash, header_.signature) != 0) 
+	if (Crypto::RsaVerify(ncsd_rsa_key, Crypto::HASH_SHA256, hash, header_.signature) != 0) 
 	{
 		return ERR_SIGN_FAIL;
 	}

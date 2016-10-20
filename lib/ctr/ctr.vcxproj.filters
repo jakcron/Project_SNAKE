@@ -60,12 +60,10 @@
     <ClInclude Include="cia_reader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ncch_header2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="cia_footer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ncch_header2.hl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cia_builder.cpp">
@@ -113,12 +111,10 @@
     <ClCompile Include="cia_reader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ncch_header2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="cia_footer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ncch_header2.cppl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="makefile" />

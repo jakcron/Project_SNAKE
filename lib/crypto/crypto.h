@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include <cstring>
 
 class Crypto
 {
@@ -25,6 +26,11 @@ public:
 	struct sAes128Key
 	{
 		u8 key[kAes128KeySize];
+
+		void set(const u8 key[kAes128KeySize])
+		{
+			memcpy(this->key, key, kAes128KeySize);
+		}
 	};
 
 	struct sAesIvCtr
@@ -36,24 +42,73 @@ public:
 	{
 		uint8_t modulus[kRsa1024Size];
 		uint8_t priv_exponent[kRsa1024Size];
+
+		void set(const u8 modulus[kRsa1024Size], const u8 priv_exponent[kRsa1024Size])
+		{
+			memcpy(this->modulus, modulus, kRsa1024Size);
+			memcpy(this->priv_exponent, priv_exponent, kRsa1024Size);
+		}
+
+		void operator=(const sRsa1024Key& other)
+		{
+			set(other.modulus, other.priv_exponent);
+		}
+
+		bool operator==(const sRsa1024Key& other)
+		{
+			return memcmp(this->modulus, other.modulus, kRsa1024Size) == 0 && memcmp(this->priv_exponent, other.priv_exponent, kRsa1024Size) == 0;
+		}
 	};
 
 	struct sRsa2048Key
 	{
 		uint8_t modulus[kRsa2048Size];
 		uint8_t priv_exponent[kRsa2048Size];
+
+		void operator=(const sRsa2048Key& other)
+		{
+			memcpy(this->modulus, other.modulus, kRsa2048Size);
+			memcpy(this->priv_exponent, other.priv_exponent, kRsa2048Size);
+		}
+
+		bool operator==(const sRsa2048Key& other)
+		{
+			return memcmp(this->modulus, other.modulus, kRsa2048Size) == 0 && memcmp(this->priv_exponent, other.priv_exponent, kRsa2048Size) == 0;
+		}
 	};
 
 	struct sRsa4096Key
 	{
 		uint8_t modulus[kRsa4096Size];
 		uint8_t priv_exponent[kRsa4096Size];
+
+		void operator=(const sRsa4096Key& other)
+		{
+			memcpy(this->modulus, other.modulus, kRsa4096Size);
+			memcpy(this->priv_exponent, other.priv_exponent, kRsa4096Size);
+		}
+
+		bool operator==(const sRsa4096Key& other)
+		{
+			return memcmp(this->modulus, other.modulus, kRsa4096Size) == 0 && memcmp(this->priv_exponent, other.priv_exponent, kRsa4096Size) == 0;
+		}
 	};
 
 	struct sEccPoint
 	{
 		uint8_t r[0x1e];
 		uint8_t s[0x1e];
+
+		void operator=(const sEccPoint& other) 
+		{
+			memcpy(this->r, other.r, 0x1e);
+			memcpy(this->s, other.s, 0x1e);
+		}
+
+		bool operator==(const sEccPoint& other)
+		{
+			return memcmp(this->r, other.r, 0x1e) == 0 && memcmp(this->s, other.s, 0x1e) == 0;
+		}
 	};
 
 	struct sEccPrivateKey

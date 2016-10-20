@@ -10,6 +10,12 @@ class EsTicket
 {
 public:
 	// Public Enums
+	enum ESTicketFormatVersion
+	{
+		ES_TIK_VER_0,
+		ES_TIK_VER_1,
+	};
+	
 	enum ESLicenseType
 	{
 		ES_LICENSE_PERMANENT = 0,
@@ -51,11 +57,11 @@ public:
 
 	// Ticket Serialisation
 	void SerialiseTicket(const Crypto::sRsa2048Key& private_key);
-	void SerialiseTicket(const Crypto::sRsa2048Key& private_key, bool use_sha1);
+	void SerialiseTicket(const Crypto::sRsa2048Key& private_key, ESTicketFormatVersion format);
 	void SerialiseTicket(const Crypto::sRsa4096Key& private_key);
-	void SerialiseTicket(const Crypto::sRsa4096Key& private_key, bool use_sha1);
+	void SerialiseTicket(const Crypto::sRsa4096Key& private_key, ESTicketFormatVersion format);
 	void SetIssuer(const std::string& issuer);
-	void SetFormatVersion(u8 version);
+	//void SetFormatVersion(u8 version);
 	void SetCaCrlVersion(u8 version);
 	void SetSignerCrlVersion(u8 version);
 	void SetEncryptedTitleKey(const u8 enc_title_key[Crypto::kAes128KeySize]);
@@ -108,6 +114,8 @@ private:
 	static const int kFormatVersion = 1;
 	static const int kCaCrlVersion = 0;
 	static const int kSignerCrlVersion = 0;
+	static const u32 kEnabledIndexMax_v0 = 0x200; // 0x0-0x1ff
+	static const u32 kEnabledIndexMax_v1 = 0x10000; // 0x0-0xffff
 	static const int kContentIndexBlockSize = 0x80;
 	static const u16 kContentIndexUpperMask = 0xFC00;
 	static const u16 kContentIndexLowerMask = 0x3FF;
@@ -131,126 +139,187 @@ private:
 		u32 value;
 	};
 
-	struct sTicketBodyVersion1
+	struct sTicketBody_v0
 	{
-		char signature_issuer[kSignatureIssuerLen];
-		u8 ecdsa_public_key[kEcdsaPublicKeyLen];
-		u8 format_version;
-		u8 ca_crl_version;
-		u8 signer_crl_version;
-		u8 encrypted_title_key[Crypto::kAes128KeySize];
-		u8 reserved0;
-		u64 ticket_id;
-		u32 device_id;
-		u64 title_id;
-		u8 reserved1[2];
-		u16 title_version;
-		u8 reserved2[8];
-		u8 license_type_item_right; // license_type lower 4 bits, item_right upper 4 bits
-		u8 common_key_index;
-		u8 reserved3[0x2A];
-		u32 eshop_account_id;
-		u8 reserved4;
-		u8 audit;
-		u8 reserved5[0x42];
-		sLimit limits[ES_MAX_LIMIT_TYPE];
+	private:
+		char issuer_[kSignatureIssuerLen];
+		Crypto::sEccPoint server_public_key_;
+		u8 format_version_;
+		u8 ca_crl_version_;
+		u8 signer_crl_version_;
+		u8 encrypted_title_key_[Crypto::kAes128KeySize];
+		u8 reserved0_;
+		u64 ticket_id_;
+		u32 device_id_;
+		u64 title_id_;
+		u16 system_title_access_mask_;
+		u16 title_version_;
+		u32 access_title_id_;
+		u32 access_title_id_mask_;
+		u8 license_type_;
+		u8 key_id_;
+		u8 reserved3_[0x2f];
+		u8 audit_; // VC title related (RVL only?)
+		u8 enabled_content_bits_[0x40];
+		u8 reserved5_[0x2];
+		sLimit limits_[ES_MAX_LIMIT_TYPE];
+
+	public:
+		const char* issuer() const { return issuer_; }
+		const Crypto::sEccPoint* server_public_key() const { return &server_public_key_; }
+		u8 format_version() const { return format_version_; }
+		u8 ca_crl_version() const { return ca_crl_version_; }
+		u8 signer_crl_version() const { return signer_crl_version_; }
+		const u8* encrypted_title_key() const { return encrypted_title_key_; }
+		u64 ticket_id() const { return be_dword(ticket_id_); }
+		u32 device_id() const { return be_word(device_id_); }
+		u64 title_id() const { return be_dword(title_id_); }
+		u16 system_title_access_mask() const { return be_hword(system_title_access_mask_); }
+		u16 title_version() const { return be_hword(title_version_); }
+		u32 access_title_id() const { return be_word(access_title_id_); }
+		u32 access_title_mask() const { return be_word(access_title_id_mask_); }
+		ESLicenseType license_type() const { return (ESLicenseType)(license_type_ & ES_LICENSE_MASK); }
+		u8 key_id() const { return key_id_; }
+		u8 audit() const { return audit_; }
+		bool is_content_enabled(u16 index) const { return (enabled_content_bits_[((index / 8) & 0x3f)] & BIT(index % 8)) != 0; }
+		ESLimitCode limit_code(u8 index) const { return (ESLimitCode)be_word(limits_[index].id); }
+		u32 limit_value(u8 index) const { return be_word(limits_[index].value); }
+
+		void set_issuer(const char* issuer, int len) { memset(issuer_, 0, kSignatureIssuerLen); memcpy(issuer_, issuer, len < kSignatureIssuerLen ? len : kSignatureIssuerLen); }
+		void set_server_public_key(const Crypto::sEccPoint* public_key) { server_public_key_ = *public_key; }
+		void set_format_version(u8 format_version) { format_version_ = format_version; }
+		void set_ca_crl_version(u8 ca_crl_version) { ca_crl_version_ = ca_crl_version; }
+		void set_signer_crl_version(u8 signer_crl_version) { signer_crl_version_ = signer_crl_version; }
+		void set_encrypted_title_key(const u8 enc_key[Crypto::kAes128KeySize]) { memcpy(encrypted_title_key_, enc_key, Crypto::kAes128KeySize); }
+		void set_ticket_id(u64 ticket_id) { ticket_id_ = be_dword(ticket_id); }
+		void set_device_id(u32 device_id) { device_id_ = be_word(device_id); }
+		void set_title_id(u64 title_id) { title_id_ = be_dword(title_id); }
+		void set_system_title_access_mask(u16 system_title_access_mask) { system_title_access_mask_ = be_hword(system_title_access_mask); }
+		void set_title_version(u16 title_version) { title_version_ = be_hword(title_version); }
+		void set_access_title_id(u32 access_title_id) { access_title_id_ = be_word(access_title_id); }
+		void set_access_title_id_mask(u32 access_title_id_mask) { access_title_id_mask_ = be_word(access_title_id_mask); }
+		void set_license_type(ESLicenseType license_type) { license_type_ = license_type & ES_LICENSE_MASK; }
+		void set_key_id(u8 key_id) { key_id_ = key_id; }
+		void set_audit(u8 audit) { audit_ = audit; }
+		void enable_content_index(u16 index) { enabled_content_bits_[(index / 8) % 0x40] |= BIT(index % 8); }
+		void disable_content_index(u16 index) { enabled_content_bits_[(index / 8) % 0x40] &= ~BIT(index % 8); }
+		void set_limit(u8 index, ESLimitCode code, u32 value) { limits_[index].id = be_word(code); limits_[index].value = be_word(value); }
+	};
+
+	struct sTicketBody_v1
+	{
+	private:
+		char issuer_[kSignatureIssuerLen];
+		Crypto::sEccPoint server_public_key_;
+		u8 format_version_;
+		u8 ca_crl_version_;
+		u8 signer_crl_version_;
+		u8 encrypted_title_key_[Crypto::kAes128KeySize];
+		u8 reserved0_;
+		u64 ticket_id_;
+		u32 device_id_;
+		u64 title_id_;
+		u8 reserved1_[2];
+		u16 title_version_;
+		u8 reserved2_[8];
+		u8 license_type_;
+		u8 key_id_;
+		u8 reserved3_[0x2A];
+		u32 eshop_account_id_;
+		u8 reserved5_[0x44];
+		sLimit limits_[ES_MAX_LIMIT_TYPE];
+	public:
+		const char* issuer() const { return issuer_; }
+		const Crypto::sEccPoint* server_public_key() const { return &server_public_key_; }
+		u8 format_version() const { return format_version_; }
+		u8 ca_crl_version() const { return ca_crl_version_; }
+		u8 signer_crl_version() const { return signer_crl_version_; }
+		const u8* encrypted_title_key() const { return encrypted_title_key_; }
+		u64 ticket_id() const { return be_dword(ticket_id_); }
+		u32 device_id() const { return be_word(device_id_); }
+		u64 title_id() const { return be_dword(title_id_); }
+		u16 title_version() const { return be_hword(title_version_); }
+		ESLicenseType license_type() const { return (ESLicenseType)(license_type_ & ES_LICENSE_MASK); }
+		u8 key_id() const { return key_id_; }
+		u32 eshop_account_id() const { return be_word(eshop_account_id_); }
+		ESLimitCode limit_code(u8 index) const { return (ESLimitCode)be_word(limits_[index].id); }
+		u32 limit_value(u8 index) const { return be_word(limits_[index].value); }
+
+		void set_issuer(const char* issuer, int len) { memset(issuer_, 0, kSignatureIssuerLen); memcpy(issuer_, issuer, len < kSignatureIssuerLen ? len : kSignatureIssuerLen); }
+		void set_server_public_key(const Crypto::sEccPoint* public_key) { server_public_key_ = *public_key; }
+		void set_format_version(u8 format_version) { format_version_ = format_version; }
+		void set_ca_crl_version(u8 ca_crl_version) { ca_crl_version_ = ca_crl_version; }
+		void set_signer_crl_version(u8 signer_crl_version) { signer_crl_version_ = signer_crl_version; }
+		void set_encrypted_title_key(const u8 enc_key[Crypto::kAes128KeySize]) { memcpy(encrypted_title_key_, enc_key, Crypto::kAes128KeySize); }
+		void set_ticket_id(u64 ticket_id) { ticket_id_ = be_dword(ticket_id); }
+		void set_device_id(u32 device_id) { device_id_ = be_word(device_id); }
+		void set_title_id(u64 title_id) { title_id_ = be_dword(title_id); }
+		void set_title_version(u16 title_version) { title_version_ = be_hword(title_version); }
+		void set_license_type(ESLicenseType license_type) { license_type_ = license_type & ES_LICENSE_MASK; }
+		void set_key_id(u8 key_id) { key_id_ = key_id; }
+		void set_eshop_account_id(u32 account_id) { eshop_account_id_ = be_word(account_id); }
+		void set_limit(u8 index, ESLimitCode code, u32 value) { limits_[index].id = be_word(code); limits_[index].value = be_word(value); }
 	};
 
 	struct sContentIndexChunkHeader
 	{
-		u32 unk0;
-		u32 total_size;
-		u32 unk1;
-		u32 unk2;
-		u32 unk3;
-		u32 header_size;
-		u32 chunk_num;
-		u32 chunk_size;
-		u32 total_chunks_size;
-		u32 unk4;
+	private:
+		u32 unk0_;
+		u32 total_size_;
+		u32 unk1_;
+		u32 unk2_;
+		u32 unk3_;
+		u32 header_size_;
+		u32 chunk_num_;
+		u32 chunk_size_;
+		u32 total_chunks_size_;
+		u32 unk4_;
+	public:
+		u32 unk0() const { return be_word(unk0_); }
+		u32 total_size() const { return be_word(total_size_); }
+		u32 unk1() const { return be_word(unk1_); }
+		u32 unk2() const { return be_word(unk2_); }
+		u32 unk3() const { return be_word(unk3_); }
+		u32 header_size() const { return be_word(header_size_); }
+		u32 chunk_num() const { return be_word(chunk_num_); }
+		u32 chunk_size() const { return be_word(chunk_size_); }
+		u32 total_chunks_size() const { return be_word(total_chunks_size_); }
+		u32 unk4() const { return be_word(unk4_); }
+
+		void set_unk0(u32 unk0) { unk0_ = be_word(unk0); }
+		void set_total_size(u32 total_size) { total_size_ = be_word(total_size); }
+		void set_unk1(u32 unk1) { unk1_ = be_word(unk1); }
+		void set_unk2(u32 unk2) { unk2_ = be_word(unk2); }
+		void set_unk3(u32 unk3) { unk3_ = be_word(unk3); }
+		void set_header_size(u32 header_size) { header_size_ = be_word(header_size); }
+		void set_chunk_num(u32 chunk_num) { chunk_num_ = be_word(chunk_num); }
+		void set_chunk_size(u32 chunk_size) { chunk_size_ = be_word(chunk_size); }
+		void set_total_chunks_size(u32 total_chunks_size) { total_chunks_size_ = be_word(total_chunks_size); }
+		void set_unk4(u32 unk4) { unk4_ = be_word(unk4); }
 	};
 
 	struct sContentIndexChunk
 	{
+	private:
 		u32 index_high_bits;
 		u8 index_bits[kContentIndexBlockSize];
+	public:
+		u32 index_group() const { return be_word(index_high_bits); }
+		bool is_index_enabled(u16 index) const { return (index_group() == get_index_high_bits(index)) && ((index_bits[get_index_low_bits(index) / 8] & BIT(get_index_low_bits(index) % 8)) != 0); }
+
+		void clear() { memset(this, 0, sizeof(sContentIndexChunk)); }
+
+		void set_index_group(u16 index) { index_high_bits = be_hword(get_index_high_bits(index)); }
+		void enable_index(u16 index) { index_bits[get_index_low_bits(index) / 8] |= BIT(get_index_low_bits(index) % 8); }
+		void disable_index(u16 index) { index_bits[get_index_low_bits(index) / 8] &= ~BIT(get_index_low_bits(index) % 8); }
+
+		inline u16 get_index_low_bits(u16 index) const { return index & kContentIndexLowerMask; }
+		inline u16 get_index_high_bits(u16 index) const { return index & kContentIndexUpperMask; }
 	};
 #pragma pack (pop)
 
 	// serialised data
 	ByteBuffer serialised_data_;
-
-	// serialised data staging ground
-	sTicketBodyVersion1 ticket_body_;
-	sContentIndexChunkHeader content_mask_header_;
-	std::vector<sContentIndexChunk> content_mask_chunks_;
-
-	// serialised data get interface
-	inline const char* signature_issuer() const { return ticket_body_.signature_issuer; }
-	inline const u8* ecdsa_public_key() const { return ticket_body_.ecdsa_public_key; }
-	inline u8 format_version() const { return ticket_body_.format_version; }
-	inline u8 ca_crl_version() const { return ticket_body_.ca_crl_version; }
-	inline u8 signer_crl_version() const { return ticket_body_.signer_crl_version; }
-	inline const u8* encrypted_title_key() const { return ticket_body_.encrypted_title_key; }
-	inline u64 ticket_id() const { return be_dword(ticket_body_.ticket_id); }
-	inline u32 device_id() const { return be_word(ticket_body_.device_id); }
-	inline u64 title_id() const { return be_dword(ticket_body_.title_id); }
-	inline u16 title_version() const { return be_hword(ticket_body_.title_version); }
-	inline ESLicenseType license_type() const { return (ESLicenseType)(ticket_body_.license_type_item_right & ES_LICENSE_MASK); }
-	inline ESItemRight item_right() const { return (ESItemRight)((ticket_body_.license_type_item_right >> 4) & ES_LICENSE_MASK); }
-	inline u8 common_key_index() const { return ticket_body_.common_key_index; }
-	inline u32 eshop_account_id() const { return be_word(ticket_body_.eshop_account_id); }
-	inline u8 audit() const { return ticket_body_.audit; }
-	inline ESLimitCode limit_id(u8 index) const { return (ESLimitCode)be_word(ticket_body_.limits[index].id); }
-	inline u32 limit_value(u8 index) const { return be_word(ticket_body_.limits[index].value); }
-
-	inline u32 content_mask_total_size() const { return be_word(content_mask_header_.total_size); }
-	inline u32 content_mask_header_size() const { return be_word(content_mask_header_.header_size); }
-	inline u32 content_mask_entry_num() const { return be_word(content_mask_header_.chunk_num); }
-	inline u32 content_mask_entry_size() const { return be_word(content_mask_header_.chunk_size); }
-	inline u32 content_mask_total_entry_size() const { return be_word(content_mask_header_.total_chunks_size); }
-
-	inline u32 content_index_chunk_high_bits(const sContentIndexChunk& chunk) const { return be_word(chunk.index_high_bits); }
-	inline bool is_content_index_chunk_lower_bits_set(const sContentIndexChunk& chunk, u32 index) const { return (chunk.index_bits[get_content_index_lower_bits(index) / 8] & BIT(index % 8)) != 0; }
-
-	// serialised data set interface
-	inline void set_signature_issuer(const char* issuer, int len) { memset(ticket_body_.signature_issuer, 0, kSignatureIssuerLen); memcpy(ticket_body_.signature_issuer, issuer, len < kSignatureIssuerLen ? len : kSignatureIssuerLen); }
-	inline void set_ecdsa_public_key(const u8 ecdsa_public_key[kEcdsaPublicKeyLen]) { memcpy(ticket_body_.ecdsa_public_key, ecdsa_public_key, kEcdsaPublicKeyLen); }
-	inline void set_format_version(u8 format_version) { ticket_body_.format_version = format_version; }
-	inline void set_ca_crl_version(u8 ca_crl_version) { ticket_body_.ca_crl_version = ca_crl_version; }
-	inline void set_signer_crl_version(u8 signer_crl_version) { ticket_body_.signer_crl_version = signer_crl_version; }
-	inline void set_encrypted_title_key(const u8 encrypted_title_key[Crypto::kAes128KeySize]) { memcpy(ticket_body_.encrypted_title_key, encrypted_title_key, Crypto::kAes128KeySize); }
-	inline void set_ticket_id(u64 ticket_id) { ticket_body_.ticket_id = be_dword(ticket_id); }
-	inline void set_device_id(u32 device_id) { ticket_body_.device_id = be_word(device_id); }
-	inline void set_title_id(u64 title_id) { ticket_body_.title_id = be_dword(title_id); }
-	inline void set_title_version(u16 title_version) { ticket_body_.title_version = be_hword(title_version); }
-	inline void set_license_type(ESLicenseType license_type) { ticket_body_.license_type_item_right &= ~ES_LICENSE_MASK; ticket_body_.license_type_item_right |= (license_type & ES_LICENSE_MASK); }
-	inline void set_item_right(ESItemRight item_right) { ticket_body_.license_type_item_right &= ~(ES_LICENSE_MASK << 4); ticket_body_.license_type_item_right |= ((item_right & ES_LICENSE_MASK) << 4); }
-	inline void set_common_key_index(u8 common_key_index) { ticket_body_.common_key_index = common_key_index; }
-	inline void set_eshop_account_id(u32 eshop_account_id) { ticket_body_.eshop_account_id = be_word(eshop_account_id); }
-	inline void set_audit(u8 audit) { ticket_body_.audit = audit; }
-	inline void set_limit(u8 index, ESLimitCode limit_code, u32 value) { ticket_body_.limits[index].id = be_word(limit_code); ticket_body_.limits[index].value = be_word(value);}
-
-	inline void set_content_mask_total_size(u32 total_size) { content_mask_header_.total_size = be_word(total_size); }
-	inline void set_content_mask_header_size(u32 header_size) { content_mask_header_.header_size = be_word(header_size); }
-	inline void set_content_mask_entry_num(u32 chunk_num) { content_mask_header_.chunk_num = be_word(chunk_num); }
-	inline void set_content_mask_entry_size(u32 chunk_size) { content_mask_header_.chunk_size = be_word(chunk_size); }
-	inline void set_content_mask_total_entry_size(u32 total_chunks_size) { content_mask_header_.total_chunks_size = be_word(total_chunks_size); }
-	inline void set_content_mask_unk0(u32 value) { content_mask_header_.unk0 = be_word(value); }
-	inline void set_content_mask_unk1(u32 value) { content_mask_header_.unk1 = be_word(value); }
-	inline void set_content_mask_unk2(u32 value) { content_mask_header_.unk2 = be_word(value); }
-	inline void set_content_mask_unk3(u32 value) { content_mask_header_.unk3 = be_word(value); }
-	inline void set_content_mask_unk4(u32 value) { content_mask_header_.unk4 = be_word(value); }
-
-
-	inline void set_content_mask_chunk_id(sContentIndexChunk& chunk, u32 id) { chunk.index_high_bits = be_word(id); }
-	inline void set_content_mask_chunk_index_bit(sContentIndexChunk& chunk, u16 index) { chunk.index_bits[get_content_index_lower_bits(index) / 8] |= BIT(index % 8); }
-	inline void remove_content_mask_chunk_index_bit(sContentIndexChunk& chunk, u16 index) { chunk.index_bits[get_content_index_lower_bits(index) / 8] &= ~(u8)(BIT(index % 8)); }
-	
-
-	// inline utils
-	inline u32 get_content_index_upper_bits(u16 index) const { return index & kContentIndexUpperMask; }
-	inline u32 get_content_index_lower_bits(u16 index) const { return index & kContentIndexLowerMask; }
 
 	// members for deserialised data
 	struct sEsLimit
@@ -260,6 +329,7 @@ private:
 	};
 
 	std::string issuer_;
+	Crypto::sEccPoint server_public_key_;
 	u8 format_version_;
 	u8 ca_crl_version_;
 	u8 signer_crl_version_;
@@ -284,19 +354,14 @@ private:
 	void CreateTitleKeyIv(u64 title_id, u8 iv[Crypto::kAesBlockSize]);
 	void EncryptTitleKey(const u8 title_key[Crypto::kAes128KeySize], u64 title_id, const u8 common_key[Crypto::kAes128KeySize], u8 enc_title_key[Crypto::kAes128KeySize]);
 	void DecryptTitleKey(const u8 enc_title_key[Crypto::kAes128KeySize], u64 title_id, const u8 common_key[Crypto::kAes128KeySize], u8 title_key[Crypto::kAes128KeySize]);
-	void ClearContentIndexControlEntry(struct sContentIndexChunk& entry);
-	void AddContentIndexChunk(u32 id);
-	sContentIndexChunk& GetContentIndexChunk(u32 id);
 
 	// (De)serialiser
 	void HashSerialisedData(EsCrypto::EsSignType sign_type, u8* hash) const;
-	void SerialiseWithoutSign(EsCrypto::EsSignType sign_type);
-	void SerialiseTicketBody();
-	void SerialiseContentMaskChunks();
-	void SerialiseContentMaskHeader();
-
-	void DeserialiseTicketBody();
-	void DeserialiseContentMask();
+	void SerialiseWithoutSign_v0(EsCrypto::EsSignType sign_type);
+	void SerialiseWithoutSign_v1(EsCrypto::EsSignType sign_type);
+	u8 GetRawBinaryFormatVersion(const u8* raw_tik_body);
+	void Deserialise_v0(const u8* tik_data);
+	void Deserialise_v1(const u8* tik_data);
 
 	bool IsSupportedFormatVersion(u8 version) const;
 

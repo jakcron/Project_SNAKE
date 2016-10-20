@@ -36,7 +36,6 @@ void CiaBuilder::MakeTicket()
 	
 	// set signature/format data + serialise
 	tik_.SetIssuer(tik_sign_.cert.GetChildIssuer());
-	tik_.SetFormatVersion(1);
 	tik_.SetCaCrlVersion(0);
 	tik_.SetSignerCrlVersion(0);
 	tik_.SerialiseTicket(tik_sign_.rsa_key);
@@ -57,7 +56,6 @@ void CiaBuilder::MakeTmd()
 	}
 
 	tmd_.SetIssuer(tmd_sign_.cert.GetChildIssuer());
-	tmd_.SetFormatVersion(1);
 	tmd_.SetCaCrlVersion(0);
 	tmd_.SetSignerCrlVersion(0);
 	tmd_.SerialiseTmd(tmd_sign_.rsa_key);

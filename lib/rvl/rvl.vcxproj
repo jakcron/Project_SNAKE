@@ -19,8 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{B69F1C8B-3C00-4D9E-8C27-6C6A5B4CBB95}</ProjectGuid>
-    <RootNamespace>ctr</RootNamespace>
+    <ProjectGuid>{F112C6F6-E2D2-4171-8780-462E7A7FF9BC}</ProjectGuid>
+    <RootNamespace>rvl</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -74,7 +74,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\lib\es;..\..\lib\crypto;..\..\lib\common;..\..\lib\oschar;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\es;..\common;..\crypto</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -112,45 +112,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="cci_builder.h" />
-    <ClInclude Include="cia_builder.h" />
-    <ClInclude Include="cia_footer.h" />
-    <ClInclude Include="cia_header.h" />
-    <ClInclude Include="cia_reader.h" />
-    <ClInclude Include="ctr_card_utils.h" />
-    <ClInclude Include="cxi_extended_header.h" />
-    <ClInclude Include="exefs.h" />
-    <ClInclude Include="exefs_code.h" />
-    <ClInclude Include="ivfc.h" />
-    <ClInclude Include="ncch_header.h" />
-    <ClInclude Include="cci_cardinfo_header.h" />
-    <ClInclude Include="ncch_header2.hl" />
-    <ClInclude Include="ncsd_header.h" />
-    <ClInclude Include="romfs.h" />
-    <ClInclude Include="romfs_dir_scanner.h" />
-    <ClInclude Include="smdh.h" />
+    <ClInclude Include="wad_header.h" />
+    <ClInclude Include="wad_reader.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="cci_builder.cpp" />
-    <ClCompile Include="cia_builder.cpp" />
-    <ClCompile Include="cia_footer.cpp" />
-    <ClCompile Include="cia_header.cpp" />
-    <ClCompile Include="cia_reader.cpp" />
-    <ClCompile Include="ctr_card_utils.cpp" />
-    <ClCompile Include="cxi_extended_header.cpp" />
-    <ClCompile Include="exefs.cpp" />
-    <ClCompile Include="exefs_code.cpp" />
-    <ClCompile Include="ivfc.cpp" />
-    <ClCompile Include="ncch_header.cpp" />
-    <ClCompile Include="cci_cardinfo_header.cpp" />
-    <ClCompile Include="ncch_header2.cppl" />
-    <ClCompile Include="ncsd_header.cpp" />
-    <ClCompile Include="romfs.cpp" />
-    <ClCompile Include="romfs_dir_scanner.cpp" />
-    <ClCompile Include="smdh.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="makefile" />
+    <ClCompile Include="wad_header.cpp" />
+    <ClCompile Include="wad_reader.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

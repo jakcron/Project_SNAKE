@@ -34,7 +34,7 @@ int NcchHeader::CreateHeader(const Crypto::sRsa2048Key& ncch_rsa_key)
 	// hash header
 	Crypto::Sha256((u8*)header_.magic, sizeof(struct sNcchHeader) - 0x100, hash);
 	// sign header
-	safe_call(Crypto::SignRsa2048(ncch_rsa_key, Crypto::HASH_SHA256, hash, header_.signature));
+	safe_call(Crypto::RsaSign(ncch_rsa_key, Crypto::HASH_SHA256, hash, header_.signature));
 	
 
 	return 0;
