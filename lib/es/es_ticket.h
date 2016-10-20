@@ -275,6 +275,12 @@ private:
 		u32 total_chunks_size_;
 		u32 unk4_;
 	public:
+		static const u32 kUnk0Default = 0x00010014;
+		static const u32 kUnk1Default = 0x00000014;
+		static const u32 kUnk2Default = 0x00010014;
+		static const u32 kUnk3Default = 0x00000000;
+		static const u32 kUnk4Default = 0x00030000;
+
 		u32 unk0() const { return be_word(unk0_); }
 		u32 total_size() const { return be_word(total_size_); }
 		u32 unk1() const { return be_word(unk1_); }

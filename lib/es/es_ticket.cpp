@@ -178,11 +178,11 @@ void EsTicket::SerialiseWithoutSign_v1(EsCrypto::EsSignType sign_type)
 	cntHdr.set_chunk_size(sizeof(sContentIndexChunk));
 	cntHdr.set_total_chunks_size(cntHdr.chunk_size() * sizeof(sContentIndexChunk));
 	cntHdr.set_total_size(cntHdr.header_size() + cntHdr.total_chunks_size());
-	cntHdr.set_unk0(0x00010014);
-	cntHdr.set_unk1(0x00000014);
-	cntHdr.set_unk2(0x00010014);
-	cntHdr.set_unk3(0x00000000);
-	cntHdr.set_unk4(0x00030000);
+	cntHdr.set_unk0(sContentIndexChunkHeader::kUnk0Default);
+	cntHdr.set_unk1(sContentIndexChunkHeader::kUnk1Default);
+	cntHdr.set_unk2(sContentIndexChunkHeader::kUnk2Default);
+	cntHdr.set_unk3(sContentIndexChunkHeader::kUnk3Default);
+	cntHdr.set_unk4(sContentIndexChunkHeader::kUnk4Default);
 
 	size_t ticket_size = sign_size + sizeof(sTicketBody_v1) + cntHdr.total_size();
 
@@ -273,7 +273,7 @@ void EsTicket::Deserialise_v1(const u8 * tik_data)
 	size_t tik_size = EsCrypto::GetSignatureSize(tik_data) + sizeof(sTicketBody_v1) + cntHdr->total_size();
 	if (serialised_data_.alloc(tik_size) != serialised_data_.ERR_NONE)
 	{
-		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for tik");
+		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for ticket");
 	}
 	memcpy(serialised_data_.data(), tik_data, tik_size);
 
@@ -300,6 +300,20 @@ void EsTicket::Deserialise_v1(const u8 * tik_data)
 
 		sEsLimit limit{ body->limit_code(i), body->limit_value(i) };
 		limits_.push_back(limit);
+	}
+
+	// check content index header
+	if (cntHdr->unk0() != sContentIndexChunkHeader::kUnk0Default ||
+		cntHdr->unk1() != sContentIndexChunkHeader::kUnk1Default ||
+		cntHdr->unk2() != sContentIndexChunkHeader::kUnk2Default ||
+		cntHdr->unk3() != sContentIndexChunkHeader::kUnk3Default ||
+		cntHdr->unk4() != sContentIndexChunkHeader::kUnk4Default ||
+		cntHdr->header_size() != sizeof(sContentIndexChunkHeader) ||
+		cntHdr->chunk_size() != sizeof(sContentIndexChunk) ||
+		cntHdr->total_chunks_size() != (cntHdr->chunk_num() * cntHdr->chunk_size()) ||
+		cntHdr->total_size() != (cntHdr->header_size() + cntHdr->total_chunks_size()))
+	{
+		throw ProjectSnakeException(kModuleName, "Ticket \"Enabled content index\" structure is malformed");
 	}
 
 	// save content indexes
