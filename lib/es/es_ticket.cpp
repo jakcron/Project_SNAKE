@@ -456,6 +456,11 @@ const std::string & EsTicket::GetIssuer() const
 	return issuer_;
 }
 
+const Crypto::sEccPoint& EsTicket::GetServerPublicKey() const
+{
+	return server_public_key_;
+}
+
 u8 EsTicket::GetFormatVersion() const
 {
 	return format_version_;
@@ -517,11 +522,6 @@ u16 EsTicket::GetTitleVersion() const
 EsTicket::ESLicenseType EsTicket::GetLicenseType() const
 {
 	return license_type_;
-}
-
-EsTicket::ESItemRight EsTicket::GetItemRight() const
-{
-	return item_right_;
 }
 
 u8 EsTicket::GetCommonKeyIndex() const
@@ -662,6 +662,11 @@ void EsTicket::SetIssuer(const std::string & issuer)
 	}
 
 	issuer_ = std::string(issuer);
+}
+
+void EsTicket::SetServerPublicKey(const Crypto::sEccPoint & public_key)
+{
+	server_public_key_ = public_key;
 }
 
 void EsTicket::SetCaCrlVersion(u8 version)

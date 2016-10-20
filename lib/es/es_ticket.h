@@ -61,7 +61,7 @@ public:
 	void SerialiseTicket(const Crypto::sRsa4096Key& private_key);
 	void SerialiseTicket(const Crypto::sRsa4096Key& private_key, ESTicketFormatVersion format);
 	void SetIssuer(const std::string& issuer);
-	//void SetFormatVersion(u8 version);
+	void SetServerPublicKey(const Crypto::sEccPoint& public_key);
 	void SetCaCrlVersion(u8 version);
 	void SetSignerCrlVersion(u8 version);
 	void SetEncryptedTitleKey(const u8 enc_title_key[Crypto::kAes128KeySize]);
@@ -84,6 +84,7 @@ public:
 	bool ValidateSignature(const Crypto::sRsa4096Key& key) const;
 	bool ValidateSignature(const EsCert& signer) const;
 	const std::string& GetIssuer() const;
+	const Crypto::sEccPoint& GetServerPublicKey() const;
 	u8 GetFormatVersion() const;
 	u8 GetCaCrlVersion() const;
 	u8 GetSignerCrlVersion() const;
@@ -95,7 +96,6 @@ public:
 	u64 GetTitleId() const;
 	u16 GetTitleVersion() const;
 	ESLicenseType GetLicenseType() const;
-	ESItemRight GetItemRight() const;
 	u8 GetCommonKeyIndex() const;
 	bool IsTicketAssociatedWithEShopAccount() const;
 	u32 GetEShopAccountId() const;
