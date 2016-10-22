@@ -33,6 +33,12 @@
     <ClInclude Include="es_cert_chain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="es_cdn_tmd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="es_cdn_ticket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="es_cert.cpp">
@@ -48,6 +54,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="es_cert_chain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="es_cdn_tmd.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="es_cdn_ticket.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
