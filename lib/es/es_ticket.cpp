@@ -92,7 +92,7 @@ void EsTicket::SerialiseWithoutSign_v0(EsCrypto::EsSignType sign_type)
 	body.set_system_title_access_mask(system_title_access_mask_);
 	body.set_title_version(title_version_);
 	body.set_access_title_id(access_title_id_);
-	body.set_access_title_id_mask(access_title_mask_);
+	body.set_access_title_id_mask(access_title_id_mask_);
 	body.set_license_type(license_type_);
 	body.set_key_id(common_key_index_);
 	body.set_audit(audit_);
@@ -240,7 +240,7 @@ void EsTicket::Deserialise_v0(const u8 * tik_data)
 	system_title_access_mask_ = body->system_title_access_mask();
 	title_version_ = body->title_version();
 	access_title_id_ = body->access_title_id();
-	access_title_mask_ = body->access_title_mask();
+	access_title_id_mask_ = body->access_title_id_mask();
 	license_type_ = body->license_type();
 	common_key_index_ = body->key_id();
 	audit_ = body->audit();
@@ -537,7 +537,7 @@ u32 EsTicket::GetAccessTitleId() const
 
 u32 EsTicket::GetAccessTitleIdMask() const
 {
-	return access_title_mask_;
+	return access_title_id_mask_;
 }
 
 EsTicket::ESLicenseType EsTicket::GetLicenseType() const

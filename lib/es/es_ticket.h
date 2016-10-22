@@ -183,7 +183,7 @@ private:
 		u16 system_title_access_mask() const { return be_hword(system_title_access_mask_); }
 		u16 title_version() const { return be_hword(title_version_); }
 		u32 access_title_id() const { return be_word(access_title_id_); }
-		u32 access_title_mask() const { return be_word(access_title_id_mask_); }
+		u32 access_title_id_mask() const { return be_word(access_title_id_mask_); }
 		ESLicenseType license_type() const { return (ESLicenseType)(license_type_ & ES_LICENSE_MASK); }
 		u8 key_id() const { return key_id_; }
 		u8 audit() const { return audit_; }
