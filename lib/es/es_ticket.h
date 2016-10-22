@@ -69,7 +69,10 @@ public:
 	void SetTicketId(u64 ticket_id);
 	void SetDeviceId(u32 device_id);
 	void SetTitleId(u64 title_id);
+	void SetSystemAccessMask(u16 system_access_mask);
 	void SetTitleVersion(u16 title_version);
+	void SetAccessTitleId(u32 access_title_id);
+	void SetAccessTitleIdMask(u32 access_title_id_mask);
 	void SetLicenseType(ESLicenseType license_type);
 	void SetCommonKeyIndex(u8 index);
 	void SetEShopAccountId(u32 account_id);
@@ -94,7 +97,10 @@ public:
 	bool IsTicketAssociatedWithDevice() const;
 	u32 GetDeviceId() const;
 	u64 GetTitleId() const;
+	u16 GetSystemAccessMask() const;
 	u16 GetTitleVersion() const;
+	u32 GetAccessTitleId() const;
+	u32 GetAccessTitleIdMask() const;
 	ESLicenseType GetLicenseType() const;
 	u8 GetCommonKeyIndex() const;
 	bool IsTicketAssociatedWithEShopAccount() const;
@@ -344,7 +350,10 @@ private:
 	u64 ticket_id_;
 	u32 device_id_;
 	u64 title_id_;
+	u16 system_title_access_mask_;
 	u16 title_version_;
+	u32 access_title_id_;
+	u32 access_title_id_mask_;
 	ESLicenseType license_type_;
 	ESItemRight item_right_;
 	u8 common_key_index_;

@@ -89,7 +89,10 @@ void EsTicket::SerialiseWithoutSign_v0(EsCrypto::EsSignType sign_type)
 	body.set_ticket_id(ticket_id_);
 	body.set_device_id(device_id_);
 	body.set_title_id(title_id_);
+	body.set_system_title_access_mask(system_title_access_mask_);
 	body.set_title_version(title_version_);
+	body.set_access_title_id(access_title_id_);
+	body.set_access_title_id_mask(access_title_mask_);
 	body.set_license_type(license_type_);
 	body.set_key_id(common_key_index_);
 	body.set_audit(audit_);
@@ -234,7 +237,10 @@ void EsTicket::Deserialise_v0(const u8 * tik_data)
 	ticket_id_ = body->ticket_id();
 	device_id_ = body->device_id();
 	title_id_ = body->title_id();
+	system_title_access_mask_ = body->system_title_access_mask();
 	title_version_ = body->title_version();
+	access_title_id_ = body->access_title_id();
+	access_title_mask_ = body->access_title_mask();
 	license_type_ = body->license_type();
 	common_key_index_ = body->key_id();
 	audit_ = body->audit();
@@ -514,9 +520,24 @@ u64 EsTicket::GetTitleId() const
 	return title_id_;
 }
 
+u16 EsTicket::GetSystemAccessMask() const
+{
+	return system_title_access_mask_;
+}
+
 u16 EsTicket::GetTitleVersion() const
 {
 	return title_version_;
+}
+
+u32 EsTicket::GetAccessTitleId() const
+{
+	return access_title_id_;
+}
+
+u32 EsTicket::GetAccessTitleIdMask() const
+{
+	return access_title_mask_;
 }
 
 EsTicket::ESLicenseType EsTicket::GetLicenseType() const
@@ -716,9 +737,24 @@ void EsTicket::SetTitleId(u64 title_id)
 	title_id_ = title_id;
 }
 
+void EsTicket::SetSystemAccessMask(u16 system_access_mask)
+{
+	system_title_access_mask_ = system_access_mask;
+}
+
 void EsTicket::SetTitleVersion(u16 title_version)
 {
 	title_version_ = title_version;
+}
+
+void EsTicket::SetAccessTitleId(u32 access_title_id)
+{
+	access_title_id_ = access_title_id;
+}
+
+void EsTicket::SetAccessTitleIdMask(u32 access_title_id_mask)
+{
+	access_title_id_mask_ = access_title_id_mask;
 }
 
 void EsTicket::SetLicenseType(ESLicenseType license_type)
