@@ -191,6 +191,7 @@ private:
 		ESLimitCode limit_code(u8 index) const { return (ESLimitCode)be_word(limits_[index].id); }
 		u32 limit_value(u8 index) const { return be_word(limits_[index].value); }
 
+		void clear() { memset(this, 0, sizeof(sTicketBody_v0)); }
 		void set_issuer(const char* issuer, int len) { memset(issuer_, 0, kSignatureIssuerLen); memcpy(issuer_, issuer, len < kSignatureIssuerLen ? len : kSignatureIssuerLen); }
 		void set_server_public_key(const Crypto::sEccPoint* public_key) { server_public_key_ = *public_key; }
 		void set_format_version(u8 format_version) { format_version_ = format_version; }
@@ -251,6 +252,7 @@ private:
 		ESLimitCode limit_code(u8 index) const { return (ESLimitCode)be_word(limits_[index].id); }
 		u32 limit_value(u8 index) const { return be_word(limits_[index].value); }
 
+		void clear() { memset(this, 0, sizeof(sTicketBody_v1)); }
 		void set_issuer(const char* issuer, int len) { memset(issuer_, 0, kSignatureIssuerLen); memcpy(issuer_, issuer, len < kSignatureIssuerLen ? len : kSignatureIssuerLen); }
 		void set_server_public_key(const Crypto::sEccPoint* public_key) { server_public_key_ = *public_key; }
 		void set_format_version(u8 format_version) { format_version_ = format_version; }
@@ -297,6 +299,8 @@ private:
 		u32 chunk_size() const { return be_word(chunk_size_); }
 		u32 total_chunks_size() const { return be_word(total_chunks_size_); }
 		u32 unk4() const { return be_word(unk4_); }
+
+		void clear() { memset(this, 0, sizeof(sContentIndexChunkHeader)); }
 
 		void set_unk0(u32 unk0) { unk0_ = be_word(unk0); }
 		void set_total_size(u32 total_size) { total_size_ = be_word(total_size); }

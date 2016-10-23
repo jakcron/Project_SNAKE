@@ -128,6 +128,7 @@ void EsTicket::SerialiseWithoutSign_v1(EsCrypto::EsSignType sign_type)
 	std::vector<sContentIndexChunk> cntList;
 
 	// serialise body
+	body.clear();
 	body.set_issuer(issuer_.c_str(), strlen(issuer_.c_str()));
 	body.set_format_version(ES_TIK_VER_1);
 	body.set_ca_crl_version(ca_crl_version_);
@@ -167,6 +168,7 @@ void EsTicket::SerialiseWithoutSign_v1(EsCrypto::EsSignType sign_type)
 		if (isIndexSet == false)
 		{
 			sContentIndexChunk cnt;
+			cnt.clear();
 			cnt.set_index_group(index);
 			cnt.enable_index(index);
 
@@ -176,10 +178,11 @@ void EsTicket::SerialiseWithoutSign_v1(EsCrypto::EsSignType sign_type)
 	}
 
 	// serialise content mask header
+	cntHdr.clear();
 	cntHdr.set_header_size(sizeof(sContentIndexChunkHeader));
 	cntHdr.set_chunk_num(cntList.size());
 	cntHdr.set_chunk_size(sizeof(sContentIndexChunk));
-	cntHdr.set_total_chunks_size(cntHdr.chunk_size() * sizeof(sContentIndexChunk));
+	cntHdr.set_total_chunks_size(cntHdr.chunk_num() * sizeof(sContentIndexChunk));
 	cntHdr.set_total_size(cntHdr.header_size() + cntHdr.total_chunks_size());
 	cntHdr.set_unk0(sContentIndexChunkHeader::kUnk0Default);
 	cntHdr.set_unk1(sContentIndexChunkHeader::kUnk1Default);
