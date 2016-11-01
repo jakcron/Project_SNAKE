@@ -129,6 +129,9 @@ private:
 		u32 public_save_data_size() const { return le_word(public_save_size_); }
 		u32 private_save_data_size() const { return le_word(private_save_size_); }
 		u8 twl_flag() const { return twl_flag_; }
+
+		void clear() { memset(this, 0, sizeof(sPlatormReservedRegion)); }
+
 		void set_public_save_data_size(u32 size) { public_save_size_ = le_word(size); }
 		void set_private_save_data_size(u32 size) { private_save_size_ = le_word(size); }
 		void set_twl_flag(u8 flag) { twl_flag_ = flag; }
@@ -169,6 +172,8 @@ private:
 		u16 content_num() const { return be_hword(content_num_); }
 		u16 boot_content_index() const { return be_hword(boot_content_index_); }
 
+		void clear() { memset(this, 0, sizeof(sTitleMetadataBody_v0)); }
+
 		void set_issuer(const char* issuer, int len) { memset(issuer_, 0, kSignatureIssuerLen); memcpy(issuer_, issuer, len < kSignatureIssuerLen ? len : kSignatureIssuerLen); }
 		void set_format_version(u8 format_version) { format_version_ = format_version; }
 		void set_ca_crl_version(u8 ca_crl_version) { ca_crl_version_ = ca_crl_version; }
@@ -198,6 +203,8 @@ private:
 		u16 flag() const { return be_hword(flag_); }
 		u64 size() const { return be_dword(size_); }
 		const u8* hash() const { return hash_; }
+
+		void clear() { memset(this, 0, sizeof(sContentInfo_v0)); }
 
 		void set_id(u32 id) { id_ = be_word(id); }
 		void set_index(u16 index) { index_ = be_hword(index); }
@@ -244,6 +251,8 @@ private:
 		u16 boot_content_index() const { return be_hword(boot_content_index_); }
 		const u8* info_records_hash() const { return info_records_hash_; }
 
+		void clear() { memset(this, 0, sizeof(sTitleMetadataBody_v1)); }
+
 		void set_issuer(const char* issuer, int len) { memset(issuer_, 0, kSignatureIssuerLen); memcpy(issuer_, issuer, len < kSignatureIssuerLen ? len : kSignatureIssuerLen); }
 		void set_format_version(u8 format_version) { format_version_ = format_version; }
 		void set_ca_crl_version(u8 ca_crl_version) { ca_crl_version_ = ca_crl_version; }
@@ -272,6 +281,8 @@ private:
 		u16 num() const { return be_hword(num_); }
 		const u8* hash() const { return hash_; }
 
+		void clear() { memset(this, 0, sizeof(sInfoRecord)); }
+
 		void set_offset(u16 offset) { offset_ = be_hword(offset); }
 		void set_num(u16 num) { num_ = be_hword(num); }
 		void set_hash(const u8 hash[Crypto::kSha256HashLen]) { memcpy(hash_, hash, Crypto::kSha256HashLen); }
@@ -291,6 +302,8 @@ private:
 		u16 flag() const { return be_hword(flag_); }
 		u64 size() const { return be_dword(size_); }
 		const u8* hash() const { return hash_; }
+
+		void clear() { memset(this, 0, sizeof(sContentInfo_v1)); }
 
 		void set_id(u32 id) { id_ = be_word(id); }
 		void set_index(u16 index) { index_ = be_hword(index); }
