@@ -63,7 +63,9 @@
     <ClInclude Include="cia_footer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ncch_header2.hl" />
+    <ClInclude Include="romfs_dir_filter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cia_builder.cpp">
@@ -114,7 +116,9 @@
     <ClCompile Include="cia_footer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ncch_header2.cppl" />
+    <ClCompile Include="romfs_dir_filter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="makefile" />

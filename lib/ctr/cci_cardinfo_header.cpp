@@ -66,7 +66,7 @@ void CciCardInfoHeader::SetCardSeedData(const u8 card_seed_key_y[Crypto::kAes128
 
 void CciCardInfoHeader::SetNcchHeader(const NcchHeader& ncch_header)
 {
-	memcpy(header()->ncch_header, ncch_header.header_blob() + 0x100, 0x100);
+	memcpy(header()->ncch_header, ncch_header.GetSerialisedData() + 0x100, 0x100);
 }
 
 void CciCardInfoHeader::SetCardInfoHeader(const u8* card_info_header)

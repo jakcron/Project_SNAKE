@@ -82,7 +82,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\common;..\crypto;..\es;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\common;..\crypto;..\es;..\oschar;</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -124,9 +124,9 @@
     <ClInclude Include="ivfc.h" />
     <ClInclude Include="ncch_header.h" />
     <ClInclude Include="cci_cardinfo_header.h" />
-    <ClInclude Include="ncch_header2.hl" />
     <ClInclude Include="ncsd_header.h" />
     <ClInclude Include="romfs.h" />
+    <ClInclude Include="romfs_dir_filter.h" />
     <ClInclude Include="romfs_dir_scanner.h" />
     <ClInclude Include="smdh.h" />
   </ItemGroup>
@@ -143,9 +143,9 @@
     <ClCompile Include="ivfc.cpp" />
     <ClCompile Include="ncch_header.cpp" />
     <ClCompile Include="cci_cardinfo_header.cpp" />
-    <ClCompile Include="ncch_header2.cppl" />
     <ClCompile Include="ncsd_header.cpp" />
     <ClCompile Include="romfs.cpp" />
+    <ClCompile Include="romfs_dir_filter.cpp" />
     <ClCompile Include="romfs_dir_scanner.cpp" />
     <ClCompile Include="smdh.cpp" />
   </ItemGroup>
