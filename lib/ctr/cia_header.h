@@ -54,45 +54,42 @@ private:
 #pragma pack (push, 1)
 	struct sCiaHeader
 	{
-		u32 header_size;
-		u16 type;
-		u16 version;
-		u32 certificate_size;
-		u32 ticket_size;
-		u32 tmd_size;
-		u32 footer_size;
-		u64 content_size;
-		u8 content_mask[kCiaContentMaskSize];
+	private:
+		u32 header_size_;
+		u16 type_;
+		u16 version_;
+		u32 certificate_size_;
+		u32 ticket_size_;
+		u32 tmd_size_;
+		u32 footer_size_;
+		u64 content_size_;
+		u8 content_mask_[kCiaContentMaskSize];
+	public:
+		u32 header_size() const { return le_word(header_size_); }
+		u16 type() const { return le_hword(type_); }
+		u16 version() const { return le_hword(version_); }
+		u32 certificate_size() const { return le_word(certificate_size_); }
+		u32 ticket_size() const { return le_word(ticket_size_); }
+		u32 tmd_size() const { return le_word(tmd_size_); }
+		u32 footer_size() const { return le_word(footer_size_); }
+		u64 content_size() const { return le_dword(content_size_); }
+		bool is_content_index_set(u16 index) const { return ((content_mask_[index / 8] & BIT(7 - (index % 8))) != 0); }
+
+		void set_header_size(u32 size) { header_size_ = le_word(size); }
+		void set_type(u16 type) { type_ = le_hword(type); }
+		void set_version(u16 version) { version_ = le_hword(version); }
+		void set_certificate_size(u32 size) { certificate_size_ = le_word(size); }
+		void set_ticket_size(u32 size) { ticket_size_ = le_word(size); }
+		void set_tmd_size(u32 size) { tmd_size_ = le_word(size); }
+		void set_footer_size(u32 size) { footer_size_ = le_word(size); }
+		void set_content_size(u64 size) { content_size_ = le_dword(size); }
+		void enable_content_index(u16 index) { content_mask_[index / 8] |= BIT(7 - (index % 8)); }
+		void disable_content_index(u16 index) { content_mask_[index / 8] &= ~BIT(7 - (index % 8)); }
 	};
 #pragma pack (pop)
 
 	// serialised data
 	ByteBuffer serialised_data_;
-
-	// serialised data staging ground
-	sCiaHeader header_;
-
-	// serialised data get interface
-	inline u32 header_size() const { return le_word(header_.header_size); }
-	inline u16 type() const { return le_hword(header_.type); }
-	inline u16 version() const { return le_hword(header_.version); }
-	inline u32 certificate_size() const { return le_word(header_.certificate_size); }
-	inline u32 ticket_size() const { return le_word(header_.ticket_size); }
-	inline u32 tmd_size() const { return le_word(header_.tmd_size); }
-	inline u32 footer_size() const { return le_word(header_.footer_size); }
-	inline u64 content_size() const { return le_dword(header_.content_size); }
-	inline bool is_content_index_set(u16 index) const { return ((header_.content_mask[index / 8] & BIT(7 - (index % 8))) != 0); }
-
-	// serialised data set interface
-	inline void set_header_size(u32 header_size) { header_.header_size = le_word(header_size); }
-	inline void set_type(u16 type) { header_.type = le_hword(type); }
-	inline void set_version(u16 version) { header_.version = le_hword(version); }
-	inline void set_certificate_size(u32 certificate_size) { header_.certificate_size = le_word(certificate_size); }
-	inline void set_ticket_size(u32 ticket_size) { header_.ticket_size = le_word(ticket_size); }
-	inline void set_tmd_size(u32 tmd_size) { header_.tmd_size = le_word(tmd_size); }
-	inline void set_footer_size(u32 footer_size) { header_.footer_size = le_word(footer_size); }
-	inline void set_content_size(u64 content_size) { header_.content_size = le_dword(content_size); }
-	inline void set_content_index(u16 index) { header_.content_mask[index / 8] |= BIT(7 - (index % 8)); }
 
 	// members for deserialised data
 	struct sSectionGeometry

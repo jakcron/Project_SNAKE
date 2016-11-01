@@ -43,29 +43,30 @@ void CiaHeader::SerialiseHeader()
 	CalculateSectionOffsets();
 	CalculateCiaSize();
 
-	// serialise header
-	memset((u8*)&header_, 0, sizeof(sCiaHeader));
-	set_header_size(sizeof(sCiaHeader));
-	set_type(type_);
-	set_version(version_);
-	set_certificate_size(certs_.size);
-	set_ticket_size(tik_.size);
-	set_tmd_size(tmd_.size);
-	set_footer_size(footer_.size);
-	set_content_size(content_.size);
-	for (u16 index : enabled_content_)
-	{
-		set_content_index(index);
-	}
-
 	// allocate memory for serialised data
 	if (serialised_data_.alloc(sizeof(sCiaHeader)) != serialised_data_.ERR_NONE)
 	{
 		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for cia header");
 	}
 
-	// copy header into serialised data
-	memcpy(serialised_data_.data(), &header_, sizeof(sCiaHeader));
+	// get pointer to header
+	sCiaHeader *hdr = (sCiaHeader*)(serialised_data_.data());
+
+	// serialise header
+	memset(hdr, 0, sizeof(sCiaHeader));
+	hdr->set_header_size(sizeof(sCiaHeader));
+	hdr->set_type(type_);
+	hdr->set_version(version_);
+	hdr->set_certificate_size(certs_.size);
+	hdr->set_ticket_size(tik_.size);
+	hdr->set_tmd_size(tmd_.size);
+	hdr->set_footer_size(footer_.size);
+	hdr->set_content_size(content_.size);
+
+	for (u16 index : enabled_content_)
+	{
+		hdr->enable_content_index(index);
+	}
 }
 
 void CiaHeader::SetCertificateChainSize(size_t size)
@@ -101,21 +102,21 @@ void CiaHeader::EnableContent(u16 index)
 void CiaHeader::DeserialiseHeader(const u8* cia_data)
 {
 	ClearDeserialisedVariables();
-	memcpy(&header_, cia_data, sizeof(sCiaHeader));
+	const sCiaHeader* hdr = (const sCiaHeader*)(cia_data);
 
 	// confirm data is likely a cia header
-	if (header_size() != sizeof(sCiaHeader))
+	if (hdr->header_size() != sizeof(sCiaHeader))
 	{
 		throw ProjectSnakeException(kModuleName, "Cia is corrupt");
 	}
 
 	// check supported type and version
-	if (!IsSupportedType(type()))
+	if (!IsSupportedType(hdr->type()))
 	{
 		throw ProjectSnakeException(kModuleName, "Cia has unsupported type");
 	}
 
-	if (!IsSupportedFormatVersion(version()))
+	if (!IsSupportedFormatVersion(hdr->version()))
 	{
 		throw ProjectSnakeException(kModuleName, "Cia has unsupported format version");
 	}
@@ -128,16 +129,16 @@ void CiaHeader::DeserialiseHeader(const u8* cia_data)
 	memcpy(serialised_data_.data(), cia_data, sizeof(sCiaHeader));
 
 	// deserialise header
-	type_ = type();
-	version_ = version();
-	certs_.size = certificate_size();
-	tik_.size = ticket_size();
-	tmd_.size = tmd_size();
-	footer_.size = footer_size();
-	content_.size = content_size();
+	type_ = hdr->type();
+	version_ = hdr->version();
+	certs_.size = hdr->certificate_size();
+	tik_.size = hdr->ticket_size();
+	tmd_.size = hdr->tmd_size();
+	footer_.size = hdr->footer_size();
+	content_.size = hdr->content_size();
 	for (u32 i = 0; i <= 0xffff; i++)
 	{
-		if (is_content_index_set(i))
+		if (hdr->is_content_index_set(i))
 		{
 			enabled_content_.push_back((u16)i);
 		}
