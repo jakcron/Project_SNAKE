@@ -29,6 +29,8 @@ public:
 
 	int ScanDir(const char* root);
 
+	void PrintDirTree(const sDirectory parent, int level);
+
 	inline struct sDirectory const& root_dir() const { return root_; }
 
 private:

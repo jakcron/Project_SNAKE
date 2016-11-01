@@ -1,4 +1,5 @@
 #include "romfs.h"
+#include "romfs_dir_filter.h"
 
 #define die(msg) do { fputs(msg "\n\n", stderr); return 1; } while(0)
 #define safe_call(a) do { int rc = a; if(rc != 0) return rc; } while(0)
@@ -50,17 +51,30 @@ Romfs::~Romfs()
 
 int Romfs::CreateRomfs(const char* dir)
 {
-	safe_call(scanner_.ScanDir(dir));
+	// scan root dir
+	RomfsDirScanner scanner;
+	safe_call(scanner.ScanDir(dir));
+
+	
+	// filter root dir
+	RomfsDirFilter filter;
+	filter.FilterFs(scanner.root_dir());
+	
+	// save copy of root dir
+	root_ = filter.GetRootFs();
+
+	// debug
+	//scanner.PrintDirTree(root_, 1);
 
 	// return if there's nothing in the directory
-	if (GetDirNum(scanner_.root_dir()) == 0 && GetFileNum(scanner_.root_dir()) == 0)
+	if (GetDirNum(root_) == 0 && GetFileNum(root_) == 0)
 		return 0;
 
 	safe_call(CreateRomfsLayout());
 
 	// add files and dirs to romfs layout
-	AddDirToRomfs(scanner_.root_dir(), 0, kUnusedOffset);
-	safe_call(AddDirChildToRomfs(scanner_.root_dir(), 0, 0));
+	AddDirToRomfs(root_, 0, kUnusedOffset);
+	safe_call(AddDirChildToRomfs(root_, 0, 0));
 
 	return 0;
 }
@@ -90,7 +104,7 @@ u32 Romfs::GetFileNum(const RomfsDirScanner::sDirectory & dir)
 
 u32 Romfs::GetDirTableSize(const RomfsDirScanner::sDirectory& dir)
 {
-	u32 size = sizeof(struct sRomfsDirEntry) + align(dir.namesize, 4);
+	u32 size = sizeof(struct sDirectoryNode) + align(dir.namesize, 4);
 	for (size_t i = 0; i < dir.child.size(); i++)
 	{
 		size += GetDirTableSize(dir.child[i]);
@@ -104,7 +118,7 @@ u32 Romfs::GetFileTableSize(const RomfsDirScanner::sDirectory& dir)
 	u32 size = 0;
 	for (size_t i = 0; i < dir.file.size(); i++)
 	{
-		size += sizeof(struct sRomfsFileEntry) + align(dir.file[i].namesize, 4);
+		size += sizeof(struct sFileNode) + align(dir.file[i].namesize, 4);
 	}
 
 	for (size_t i = 0; i < dir.child.size(); i++)
@@ -138,65 +152,64 @@ int Romfs::CreateRomfsLayout()
 	u64 data_size;
 
 	// get sizes
-	header_.dir_hash_num = CalcHashTableLen(GetDirNum(scanner_.root_dir()) + 1);
-	header_.file_hash_num = CalcHashTableLen(GetFileNum(scanner_.root_dir()));
+	header_.dir_hash_num = CalcHashTableLen(GetDirNum(root_) + 1);
+	header_.file_hash_num = CalcHashTableLen(GetFileNum(root_));
 
 	dir_hash_table_size = (header_.dir_hash_num) * sizeof(u32);
 	file_hash_table_size = (header_.file_hash_num) * sizeof(u32);
-	dir_entry_table_size = GetDirTableSize(scanner_.root_dir());
-	file_entry_table_size = GetFileTableSize(scanner_.root_dir());
+	dir_entry_table_size = GetDirTableSize(root_);
+	file_entry_table_size = GetFileTableSize(root_);
 
 	header_size = align(\
-		sizeof(struct sRomfsHeader) \
+		sizeof(sRomfsHeader) \
 		+ dir_hash_table_size + dir_entry_table_size \
 		+ file_hash_table_size + file_entry_table_size \
 		, 0x10);
 
-	data_size = GetDataSize(scanner_.root_dir());
+	data_size = GetDataSize(root_);
 
 
 	// allocate memory
 	safe_call(data_.alloc(header_size + data_size));
 
 	// set header
-	struct sRomfsHeader* hdr = (struct sRomfsHeader*)data_.data();
-	hdr->header_size = le_word(sizeof(struct sRomfsHeader));
-	hdr->data_offset = le_word(header_size);
+	sRomfsHeader* hdr = (sRomfsHeader*)data_.data();
+	hdr->set_header_size(sizeof(sRomfsHeader));
+	hdr->set_data_offset(header_size);
 
-	u32 offset = sizeof(struct sRomfsHeader);
+	u32 offset = sizeof(sRomfsHeader);
 	for (size_t i = 0; i < kRomfsSectionNum; i++)
 	{
 		switch (i)
 		{
 		case(ROMFS_SECTION_DIR_HASH_TABLE) :
 		{
-			hdr->section[i].size = le_word(dir_hash_table_size);
+			hdr->set_section(i, offset, dir_hash_table_size);
 			header_.dir_hash_table = (u32*)(data_.data() + offset);
 			break;
 		}
 		case(ROMFS_SECTION_DIR_ENTRY_TABLE) :
 		{
-			hdr->section[i].size = le_word(dir_entry_table_size);
+			hdr->set_section(i, offset, dir_entry_table_size);
 			header_.dir_entry_offset = 0;
 			header_.dir_entry_table = (data_.data() + offset);
 			break;
 		}
 		case(ROMFS_SECTION_FILE_HASH_TABLE) :
 		{
-			hdr->section[i].size = le_word(file_hash_table_size);
+			hdr->set_section(i, offset, file_hash_table_size);
 			header_.file_hash_table = (u32*)(data_.data() + offset);
 			break;
 		}
 		case(ROMFS_SECTION_FILE_ENTRY_TABLE) :
 		{
-			hdr->section[i].size = le_word(file_entry_table_size);
+			hdr->set_section(i, offset, file_entry_table_size);
 			header_.file_entry_offset = 0;
 			header_.file_entry_table = (data_.data() + offset);
 			break;
 		}
 		}
-		hdr->section[i].offset = le_word(offset);
-		offset += le_word(hdr->section[i].size);
+		offset += hdr->section(i).size();
 	}
 
 	header_.data_offset = 0;
@@ -218,38 +231,33 @@ int Romfs::CreateRomfsLayout()
 
 void Romfs::AddDirToRomfs(const RomfsDirScanner::sDirectory& dir, u32 parent, u32 sibling)
 {
-	struct sRomfsDirEntry* entry = (struct sRomfsDirEntry*)(header_.dir_entry_table + header_.dir_entry_offset);
-	utf16char_t* name = (utf16char_t*)(header_.dir_entry_table + header_.dir_entry_offset + sizeof(struct sRomfsDirEntry));
+	struct sDirectoryNode* entry = (struct sDirectoryNode*)(header_.dir_entry_table + header_.dir_entry_offset);
 
-	entry->parent_offset = le_word(parent);
-	entry->sibling_offset = le_word(sibling);
-	entry->child_offset = le_word(kUnusedOffset);
-	entry->file_offset = le_word(kUnusedOffset);
+	entry->set_parent_node(parent);
+	entry->set_sibling_node(sibling);
+	entry->set_child_node(kUnusedOffset);
+	entry->set_file_node(kUnusedOffset);
 
 	u32 hash = CalcHash(parent, dir.name, header_.dir_hash_num);
-	entry->hash_offset = header_.dir_hash_table[hash];
+	entry->set_hash_sibling(header_.dir_hash_table[hash]);
 	header_.dir_hash_table[hash] = le_word(header_.dir_entry_offset);
 
-	entry->name_size = le_dword(dir.namesize);
-	for (u32 i = 0; i < dir.namesize / sizeof(utf16char_t); i++)
-	{
-		name[i] = le_hword(dir.name[i]);
-	}
+	entry->set_name(dir.name, dir.namesize);
 
-	header_.dir_entry_offset += (sizeof(struct sRomfsDirEntry) + align(dir.namesize, 4));
+	header_.dir_entry_offset += entry->node_size();
 }
 
 int Romfs::AddDirChildToRomfs(const RomfsDirScanner::sDirectory& dir, u32 parent, u32 diroff)
 {
-	struct sRomfsDirEntry* entry = (struct sRomfsDirEntry*)(header_.dir_entry_table + diroff);
+	struct sDirectoryNode* entry = (struct sDirectoryNode*)(header_.dir_entry_table + diroff);
 	
 	if (dir.file.size())
 	{
 		u32 sibling;
-		entry->file_offset = le_word(header_.file_entry_offset);
+		entry->set_file_node(header_.file_entry_offset);
 		for (size_t i = 0; i < dir.file.size(); i++)
 		{
-			sibling = (i == dir.file.size() - 1) ? kUnusedOffset : (header_.file_entry_offset + sizeof(struct sRomfsFileEntry) + align(dir.file[i].namesize, 4));
+			sibling = (i == dir.file.size() - 1) ? kUnusedOffset : (header_.file_entry_offset + sizeof(struct sFileNode) + align(dir.file[i].namesize, 4));
 			safe_call(AddFileToRomfs(dir.file[i], diroff, sibling));
 		}
 	}
@@ -258,14 +266,14 @@ int Romfs::AddDirChildToRomfs(const RomfsDirScanner::sDirectory& dir, u32 parent
 	{
 		u32 sibling;
 		std::vector<u32> child;
-		entry->child_offset = le_word(header_.dir_entry_offset);
+		entry->set_child_node(header_.dir_entry_offset);
 		for (size_t i = 0; i < dir.child.size(); i++)
 		{
 			/* Store address for child */
 			child.push_back(header_.dir_entry_offset);
 
 			/* If is the last child directory, no more siblings  */
-			sibling = (i == dir.file.size() - 1) ? kUnusedOffset : (header_.dir_entry_offset + sizeof(struct sRomfsDirEntry) + align(dir.child[i].namesize, 4));
+			sibling = (i == dir.child.size() - 1) ? kUnusedOffset : (header_.dir_entry_offset + sizeof(struct sDirectoryNode) + align(dir.child[i].namesize, 4));
 		
 			/* Create child directory entry */
 			AddDirToRomfs(dir.child[i], diroff, sibling);
@@ -283,23 +291,20 @@ int Romfs::AddDirChildToRomfs(const RomfsDirScanner::sDirectory& dir, u32 parent
 
 int Romfs::AddFileToRomfs(const RomfsDirScanner::sFile& file, u32 parent, u32 sibling)
 {
-	struct sRomfsFileEntry* entry = (struct sRomfsFileEntry*)(header_.file_entry_table + header_.file_entry_offset);
-	utf16char_t* name = (utf16char_t*)(header_.file_entry_table + header_.file_entry_offset + sizeof(struct sRomfsFileEntry));
+	struct sFileNode* entry = (struct sFileNode*)(header_.file_entry_table + header_.file_entry_offset);
+	
+	entry->set_parent_node(parent);
+	entry->set_sibling_node(sibling);
+	entry->set_data_offset(0);
+	entry->set_data_size(file.size);
+	
 
-	entry->parent_offset = le_word(parent);
-	entry->sibling_offset = le_word(sibling);
-	entry->data_offset = le_dword(0);
-	entry->data_size = le_dword(file.size);
 
 	u32 hash = CalcHash(parent, file.name, header_.file_hash_num);
-	entry->hash_offset = header_.file_hash_table[hash];
+	entry->set_hash_sibling(header_.file_hash_table[hash]);
 	header_.file_hash_table[hash] = le_word(header_.file_entry_offset);
 
-	entry->name_size = le_dword(file.namesize);
-	for (u32 i = 0; i < file.namesize / sizeof(utf16char_t); i++)
-	{
-		name[i] = le_hword(file.name[i]);
-	}
+	entry->set_name(file.name, file.namesize);
 	
 	if (file.size)
 	{
@@ -314,14 +319,14 @@ int Romfs::AddFileToRomfs(const RomfsDirScanner::sFile& file, u32 parent, u32 si
 
 		// align data pos to 0x10 bytes
 		header_.data_offset = align(header_.data_offset, 0x10);
-		entry->data_offset = le_dword(header_.data_offset);
+		entry->set_data_offset(header_.data_offset);
 
 		fread(header_.data + header_.data_offset, 1, file.size, fp);
 		fclose(fp);
 	}
 
 	header_.data_offset += file.size;
-	header_.file_entry_offset += (sizeof(struct sRomfsFileEntry) + align(file.namesize, 4));
+	header_.file_entry_offset += entry->node_size();
 
 	return 0;
 }

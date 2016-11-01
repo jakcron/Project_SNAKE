@@ -27,35 +27,104 @@ private:
 	};
 
 #pragma pack (push, 1)
+	struct sSectionGeometry
+	{
+	private:
+		u32 offset_;
+		u32 size_;
+	public:
+		u32 offset() const { return le_word(offset_); }
+		u32 size() const { return le_word(size_); }
+
+		void set_offset(u32 offset) { offset_ = le_word(offset); }
+		void set_size(u32 size) { size_ = le_word(size); }
+	};
+
 	struct sRomfsHeader
 	{
-		u32 header_size;
-		struct sRomfsSectionGeometry
+	private:
+		u32 header_size_;
+		sSectionGeometry section_[kRomfsSectionNum];
+		u32 data_offset_;
+	public:
+		u32 header_size() const { return le_word(header_size_); }
+		const sSectionGeometry& section(int index) const { return section_[index]; }
+		
+		u32 data_offset() const { return le_word(data_offset_); };
+	
+		void set_header_size(u32 size) { header_size_ = le_word(size); }
+		void set_section(int index, u32 offset, u32 size) { section_[index].set_offset(offset); section_[index].set_size(size); };
+		void set_data_offset(u32 offset) { data_offset_ = le_word(offset); }
+	};
+
+	struct sDirectoryNode
+	{
+	private:
+		u32 parent_offset_;
+		u32 sibling_offset_;
+		u32 child_offset_;
+		u32 file_offset_;
+		u32 hash_offset_;
+		u32 name_size_;
+	public:
+		u32 parent_node() const { return le_word(parent_offset_); }
+		u32 sibling_node() const { return le_word(sibling_offset_); }
+		u32 child_node() const { return le_word(child_offset_); }
+		u32 file_node() const { return le_word(file_offset_); }
+		u32 hash_sibling_node() const { return le_word(hash_offset_); }
+		u32 name_size() const { return le_word(name_size_); }
+		u32 node_size() const { return align(sizeof(sDirectoryNode) + name_size(), 4); }
+		const utf16char_t* name_str() const { return (const utf16char_t*)(((u8*)this) + sizeof(sDirectoryNode)); }
+
+		void set_parent_node(u32 node) { parent_offset_ = le_word(node); }
+		void set_sibling_node(u32 node) { sibling_offset_ = le_word(node); }
+		void set_child_node(u32 node) { child_offset_ = le_word(node); }
+		void set_file_node(u32 node) { file_offset_ = le_word(node); }
+		void set_hash_sibling(u32 node) { hash_offset_ = le_word(node); }
+		void set_name(const utf16char_t* name, u32 raw_size)
 		{
-			u32 offset;
-			u32 size;
-		} section[kRomfsSectionNum];
-		u32 data_offset;
+			utf16char_t* name_ = (utf16char_t*)(((u8*)this) + sizeof(sDirectoryNode));
+			name_size_ = le_word(raw_size);
+			for (u32 i = 0; i < raw_size / sizeof(utf16char_t); i++)
+			{
+				name_[i] = le_hword(name[i]);
+			}
+		}
 	};
 
-	struct sRomfsDirEntry
+	struct sFileNode
 	{
-		u32 parent_offset;
-		u32 sibling_offset;
-		u32 child_offset;
-		u32 file_offset;
-		u32 hash_offset;
-		u32 name_size;
-	};
+	private:
+		u32 parent_offset_;
+		u32 sibling_offset_;
+		u64 data_offset_;
+		u64 data_size_;
+		u32 hash_offset_;
+		u32 name_size_;
+	public:
+		u32 parent_node() const { return le_word(parent_offset_); }
+		u32 sibling_node() const { return le_word(sibling_offset_); }
+		u32 data_offset() const { return le_dword(data_offset_); }
+		u32 data_size() const { return le_dword(data_size_); }
+		u32 hash_sibling_node() const { return le_word(hash_offset_); }
+		u32 name_size() const { return le_word(name_size_); }
+		u32 node_size() const { return align(sizeof(sFileNode) + name_size(), 4); }
+		const utf16char_t* name_str() const { return (const utf16char_t*)(((u8*)this) + sizeof(sFileNode)); }
 
-	struct sRomfsFileEntry
-	{
-		u32 parent_offset;
-		u32 sibling_offset;
-		u64 data_offset;
-		u64 data_size;
-		u32 hash_offset;
-		u32 name_size;
+		void set_parent_node(u32 node) { parent_offset_ = le_word(node); }
+		void set_sibling_node(u32 node) { sibling_offset_ = le_word(node); }
+		void set_data_offset(u64 offset) { data_offset_ = le_dword(offset); }
+		void set_data_size(u64 size) { data_size_ = le_dword(size); }
+		void set_hash_sibling(u32 node) { hash_offset_ = le_word(node); }
+		void set_name(const utf16char_t* name, u32 raw_size)
+		{
+			utf16char_t* name_ = (utf16char_t*)(((u8*)this) + sizeof(sFileNode));
+			name_size_ = le_word(raw_size);
+			for (u32 i = 0; i < raw_size / sizeof(utf16char_t); i++)
+			{
+				name_[i] = le_hword(name[i]);
+			}
+		}
 	};
 #pragma pack (pop)
 
@@ -76,7 +145,8 @@ private:
 		u8* data;
 	} header_;
 	
-	RomfsDirScanner scanner_;
+	//RomfsDirScanner scanner_;
+	RomfsDirScanner::sDirectory root_;
 	ByteBuffer data_; // raw romfs filesystem
 
 	u32 GetDirNum(const struct RomfsDirScanner::sDirectory& dir);

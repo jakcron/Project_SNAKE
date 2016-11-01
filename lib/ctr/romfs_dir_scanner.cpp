@@ -23,6 +23,32 @@ int RomfsDirScanner::ScanDir(const char* root)
 	return PopulateDir(root_);
 }
 
+void RomfsDirScanner::PrintDirTree(const sDirectory parent, int level)
+{
+	for (sFile file : parent.file)
+	{
+		for (int i = 0; i < level; i++) 
+		{
+			//putchar(' ');
+		}
+		os_fputs(file.path, stdout);
+		printf(" (size=0x%x)", file.size);
+		putchar('\n');
+	}
+	for (sDirectory dir : parent.child)
+	{
+		for (int i = 0; i < level; i++)
+		{
+			//putchar(' ');
+		}
+		os_fputs(dir.path, stdout);
+		printf(" (dir=%d, file=%d)", dir.child.size(), dir.file.size());
+		putchar('\n');
+		PrintDirTree(dir, level + 1);
+		
+	}
+}
+
 void RomfsDirScanner::InitDirectory(struct RomfsDirScanner::sDirectory& dir)
 {
 	dir.path = NULL;
