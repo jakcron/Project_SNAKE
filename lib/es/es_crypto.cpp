@@ -3,7 +3,37 @@
 #include "polarssl/rsa.h"
 #include "es_crypto.h"
 
-int EsCrypto::RsaSign(EsSignType type, const u8* hash, const u8* modulus, const u8* priv_exp, u8* signature)
+int ESCrypto::GenerateSignature(ESSignType type, const u8 * hash, const Crypto::sRsa2048Key & private_key, u8 * signature)
+{
+	return RsaSign(type, hash, private_key.modulus, private_key.priv_exponent, signature);
+}
+
+int ESCrypto::VerifySignature(const u8 * hash, const Crypto::sRsa2048Key & public_key, const u8 * signature)
+{
+	return RsaVerify(hash, public_key.modulus, signature);
+}
+
+int ESCrypto::GenerateSignature(ESSignType type, const u8 * hash, const Crypto::sRsa4096Key & private_key, u8 * signature)
+{
+	return RsaSign(type, hash, private_key.modulus, private_key.priv_exponent, signature);
+}
+
+int ESCrypto::VerifySignature(const u8 * hash, const Crypto::sRsa4096Key & public_key, const u8 * signature)
+{
+	return RsaVerify(hash, public_key.modulus, signature);
+}
+
+int ESCrypto::GenerateSignature(ESSignType type, const u8 * hash, const Crypto::sEccPrivateKey & private_key, u8 * signature)
+{
+	return 1;
+}
+
+int ESCrypto::VerifySignature(const u8 * hash, const Crypto::sEccPoint & public_key, const u8 * signature)
+{
+	return 1;
+}
+
+int ESCrypto::RsaSign(ESSignType type, const u8* hash, const u8* modulus, const u8* priv_exp, u8* signature)
 {
 	int ret;
 	rsa_context rsa;
@@ -50,12 +80,12 @@ int EsCrypto::RsaSign(EsSignType type, const u8* hash, const u8* modulus, const 
 	return ret;
 }
 
-int EsCrypto::RsaVerify(const u8* hash, const u8* modulus, const u8* signature)
+int ESCrypto::RsaVerify(const u8* hash, const u8* modulus, const u8* signature)
 {
 	static const u8 public_exponent[3] = { 0x01, 0x00, 0x01 };
 
 	int ret;
-	EsSignType type;
+	ESSignType type;
 	rsa_context rsa;
 	int hash_id = 0;
 	int hash_len = 0;
@@ -86,12 +116,12 @@ int EsCrypto::RsaVerify(const u8* hash, const u8* modulus, const u8* signature)
 	return ret;
 }
 
-EsCrypto::EsSignType EsCrypto::GetSignatureType(const void* signed_binary)
+ESCrypto::ESSignType ESCrypto::GetSignatureType(const void* signed_binary)
 {
 	return get_sign_type(signed_binary);
 }
 
-size_t EsCrypto::GetSignatureSize(const void* signed_binary)
+size_t ESCrypto::GetSignatureSize(const void* signed_binary)
 {
 	if (signed_binary == nullptr)
 	{
@@ -100,7 +130,7 @@ size_t EsCrypto::GetSignatureSize(const void* signed_binary)
 	return GetSignatureSize(get_sign_type(signed_binary));
 }
 
-size_t EsCrypto::GetSignatureSize(EsSignType type)
+size_t ESCrypto::GetSignatureSize(ESSignType type)
 {
 	size_t size = 0;
 	switch (type)
@@ -124,14 +154,14 @@ size_t EsCrypto::GetSignatureSize(EsSignType type)
 }
 
 
-const void* EsCrypto::GetSignedBinaryBody(const void* signed_binary)
+const void* ESCrypto::GetSignedBinaryBody(const void* signed_binary)
 {
 	if (signed_binary == nullptr)
 	{
 		return nullptr;
 	}
 
-	EsSignType sign_type = get_sign_type(signed_binary);
+	ESSignType sign_type = get_sign_type(signed_binary);
 	size_t signature_size = GetSignatureSize(sign_type);
 
 	if (signature_size == 0) return nullptr;
@@ -139,38 +169,38 @@ const void* EsCrypto::GetSignedBinaryBody(const void* signed_binary)
 	return ((const u8*)signed_binary) + signature_size;
 }
 
-bool EsCrypto::IsSignRsa4096(EsSignType type)
+bool ESCrypto::IsSignRsa4096(ESSignType type)
 {
 	return type == ES_SIGN_RSA4096_SHA1 || type == ES_SIGN_RSA4096_SHA256;
 }
 
-bool EsCrypto::IsSignRsa2048(EsSignType type)
+bool ESCrypto::IsSignRsa2048(ESSignType type)
 {
 	return type == ES_SIGN_RSA2048_SHA1 || type == ES_SIGN_RSA2048_SHA256;
 }
 
-bool EsCrypto::IsSignEcdsa(EsSignType type)
+bool ESCrypto::IsSignEcdsa(ESSignType type)
 {
 	return type == ES_SIGN_ECDSA_SHA1 || type == ES_SIGN_ECDSA_SHA256;
 }
 
-bool EsCrypto::IsSignHashSha1(EsSignType type)
+bool ESCrypto::IsSignHashSha1(ESSignType type)
 {
 	return type == ES_SIGN_ECDSA_SHA1 || type == ES_SIGN_RSA2048_SHA1 || type == ES_SIGN_RSA4096_SHA1;
 }
 
-bool EsCrypto::IsSignHashSha256(EsSignType type)
+bool ESCrypto::IsSignHashSha256(ESSignType type)
 {
 	return type == ES_SIGN_ECDSA_SHA256 || type == ES_SIGN_RSA2048_SHA256 || type == ES_SIGN_RSA4096_SHA256;
 }
 
-void EsCrypto::HashData(EsSignType type, const u8 * data, size_t size, u8 * hash)
+void ESCrypto::HashData(ESSignType type, const u8 * data, size_t size, u8 * hash)
 {
-	if (EsCrypto::IsSignHashSha1(type))
+	if (ESCrypto::IsSignHashSha1(type))
 	{
 		Crypto::Sha1(data, size, hash);
 	}
-	else if (EsCrypto::IsSignHashSha256(type))
+	else if (ESCrypto::IsSignHashSha256(type))
 	{
 		Crypto::Sha256(data, size, hash);
 	}
@@ -178,14 +208,14 @@ void EsCrypto::HashData(EsSignType type, const u8 * data, size_t size, u8 * hash
 
 
 
-void EsCrypto::SetupContentAesIv(u16 index, u8 iv[Crypto::kAesBlockSize])
+void ESCrypto::SetupContentAesIv(u16 index, u8 iv[Crypto::kAesBlockSize])
 {
 	memset(iv, 0, Crypto::kAesBlockSize);
 	iv[0] = (index >> 8) & 0xff;
 	iv[1] = index & 0xff;
 }
 
-size_t EsCrypto::GetApiSignSize(EsSignType type)
+size_t ESCrypto::GetApiSignSize(ESSignType type)
 {
 	size_t size = 0;
 	switch (type)
@@ -208,12 +238,12 @@ size_t EsCrypto::GetApiSignSize(EsSignType type)
 	return size;
 }
 
-size_t EsCrypto::GetApiHashId(EsSignType type)
+size_t ESCrypto::GetApiHashId(ESSignType type)
 {
 	return IsSignHashSha1(type) ? SIG_RSA_SHA1 : SIG_RSA_SHA256;
 }
 
-size_t EsCrypto::GetApiHashLen(EsSignType type)
+size_t ESCrypto::GetApiHashLen(ESSignType type)
 {
 	return IsSignHashSha1(type)? Crypto::kSha1HashLen : Crypto::kSha256HashLen;
 }

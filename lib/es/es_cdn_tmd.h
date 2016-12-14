@@ -2,20 +2,20 @@
 #include "es_tmd.h"
 #include "es_cert_chain.h"
 
-class EsCdnTmd
+class ESCdnTmd
 {
 public:
-	EsCdnTmd();
-	~EsCdnTmd();
+	ESCdnTmd();
+	~ESCdnTmd();
 
 	void DeserialiseTmd(const u8* tmd_data, size_t size);
 	bool ValidateSignature();
 	bool ValidateSignature(const Crypto::sRsa4096Key& root_key);
 
-	const EsTmd& GetTmd();
-	const EsCertChain& GetCerts();
+	const ESTmd& GetTmd();
+	const ESCertChain& GetCerts();
 private:
-	EsTmd tmd_;
-	EsCertChain certs_;
+	ESTmd tmd_;
+	ESCertChain certs_;
 };
 

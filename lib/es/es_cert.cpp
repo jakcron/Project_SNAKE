@@ -2,42 +2,42 @@
 
 
 
-EsCert::EsCert() :
+ESCert::ESCert() :
 	serialised_data_()
 {
 	ClearDeserialisedVariables();
 }
 
 
-EsCert::~EsCert()
+ESCert::~ESCert()
 {
 	//printf("Kill Cert %s\n", name_.c_str());
 }
 
-void EsCert::operator=(const EsCert & other)
+void ESCert::operator=(const ESCert & other)
 {
 	DeserialiseCert(other.GetSerialisedData());
 }
 
-const u8* EsCert::GetSerialisedData() const
+const u8* ESCert::GetSerialisedData() const
 {
 	return serialised_data_.data_const();
 }
 
-size_t EsCert::GetSerialisedDataSize() const
+size_t ESCert::GetSerialisedDataSize() const
 {
 	return serialised_data_.size();
 }
 
-void EsCert::SerialiseCert(const Crypto::sRsa2048Key& private_key)
+void ESCert::SerialiseCert(const Crypto::sRsa2048Key& private_key)
 {
 	SerialiseCert(private_key, false);
 }
 
-void EsCert::SerialiseCert(const Crypto::sRsa2048Key& private_key, bool use_sha_1)
+void ESCert::SerialiseCert(const Crypto::sRsa2048Key& private_key, bool use_sha_1)
 {
 	// sign parameters
-	EsCrypto::EsSignType sign_type = use_sha_1 ? EsCrypto::ES_SIGN_RSA2048_SHA1 : EsCrypto::ES_SIGN_RSA2048_SHA256;
+	ESCrypto::ESSignType sign_type = use_sha_1 ? ESCrypto::ES_SIGN_RSA2048_SHA1 : ESCrypto::ES_SIGN_RSA2048_SHA256;
 	
 	// serialise
 	SerialiseWithoutSign(sign_type);
@@ -45,21 +45,21 @@ void EsCert::SerialiseCert(const Crypto::sRsa2048Key& private_key, bool use_sha_
 	// sign header
 	u8 hash[Crypto::kSha256HashLen];
 	HashSerialisedData(sign_type, hash);
-	if (EsCrypto::RsaSign(sign_type, hash, private_key.modulus, private_key.priv_exponent, serialised_data_.data()) != 0)
+	if (ESCrypto::GenerateSignature(sign_type, hash, private_key, serialised_data_.data()) != 0)
 	{
 		throw ProjectSnakeException(kModuleName, "Failed to sign certificate");
 	}
 }
 
-void EsCert::SerialiseCert(const Crypto::sRsa4096Key& private_key)
+void ESCert::SerialiseCert(const Crypto::sRsa4096Key& private_key)
 {
 	SerialiseCert(private_key, false);
 }
 
-void EsCert::SerialiseCert(const Crypto::sRsa4096Key& private_key, bool use_sha_1)
+void ESCert::SerialiseCert(const Crypto::sRsa4096Key& private_key, bool use_sha_1)
 {
 	// sign parameters
-	EsCrypto::EsSignType sign_type = use_sha_1 ? EsCrypto::ES_SIGN_RSA4096_SHA1 : EsCrypto::ES_SIGN_RSA4096_SHA256;
+	ESCrypto::ESSignType sign_type = use_sha_1 ? ESCrypto::ES_SIGN_RSA4096_SHA1 : ESCrypto::ES_SIGN_RSA4096_SHA256;
 
 	// serialise
 	SerialiseWithoutSign(sign_type);
@@ -67,13 +67,13 @@ void EsCert::SerialiseCert(const Crypto::sRsa4096Key& private_key, bool use_sha_
 	// sign header
 	u8 hash[Crypto::kSha256HashLen];
 	HashSerialisedData(sign_type, hash);
-	if (EsCrypto::RsaSign(sign_type, hash, private_key.modulus, private_key.priv_exponent, serialised_data_.data()) != 0)
+	if (ESCrypto::GenerateSignature(sign_type, hash, private_key, serialised_data_.data()) != 0)
 	{
 		throw ProjectSnakeException(kModuleName, "Failed to sign certificate");
 	}
 }
 
-void EsCert::SetIssuer(const std::string & issuer)
+void ESCert::SetIssuer(const std::string & issuer)
 {
 	if (issuer.length() > kStringMax)
 	{
@@ -82,7 +82,7 @@ void EsCert::SetIssuer(const std::string & issuer)
 	issuer_ = issuer;
 }
 
-void EsCert::SetName(const std::string & name)
+void ESCert::SetName(const std::string & name)
 {
 	if (name.length() > kStringMax)
 	{
@@ -91,31 +91,31 @@ void EsCert::SetName(const std::string & name)
 	name_ = name;
 }
 
-void EsCert::SetUniqueId(u32 id)
+void ESCert::SetUniqueId(u32 id)
 {
 	unique_id_ = id;
 }
 
-void EsCert::SetPublicKey(const Crypto::sRsa4096Key& key)
+void ESCert::SetPublicKey(const Crypto::sRsa4096Key& key)
 {
 	public_key_type_ = RSA_4096;
 	memcpy(public_key_, key.modulus, Crypto::kRsa4096Size);
 }
 
-void EsCert::SetPublicKey(const Crypto::sRsa2048Key & key)
+void ESCert::SetPublicKey(const Crypto::sRsa2048Key & key)
 {
 	public_key_type_ = RSA_2048;
 	memcpy(public_key_, key.modulus, Crypto::kRsa2048Size);
 }
 
-void EsCert::SetPublicKey(const Crypto::sEccPoint & key)
+void ESCert::SetPublicKey(const Crypto::sEccPoint & key)
 {
 	public_key_type_ = ECDSA;
 	memcpy(public_key_, key.r, 0x1e);
 	memcpy(public_key_ + 0x1e, key.s, 0x1e);
 }
 
-void EsCert::ClearDeserialisedVariables()
+void ESCert::ClearDeserialisedVariables()
 {
 	issuer_.clear();
 	name_.clear();
@@ -125,18 +125,18 @@ void EsCert::ClearDeserialisedVariables()
 	child_issuer_.clear();
 }
 
-void EsCert::CreateChildIssuer()
+void ESCert::CreateChildIssuer()
 {
 	child_issuer_ = issuer_ + "-" + name_;
 	child_issuer_ = child_issuer_.substr(0, kStringMax); // limit child issuer size
 }
 
-bool EsCert::IsValidPublicKeyType(PublicKeyType type) const
+bool ESCert::IsValidPublicKeyType(PublicKeyType type) const
 {
 	return (type == RSA_4096 || type == RSA_2048 || type == ECDSA);
 }
 
-u32 EsCert::GetPublicKeySize(PublicKeyType type) const
+u32 ESCert::GetPublicKeySize(PublicKeyType type) const
 {
 	u32 size = 0;
 	switch (type)
@@ -157,16 +157,16 @@ u32 EsCert::GetPublicKeySize(PublicKeyType type) const
 	return size;
 }
 
-void EsCert::HashSerialisedData(EsCrypto::EsSignType type, u8* hash) const
+void ESCert::HashSerialisedData(ESCrypto::ESSignType type, u8* hash) const
 {
 	size_t data_size = sizeof(sCertificateBody) + GetPublicKeySize(public_key_type_);
-	size_t sign_size = EsCrypto::GetSignatureSize(type);
-	EsCrypto::HashData(type, serialised_data_.data_const() + sign_size, data_size, hash);
+	size_t sign_size = ESCrypto::GetSignatureSize(type);
+	ESCrypto::HashData(type, serialised_data_.data_const() + sign_size, data_size, hash);
 }
 
-void EsCert::SerialiseWithoutSign(EsCrypto::EsSignType sign_type)
+void ESCert::SerialiseWithoutSign(ESCrypto::ESSignType sign_type)
 {
-	size_t sign_size = EsCrypto::GetSignatureSize(sign_type);
+	size_t sign_size = ESCrypto::GetSignatureSize(sign_type);
 
 	// allocate memory
 	size_t cert_size = sign_size + sizeof(sCertificateBody) + GetPublicKeySize(public_key_type_);
@@ -212,18 +212,18 @@ void EsCert::SerialiseWithoutSign(EsCrypto::EsSignType sign_type)
 	}
 }
 
-void EsCert::DeserialiseCert(const u8* cert_data)
+void ESCert::DeserialiseCert(const u8* cert_data)
 {
 	ClearDeserialisedVariables();
 
 	// initial es signature header check
-	if (EsCrypto::GetSignedBinaryBody(cert_data) == nullptr)
+	if (ESCrypto::GetSignedBinaryBody(cert_data) == nullptr)
 	{
 		throw ProjectSnakeException(kModuleName, "Certificate is corrupt (bad signature identifier)");
 	}
 
 	// cache pointer
-	const u8* cert_body = (const u8*)EsCrypto::GetSignedBinaryBody(cert_data);
+	const u8* cert_body = (const u8*)ESCrypto::GetSignedBinaryBody(cert_data);
 	
 	// copy cert body into staging ground
 	memcpy(&cert_body_, cert_body, sizeof(sCertificateBody));
@@ -238,7 +238,7 @@ void EsCert::DeserialiseCert(const u8* cert_data)
 	u32 public_key_size = GetPublicKeySize(public_key_type());
 
 	// save internal copy of certificate
-	size_t cert_size = EsCrypto::GetSignatureSize(cert_data) + sizeof(sCertificateBody) + public_key_size;
+	size_t cert_size = ESCrypto::GetSignatureSize(cert_data) + sizeof(sCertificateBody) + public_key_size;
 	if (serialised_data_.alloc(cert_size) != serialised_data_.ERR_NONE)
 	{
 		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for certificate");
@@ -270,10 +270,10 @@ void EsCert::DeserialiseCert(const u8* cert_data)
 	}
 }
 
-bool EsCert::ValidateSignature(const Crypto::sRsa2048Key& key) const
+bool ESCert::ValidateSignature(const Crypto::sRsa2048Key& key) const
 {
-	EsCrypto::EsSignType sign_type = EsCrypto::GetSignatureType(serialised_data_.data_const());
-	if (!EsCrypto::IsSignRsa2048(sign_type))
+	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data_const());
+	if (!ESCrypto::IsSignRsa2048(sign_type))
 	{
 		throw ProjectSnakeException(kModuleName, "Attempted to validate signature with incompatible key");
 	}
@@ -281,13 +281,13 @@ bool EsCert::ValidateSignature(const Crypto::sRsa2048Key& key) const
 	// signature check
 	u8 hash[Crypto::kSha256HashLen];
 	HashSerialisedData(sign_type, hash);
-	return EsCrypto::RsaVerify(hash, key.modulus, serialised_data_.data_const()) == 0;
+	return ESCrypto::VerifySignature(hash, key, serialised_data_.data_const()) == 0;
 }
 
-bool EsCert::ValidateSignature(const Crypto::sRsa4096Key & key) const
+bool ESCert::ValidateSignature(const Crypto::sRsa4096Key & key) const
 {
-	EsCrypto::EsSignType sign_type = EsCrypto::GetSignatureType(serialised_data_.data_const());
-	if (!EsCrypto::IsSignRsa4096(sign_type))
+	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data_const());
+	if (!ESCrypto::IsSignRsa4096(sign_type))
 	{
 		throw ProjectSnakeException(kModuleName, "Attempted to validate signature with incompatible key");
 	}
@@ -295,13 +295,13 @@ bool EsCert::ValidateSignature(const Crypto::sRsa4096Key & key) const
 	// signature check
 	u8 hash[Crypto::kSha256HashLen];
 	HashSerialisedData(sign_type, hash);
-	return EsCrypto::RsaVerify(hash, key.modulus, serialised_data_.data_const()) == 0;
+	return ESCrypto::VerifySignature(hash, key, serialised_data_.data_const()) == 0;
 }
 
 
-bool EsCert::ValidateSignature(const EsCert& signer) const
+bool ESCert::ValidateSignature(const ESCert& signer) const
 {
-	EsCrypto::EsSignType sign_type = EsCrypto::GetSignatureType(serialised_data_.data_const());
+	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data_const());
 
 	if (signer.GetChildIssuer() != GetIssuer())
 	{
@@ -310,19 +310,19 @@ bool EsCert::ValidateSignature(const EsCert& signer) const
 	}
 
 	bool is_valid = false;
-	if (signer.GetPublicKeyType() == RSA_2048 && EsCrypto::IsSignRsa2048(sign_type))
+	if (signer.GetPublicKeyType() == RSA_2048 && ESCrypto::IsSignRsa2048(sign_type))
 	{
 		Crypto::sRsa2048Key rsa_key;
 		signer.GetPublicKey(rsa_key);
 		is_valid = ValidateSignature(rsa_key);
 	}
-	else if (signer.GetPublicKeyType() == RSA_4096 && EsCrypto::IsSignRsa4096(sign_type))
+	else if (signer.GetPublicKeyType() == RSA_4096 && ESCrypto::IsSignRsa4096(sign_type))
 	{
 		Crypto::sRsa4096Key rsa_key;
 		signer.GetPublicKey(rsa_key);
 		is_valid = ValidateSignature(rsa_key);
 	}
-	else if (signer.GetPublicKeyType() == ECDSA && EsCrypto::IsSignEcdsa(sign_type))
+	else if (signer.GetPublicKeyType() == ECDSA && ESCrypto::IsSignEcdsa(sign_type))
 	{
 		throw ProjectSnakeException(kModuleName, "Failed to verify certificate using parent certificate: ECDSA not implemented");
 	}
@@ -334,32 +334,32 @@ bool EsCert::ValidateSignature(const EsCert& signer) const
 	return is_valid;
 }
 
-const std::string & EsCert::GetIssuer() const
+const std::string & ESCert::GetIssuer() const
 {
 	return issuer_;
 }
 
-const std::string & EsCert::GetName() const
+const std::string & ESCert::GetName() const
 {
 	return name_;
 }
 
-const std::string & EsCert::GetChildIssuer() const
+const std::string & ESCert::GetChildIssuer() const
 {
 	return child_issuer_;
 }
 
-u32 EsCert::GetUniqueId() const
+u32 ESCert::GetUniqueId() const
 {
 	return unique_id_;
 }
 
-EsCert::PublicKeyType EsCert::GetPublicKeyType() const
+ESCert::PublicKeyType ESCert::GetPublicKeyType() const
 {
 	return public_key_type_;
 }
 
-void EsCert::GetPublicKey(Crypto::sRsa4096Key & key) const
+void ESCert::GetPublicKey(Crypto::sRsa4096Key & key) const
 {
 	if (public_key_type_ != RSA_4096)
 	{
@@ -369,7 +369,7 @@ void EsCert::GetPublicKey(Crypto::sRsa4096Key & key) const
 	memcpy(key.modulus, public_key_, Crypto::kRsa4096Size);
 }
 
-void EsCert::GetPublicKey(Crypto::sRsa2048Key & key) const
+void ESCert::GetPublicKey(Crypto::sRsa2048Key & key) const
 {
 	if (public_key_type_ != RSA_2048)
 	{
@@ -379,7 +379,7 @@ void EsCert::GetPublicKey(Crypto::sRsa2048Key & key) const
 	memcpy(key.modulus, public_key_, Crypto::kRsa2048Size);
 }
 
-void EsCert::GetPublicKey(Crypto::sEccPoint & key) const
+void ESCert::GetPublicKey(Crypto::sEccPoint & key) const
 {
 	if (public_key_type_ != ECDSA)
 	{

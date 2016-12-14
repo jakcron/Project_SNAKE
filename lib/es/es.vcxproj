@@ -116,6 +116,8 @@
     <ClInclude Include="es_cdn_tmd.h" />
     <ClInclude Include="es_cert.h" />
     <ClInclude Include="es_cert_chain.h" />
+    <ClInclude Include="es_content.h" />
+    <ClInclude Include="es_content_info.h" />
     <ClInclude Include="es_crypto.h" />
     <ClInclude Include="es_ticket.h" />
     <ClInclude Include="es_tmd.h" />
@@ -126,9 +128,12 @@
     <ClCompile Include="es_cdn_tmd.cpp" />
     <ClCompile Include="es_cert.cpp" />
     <ClCompile Include="es_cert_chain.cpp" />
+    <ClCompile Include="es_content.cpp" />
+    <ClCompile Include="es_content_info.cpp" />
     <ClCompile Include="es_crypto.cpp" />
     <ClCompile Include="es_ticket.cpp" />
     <ClCompile Include="es_tmd.cpp" />
+    <ClCompile Include="es_version.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="makefile" />

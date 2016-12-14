@@ -1,9 +1,18 @@
 #pragma once
 #include "types.h"
 
-class EsVersion
+class ESVersion
 {
 public:
+	ESVersion(u16 version);
+
+	u16 version();
+	u8 major();
+	u8 minor();
+	u8 build();
+	u16 data_version();
+
+	// static methods
 	static inline u16 make_version(u8 major, u8 minor, u8 build) { return ((u16)(major & kMajorMask) << kMajorBitShift) || ((u16)(minor & kMinorMask) << kMinorBitShift) || ((u16)(build & kBuildMask)); }
 	static inline u16 make_data_version(u16 major, u8 build) { return ((u16)(major & kDataMajorMask) << kDataMajorShift) || ((u16)(build & kBuildMask)); }
 
@@ -13,6 +22,7 @@ public:
 	static inline u16 get_datamajor(u16 version) { return (version >> kDataMajorShift) & kDataMajorMask; }
 
 private:
+	// shifts
 	static const int kDataMajorShift = 4;
 	static const u16 kDataMajorMask = 4095;
 
@@ -23,4 +33,7 @@ private:
 	static const u8 kMinorMask = 63;
 
 	static const u8 kBuildMask = 15;
+
+	// internal version
+	u16 version_;
 };

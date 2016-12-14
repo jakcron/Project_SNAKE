@@ -2,33 +2,33 @@
 #include "es_crypto.h"
 
 
-EsTicket::EsTicket() :
+ESTicket::ESTicket() :
 	serialised_data_()
 {
 	ClearDeserialisedVariables();
 }
 
 
-EsTicket::~EsTicket()
+ESTicket::~ESTicket()
 {
 }
 
-void EsTicket::operator=(const EsTicket & other)
+void ESTicket::operator=(const ESTicket & other)
 {
 	DeserialiseTicket(other.GetSerialisedData());
 }
 
-const u8* EsTicket::GetSerialisedData() const
+const u8* ESTicket::GetSerialisedData() const
 {
 	return serialised_data_.data_const();
 }
 
-size_t EsTicket::GetSerialisedDataSize() const 
+size_t ESTicket::GetSerialisedDataSize() const 
 {
 	return serialised_data_.size();
 }
 
-void EsTicket::CreateTitleKeyIv(u64 title_id, u8 iv[Crypto::kAesBlockSize])
+void ESTicket::CreateTitleKeyIv(u64 title_id, u8 iv[Crypto::kAesBlockSize]) const
 {
 	memset(iv, 0, Crypto::kAesBlockSize);
 	for (size_t i = 0; i < sizeof(u64); i++)
@@ -37,14 +37,14 @@ void EsTicket::CreateTitleKeyIv(u64 title_id, u8 iv[Crypto::kAesBlockSize])
 	}
 }
 
-void EsTicket::EncryptTitleKey(const u8 title_key[Crypto::kAes128KeySize], u64 title_id, const u8 common_key[Crypto::kAes128KeySize], u8 enc_title_key[Crypto::kAes128KeySize])
+void ESTicket::EncryptTitleKey(const u8 title_key[Crypto::kAes128KeySize], u64 title_id, const u8 common_key[Crypto::kAes128KeySize], u8 enc_title_key[Crypto::kAes128KeySize]) const
 {
 	u8 iv[Crypto::kAesBlockSize];
 	CreateTitleKeyIv(title_id, iv);
 	Crypto::AesCbcEncrypt(title_key, Crypto::kAes128KeySize, common_key, iv, enc_title_key);
 }
 
-void EsTicket::DecryptTitleKey(const u8 enc_title_key[Crypto::kAes128KeySize], u64 title_id, const u8 common_key[Crypto::kAes128KeySize], u8 title_key[Crypto::kAes128KeySize])
+void ESTicket::DecryptTitleKey(const u8 enc_title_key[Crypto::kAes128KeySize], u64 title_id, const u8 common_key[Crypto::kAes128KeySize], u8 title_key[Crypto::kAes128KeySize]) const
 {
 	u8 iv[Crypto::kAesBlockSize];
 	CreateTitleKeyIv(title_id, iv);
@@ -52,10 +52,10 @@ void EsTicket::DecryptTitleKey(const u8 enc_title_key[Crypto::kAes128KeySize], u
 }
 
 
-void EsTicket::HashSerialisedData(EsCrypto::EsSignType sign_type, u8 * hash) const
+void ESTicket::HashSerialisedData(ESCrypto::ESSignType sign_type, u8 * hash) const
 {
 	size_t data_size = 0;
-	size_t sign_size = EsCrypto::GetSignatureSize(sign_type);
+	size_t sign_size = ESCrypto::GetSignatureSize(sign_type);
 	if (format_version_ == ES_TIK_VER_0)
 	{
 		data_size = sizeof(sTicketBody_v0);
@@ -66,12 +66,12 @@ void EsTicket::HashSerialisedData(EsCrypto::EsSignType sign_type, u8 * hash) con
 		data_size = sizeof(sTicketBody_v1) + cntHdr->total_size();
 	}
 	
-	EsCrypto::HashData(sign_type, serialised_data_.data_const() + sign_size, data_size, hash);
+	ESCrypto::HashData(sign_type, serialised_data_.data_const() + sign_size, data_size, hash);
 }
 
-void EsTicket::SerialiseWithoutSign_v0(EsCrypto::EsSignType sign_type)
+void ESTicket::SerialiseWithoutSign_v0(ESCrypto::ESSignType sign_type)
 {
-	size_t sign_size = EsCrypto::GetSignatureSize(sign_type);
+	size_t sign_size = ESCrypto::GetSignatureSize(sign_type);
 
 	// serialised data staging ground
 	sTicketBody_v0 body;
@@ -118,9 +118,9 @@ void EsTicket::SerialiseWithoutSign_v0(EsCrypto::EsSignType sign_type)
 	memcpy(serialised_data_.data() + sign_size, &body, sizeof(sTicketBody_v0));
 }
 
-void EsTicket::SerialiseWithoutSign_v1(EsCrypto::EsSignType sign_type)
+void ESTicket::SerialiseWithoutSign_v1(ESCrypto::ESSignType sign_type)
 {
-	size_t sign_size = EsCrypto::GetSignatureSize(sign_type);
+	size_t sign_size = ESCrypto::GetSignatureSize(sign_type);
 
 	// serialised data staging ground
 	sTicketBody_v1 body;
@@ -209,21 +209,21 @@ void EsTicket::SerialiseWithoutSign_v1(EsCrypto::EsSignType sign_type)
 	}
 }
 
-u8 EsTicket::GetRawBinaryFormatVersion(const u8 * raw_tik_body)
+u8 ESTicket::GetRawBinaryFormatVersion(const u8 * raw_tik_body)
 {
 	return raw_tik_body[0x7C];
 }
 
-void EsTicket::Deserialise_v0(const u8 * tik_data)
+void ESTicket::Deserialise_v0(const u8 * tik_data)
 {
 	// cache body pointer
-	const u8* tik_body = (const u8*)EsCrypto::GetSignedBinaryBody(tik_data);
+	const u8* tik_body = (const u8*)ESCrypto::GetSignedBinaryBody(tik_data);
 
 	// get tik body
 	const sTicketBody_v0* body = (const sTicketBody_v0*)tik_body;
 	
 	// save internal copy of ticket
-	size_t tik_size = EsCrypto::GetSignatureSize(tik_data) + sizeof(sTicketBody_v0);
+	size_t tik_size = ESCrypto::GetSignatureSize(tik_data) + sizeof(sTicketBody_v0);
 	if (serialised_data_.alloc(tik_size) != serialised_data_.ERR_NONE)
 	{
 		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for tik");
@@ -268,10 +268,10 @@ void EsTicket::Deserialise_v0(const u8 * tik_data)
 	}
 }
 
-void EsTicket::Deserialise_v1(const u8 * tik_data)
+void ESTicket::Deserialise_v1(const u8 * tik_data)
 {
 	// cache body pointer
-	const u8* tik_body = (const u8*)EsCrypto::GetSignedBinaryBody(tik_data);
+	const u8* tik_body = (const u8*)ESCrypto::GetSignedBinaryBody(tik_data);
 
 	// get tik body
 	const sTicketBody_v1* body = (const sTicketBody_v1*)tik_body;
@@ -279,7 +279,7 @@ void EsTicket::Deserialise_v1(const u8 * tik_data)
 	const sContentIndexChunk* cntList = (const sContentIndexChunk*)(tik_body + sizeof(sTicketBody_v1) + sizeof(sContentIndexChunkHeader));
 
 	// save internal copy of ticket
-	size_t tik_size = EsCrypto::GetSignatureSize(tik_data) + sizeof(sTicketBody_v1) + cntHdr->total_size();
+	size_t tik_size = ESCrypto::GetSignatureSize(tik_data) + sizeof(sTicketBody_v1) + cntHdr->total_size();
 	if (serialised_data_.alloc(tik_size) != serialised_data_.ERR_NONE)
 	{
 		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for ticket");
@@ -340,12 +340,12 @@ void EsTicket::Deserialise_v1(const u8 * tik_data)
 	}
 }
 
-bool EsTicket::IsSupportedFormatVersion(u8 version) const
+bool ESTicket::IsSupportedFormatVersion(u8 version) const
 {
 	return version == ES_TIK_VER_0 || version == ES_TIK_VER_1;
 }
 
-void EsTicket::ClearDeserialisedVariables()
+void ESTicket::ClearDeserialisedVariables()
 {
 	issuer_.clear();
 	format_version_ = kFormatVersion;
@@ -369,12 +369,12 @@ void EsTicket::ClearDeserialisedVariables()
 	memset(common_key_, 0, Crypto::kAes128KeySize);
 }
 
-void EsTicket::DeserialiseTicket(const u8* ticket_data)
+void ESTicket::DeserialiseTicket(const u8* ticket_data)
 {
 	ClearDeserialisedVariables();
 
 	// cache body ptr
-	const u8* tik_body = (const u8*)EsCrypto::GetSignedBinaryBody(ticket_data);
+	const u8* tik_body = (const u8*)ESCrypto::GetSignedBinaryBody(ticket_data);
 
 	// initial es signature header check
 	if (tik_body == nullptr)
@@ -397,10 +397,10 @@ void EsTicket::DeserialiseTicket(const u8* ticket_data)
 	}
 }
 
-bool EsTicket::ValidateSignature(const Crypto::sRsa2048Key & key) const
+bool ESTicket::ValidateSignature(const Crypto::sRsa2048Key & key) const
 {
-	EsCrypto::EsSignType sign_type = EsCrypto::GetSignatureType(serialised_data_.data_const());
-	if (!EsCrypto::IsSignRsa2048(sign_type))
+	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data_const());
+	if (!ESCrypto::IsSignRsa2048(sign_type))
 	{
 		throw ProjectSnakeException(kModuleName, "Attempted to validate signature with incompatible key");
 	}
@@ -408,13 +408,13 @@ bool EsTicket::ValidateSignature(const Crypto::sRsa2048Key & key) const
 	// signature check
 	u8 hash[Crypto::kSha256HashLen];
 	HashSerialisedData(sign_type, hash);
-	return EsCrypto::RsaVerify(hash, key.modulus, serialised_data_.data_const()) == 0;
+	return ESCrypto::VerifySignature(hash, key, serialised_data_.data_const()) == 0;
 }
 
-bool EsTicket::ValidateSignature(const Crypto::sRsa4096Key & key) const
+bool ESTicket::ValidateSignature(const Crypto::sRsa4096Key & key) const
 {
-	EsCrypto::EsSignType sign_type = EsCrypto::GetSignatureType(serialised_data_.data_const());
-	if (!EsCrypto::IsSignRsa4096(sign_type))
+	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data_const());
+	if (!ESCrypto::IsSignRsa4096(sign_type))
 	{
 		throw ProjectSnakeException(kModuleName, "Attempted to validate signature with incompatible key");
 	}
@@ -422,12 +422,12 @@ bool EsTicket::ValidateSignature(const Crypto::sRsa4096Key & key) const
 	// signature check
 	u8 hash[Crypto::kSha256HashLen];
 	HashSerialisedData(sign_type, hash);
-	return EsCrypto::RsaVerify(hash, key.modulus, serialised_data_.data_const()) == 0;
+	return ESCrypto::VerifySignature(hash, key, serialised_data_.data_const()) == 0;
 }
 
-bool EsTicket::ValidateSignature(const EsCert & signer) const
+bool ESTicket::ValidateSignature(const ESCert & signer) const
 {
-	EsCrypto::EsSignType sign_type = EsCrypto::GetSignatureType(serialised_data_.data_const());
+	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data_const());
 
 	if (signer.GetChildIssuer() != GetIssuer())
 	{
@@ -436,19 +436,19 @@ bool EsTicket::ValidateSignature(const EsCert & signer) const
 	}
 
 	bool is_valid = false;
-	if (signer.GetPublicKeyType() == EsCert::RSA_2048 && EsCrypto::IsSignRsa2048(sign_type))
+	if (signer.GetPublicKeyType() == ESCert::RSA_2048 && ESCrypto::IsSignRsa2048(sign_type))
 	{
 		Crypto::sRsa2048Key rsa_key;
 		signer.GetPublicKey(rsa_key);
 		is_valid = ValidateSignature(rsa_key);
 	}
-	else if (signer.GetPublicKeyType() == EsCert::RSA_4096 && EsCrypto::IsSignRsa4096(sign_type))
+	else if (signer.GetPublicKeyType() == ESCert::RSA_4096 && ESCrypto::IsSignRsa4096(sign_type))
 	{
 		Crypto::sRsa4096Key rsa_key;
 		signer.GetPublicKey(rsa_key);
 		is_valid = ValidateSignature(rsa_key);
 	}
-	else if (signer.GetPublicKeyType() == EsCert::ECDSA && EsCrypto::IsSignEcdsa(sign_type))
+	else if (signer.GetPublicKeyType() == ESCert::ECDSA && ESCrypto::IsSignEcdsa(sign_type))
 	{
 		throw ProjectSnakeException(kModuleName, "Failed to verify ticket using parent certificate: ECDSA not implemented");
 	}
@@ -460,37 +460,37 @@ bool EsTicket::ValidateSignature(const EsCert & signer) const
 	return is_valid;
 }
 
-const std::string & EsTicket::GetIssuer() const
+const std::string & ESTicket::GetIssuer() const
 {
 	return issuer_;
 }
 
-const Crypto::sEccPoint& EsTicket::GetServerPublicKey() const
+const Crypto::sEccPoint& ESTicket::GetServerPublicKey() const
 {
 	return server_public_key_;
 }
 
-u8 EsTicket::GetFormatVersion() const
+u8 ESTicket::GetFormatVersion() const
 {
 	return format_version_;
 }
 
-u8 EsTicket::GetCaCrlVersion() const
+u8 ESTicket::GetCaCrlVersion() const
 {
 	return ca_crl_version_;
 }
 
-u8 EsTicket::GetSignerCrlVersion() const
+u8 ESTicket::GetSignerCrlVersion() const
 {
 	return signer_crl_version_;
 }
 
-const u8* EsTicket::GetEncryptedTitleKey() const
+const u8* ESTicket::GetEncryptedTitleKey() const
 {
 	return enc_title_key_;
 }
 
-const u8* EsTicket::GetTitleKey(const u8* common_key)
+const u8* ESTicket::GetTitleKey(const u8* common_key)
 {
 	if (common_key == NULL)
 	{
@@ -503,72 +503,82 @@ const u8* EsTicket::GetTitleKey(const u8* common_key)
 	return dec_title_key_;
 }
 
-u64 EsTicket::GetTicketId() const
+void ESTicket::GetTitleKey(const u8 common_key[Crypto::kAes128KeySize], u8 title_key[Crypto::kAes128KeySize]) const
+{
+	if (common_key == nullptr || title_key == nullptr)
+	{
+		// TODO
+		return;
+	}
+	DecryptTitleKey(enc_title_key_, title_id_, common_key, title_key);
+}
+
+u64 ESTicket::GetTicketId() const
 {
 	return ticket_id_;
 }
 
-bool EsTicket::IsTicketAssociatedWithDevice() const
+bool ESTicket::IsTicketAssociatedWithDevice() const
 {
 	return device_id_ != 0;
 }
 
-u32 EsTicket::GetDeviceId() const
+u32 ESTicket::GetDeviceId() const
 {
 	return device_id_;
 }
 
-u64 EsTicket::GetTitleId() const
+u64 ESTicket::GetTitleId() const
 {
 	return title_id_;
 }
 
-u16 EsTicket::GetSystemAccessMask() const
+u16 ESTicket::GetSystemAccessMask() const
 {
 	return system_title_access_mask_;
 }
 
-u16 EsTicket::GetTitleVersion() const
+u16 ESTicket::GetTitleVersion() const
 {
 	return title_version_;
 }
 
-u32 EsTicket::GetAccessTitleId() const
+u32 ESTicket::GetAccessTitleId() const
 {
 	return access_title_id_;
 }
 
-u32 EsTicket::GetAccessTitleIdMask() const
+u32 ESTicket::GetAccessTitleIdMask() const
 {
 	return access_title_id_mask_;
 }
 
-EsTicket::ESLicenseType EsTicket::GetLicenseType() const
+ESTicket::ESLicenseType ESTicket::GetLicenseType() const
 {
 	return license_type_;
 }
 
-u8 EsTicket::GetCommonKeyIndex() const
+u8 ESTicket::GetCommonKeyIndex() const
 {
 	return common_key_index_;
 }
 
-bool EsTicket::IsTicketAssociatedWithEShopAccount() const
+bool ESTicket::IsTicketAssociatedWithEShopAccount() const
 {
 	return eshop_account_id_ != 0;
 }
 
-u32 EsTicket::GetEShopAccountId() const
+u32 ESTicket::GetEShopAccountId() const
 {
 	return eshop_account_id_;
 }
 
-u8 EsTicket::GetAudit() const
+u8 ESTicket::GetAudit() const
 {
 	return audit_;
 }
 
-bool EsTicket::IsLimitSet(ESLimitCode limit_code) const
+bool ESTicket::IsLimitSet(ESLimitCode limit_code) const
 {
 	bool found = false;
 	for (size_t i = 0; i < limits_.size(); i++)
@@ -581,7 +591,7 @@ bool EsTicket::IsLimitSet(ESLimitCode limit_code) const
 	return found;
 }
 
-u32 EsTicket::GetLimit(ESLimitCode limit_code) const
+u32 ESTicket::GetLimit(ESLimitCode limit_code) const
 {
 	u32 value = 0;
 	for (size_t i = 0; i < limits_.size(); i++)
@@ -594,7 +604,7 @@ u32 EsTicket::GetLimit(ESLimitCode limit_code) const
 	return value;
 }
 
-bool EsTicket::IsContentEnabled(u16 content_index) const
+bool ESTicket::IsContentEnabled(u16 content_index) const
 {
 	bool is_enabled = false;
 	for (size_t i = 0; i < enabled_content_.size(); i++)
@@ -607,61 +617,61 @@ bool EsTicket::IsContentEnabled(u16 content_index) const
 	return is_enabled;
 }
 
-const std::vector<u16>& EsTicket::GetEnabledContentList() const
+const std::vector<u16>& ESTicket::GetEnabledContentList() const
 {
 	return enabled_content_;
 }
 
-void EsTicket::SerialiseTicket(const Crypto::sRsa2048Key & private_key)
+void ESTicket::SerialiseTicket(const Crypto::sRsa2048Key & private_key)
 {
 	SerialiseTicket(private_key, ES_TIK_VER_1);
 }
 
-void EsTicket::SerialiseTicket(const Crypto::sRsa2048Key & private_key, ESTicketFormatVersion format)
+void ESTicket::SerialiseTicket(const Crypto::sRsa2048Key & private_key, ESTicketFormatVersion format)
 {
 	// sign parameters
-	EsCrypto::EsSignType sign_type;
+	ESCrypto::ESSignType sign_type;
 
 	// serialise
 	if (format == ES_TIK_VER_0)
 	{
-		sign_type = EsCrypto::ES_SIGN_RSA2048_SHA1;
+		sign_type = ESCrypto::ES_SIGN_RSA2048_SHA1;
 		SerialiseWithoutSign_v0(sign_type);
 	}
 	else if (format == ES_TIK_VER_1)
 	{
-		sign_type = EsCrypto::ES_SIGN_RSA2048_SHA256;
+		sign_type = ESCrypto::ES_SIGN_RSA2048_SHA256;
 		SerialiseWithoutSign_v1(sign_type);
 	}
 
 	// sign the serialised data
 	u8 hash[Crypto::kSha256HashLen];
 	HashSerialisedData(sign_type, hash);
-	if (EsCrypto::RsaSign(sign_type, hash, private_key.modulus, private_key.priv_exponent, serialised_data_.data()) != 0)
+	if (ESCrypto::GenerateSignature(sign_type, hash, private_key, serialised_data_.data()) != 0)
 	{
 		throw ProjectSnakeException(kModuleName, "Failed to sign ticket");
 	}
 }
 
-void EsTicket::SerialiseTicket(const Crypto::sRsa4096Key & private_key)
+void ESTicket::SerialiseTicket(const Crypto::sRsa4096Key & private_key)
 {
 	SerialiseTicket(private_key, ES_TIK_VER_1);
 }
 
-void EsTicket::SerialiseTicket(const Crypto::sRsa4096Key& private_key, ESTicketFormatVersion format)
+void ESTicket::SerialiseTicket(const Crypto::sRsa4096Key& private_key, ESTicketFormatVersion format)
 {
 	// sign parameters
-	EsCrypto::EsSignType sign_type;
+	ESCrypto::ESSignType sign_type;
 
 	// serialise
 	if (format == ES_TIK_VER_0)
 	{
-		sign_type = EsCrypto::ES_SIGN_RSA2048_SHA1;
+		sign_type = ESCrypto::ES_SIGN_RSA2048_SHA1;
 		//SerialiseWithoutSign_v0(sign_type);
 	}
 	else if (format == ES_TIK_VER_1)
 	{
-		sign_type = EsCrypto::ES_SIGN_RSA2048_SHA256;
+		sign_type = ESCrypto::ES_SIGN_RSA2048_SHA256;
 		SerialiseWithoutSign_v1(sign_type);
 	}
 	else
@@ -672,13 +682,13 @@ void EsTicket::SerialiseTicket(const Crypto::sRsa4096Key& private_key, ESTicketF
 	// sign the serialised data
 	u8 hash[Crypto::kSha256HashLen];
 	HashSerialisedData(sign_type, hash);
-	if (EsCrypto::RsaSign(sign_type, hash, private_key.modulus, private_key.priv_exponent, serialised_data_.data()) != 0)
+	if (ESCrypto::GenerateSignature(sign_type, hash, private_key, serialised_data_.data()) != 0)
 	{
 		throw ProjectSnakeException(kModuleName, "Failed to sign eTicket");
 	}
 }
 
-void EsTicket::SetIssuer(const std::string & issuer)
+void ESTicket::SetIssuer(const std::string & issuer)
 {
 	if (issuer_.size() > kSignatureIssuerLen)
 	{
@@ -688,22 +698,22 @@ void EsTicket::SetIssuer(const std::string & issuer)
 	issuer_ = std::string(issuer);
 }
 
-void EsTicket::SetServerPublicKey(const Crypto::sEccPoint & public_key)
+void ESTicket::SetServerPublicKey(const Crypto::sEccPoint & public_key)
 {
 	server_public_key_ = public_key;
 }
 
-void EsTicket::SetCaCrlVersion(u8 version)
+void ESTicket::SetCaCrlVersion(u8 version)
 {
 	ca_crl_version_ = version;
 }
 
-void EsTicket::SetSignerCrlVersion(u8 version)
+void ESTicket::SetSignerCrlVersion(u8 version)
 {
 	signer_crl_version_ = version;
 }
 
-void EsTicket::SetEncryptedTitleKey(const u8 enc_title_key[Crypto::kAes128KeySize])
+void ESTicket::SetEncryptedTitleKey(const u8 enc_title_key[Crypto::kAes128KeySize])
 {
 	if (enc_title_key == NULL)
 	{
@@ -713,7 +723,7 @@ void EsTicket::SetEncryptedTitleKey(const u8 enc_title_key[Crypto::kAes128KeySiz
 	memcpy(enc_title_key_, enc_title_key, Crypto::kAes128KeySize);
 }
 
-void EsTicket::SetTitleKey(const u8 title_key[Crypto::kAes128KeySize], const u8 common_key[Crypto::kAes128KeySize])
+void ESTicket::SetTitleKey(const u8 title_key[Crypto::kAes128KeySize], const u8 common_key[Crypto::kAes128KeySize])
 {
 	if (title_key == NULL || common_key == NULL)
 	{
@@ -725,62 +735,62 @@ void EsTicket::SetTitleKey(const u8 title_key[Crypto::kAes128KeySize], const u8 
 	is_common_key_set_ = true;
 }
 
-void EsTicket::SetTicketId(u64 ticket_id)
+void ESTicket::SetTicketId(u64 ticket_id)
 {
 	ticket_id_ = ticket_id;
 }
 
-void EsTicket::SetDeviceId(u32 device_id)
+void ESTicket::SetDeviceId(u32 device_id)
 {
 	device_id_ = device_id;
 }
 
-void EsTicket::SetTitleId(u64 title_id)
+void ESTicket::SetTitleId(u64 title_id)
 {
 	title_id_ = title_id;
 }
 
-void EsTicket::SetSystemAccessMask(u16 system_access_mask)
+void ESTicket::SetSystemAccessMask(u16 system_access_mask)
 {
 	system_title_access_mask_ = system_access_mask;
 }
 
-void EsTicket::SetTitleVersion(u16 title_version)
+void ESTicket::SetTitleVersion(u16 title_version)
 {
 	title_version_ = title_version;
 }
 
-void EsTicket::SetAccessTitleId(u32 access_title_id)
+void ESTicket::SetAccessTitleId(u32 access_title_id)
 {
 	access_title_id_ = access_title_id;
 }
 
-void EsTicket::SetAccessTitleIdMask(u32 access_title_id_mask)
+void ESTicket::SetAccessTitleIdMask(u32 access_title_id_mask)
 {
 	access_title_id_mask_ = access_title_id_mask;
 }
 
-void EsTicket::SetLicenseType(ESLicenseType license_type)
+void ESTicket::SetLicenseType(ESLicenseType license_type)
 {
 	license_type_ = license_type;
 }
 
-void EsTicket::SetCommonKeyIndex(u8 index)
+void ESTicket::SetCommonKeyIndex(u8 index)
 {
 	common_key_index_ = index;
 }
 
-void EsTicket::SetEShopAccountId(u32 account_id)
+void ESTicket::SetEShopAccountId(u32 account_id)
 {
 	eshop_account_id_ = account_id;
 }
 
-void EsTicket::SetAudit(u8 audit)
+void ESTicket::SetAudit(u8 audit)
 {
 	audit_ = audit;
 }
 
-void EsTicket::AddLimit(ESLimitCode limit_code, u32 value)
+void ESTicket::AddLimit(ESLimitCode limit_code, u32 value)
 {
 	if (limits_.size() >= ES_MAX_LIMIT_TYPE)
 	{
@@ -806,7 +816,7 @@ void EsTicket::AddLimit(ESLimitCode limit_code, u32 value)
 	}
 }
 
-void EsTicket::RemoveLimit(ESLimitCode limit_code)
+void ESTicket::RemoveLimit(ESLimitCode limit_code)
 {
 	for (size_t i = 0; i < limits_.size(); i++)
 	{
@@ -817,7 +827,7 @@ void EsTicket::RemoveLimit(ESLimitCode limit_code)
 	}
 }
 
-void EsTicket::EnableContent(u16 index)
+void ESTicket::EnableContent(u16 index)
 {
 	enabled_content_.push_back(index);
 }

@@ -6,7 +6,7 @@
 
 #include "es_cert.h"
 
-class EsTicket
+class ESTicket
 {
 public:
 	// Public Enums
@@ -46,10 +46,10 @@ public:
 	};
 
 	// Constructor/Destructor
-	EsTicket();
-	~EsTicket();
+	ESTicket();
+	~ESTicket();
 
-	void operator=(const EsTicket& other);
+	void operator=(const ESTicket& other);
 
 	// Export serialised data
 	const u8* GetSerialisedData() const;
@@ -85,7 +85,7 @@ public:
 	void DeserialiseTicket(const u8* ticket_data);
 	bool ValidateSignature(const Crypto::sRsa2048Key& key) const;
 	bool ValidateSignature(const Crypto::sRsa4096Key& key) const;
-	bool ValidateSignature(const EsCert& signer) const;
+	bool ValidateSignature(const ESCert& signer) const;
 	const std::string& GetIssuer() const;
 	const Crypto::sEccPoint& GetServerPublicKey() const;
 	u8 GetFormatVersion() const;
@@ -93,6 +93,7 @@ public:
 	u8 GetSignerCrlVersion() const;
 	const u8* GetEncryptedTitleKey() const;
 	const u8* GetTitleKey(const u8* common_key);
+	void GetTitleKey(const u8 common_key[Crypto::kAes128KeySize], u8 title_key[Crypto::kAes128KeySize]) const;
 	u64 GetTicketId() const;
 	bool IsTicketAssociatedWithDevice() const;
 	u32 GetDeviceId() const;
@@ -370,14 +371,14 @@ private:
 	u8 common_key_[Crypto::kAes128KeySize];
 
 	// Internal processing member methods
-	void CreateTitleKeyIv(u64 title_id, u8 iv[Crypto::kAesBlockSize]);
-	void EncryptTitleKey(const u8 title_key[Crypto::kAes128KeySize], u64 title_id, const u8 common_key[Crypto::kAes128KeySize], u8 enc_title_key[Crypto::kAes128KeySize]);
-	void DecryptTitleKey(const u8 enc_title_key[Crypto::kAes128KeySize], u64 title_id, const u8 common_key[Crypto::kAes128KeySize], u8 title_key[Crypto::kAes128KeySize]);
+	void CreateTitleKeyIv(u64 title_id, u8 iv[Crypto::kAesBlockSize]) const;
+	void EncryptTitleKey(const u8 title_key[Crypto::kAes128KeySize], u64 title_id, const u8 common_key[Crypto::kAes128KeySize], u8 enc_title_key[Crypto::kAes128KeySize]) const;
+	void DecryptTitleKey(const u8 enc_title_key[Crypto::kAes128KeySize], u64 title_id, const u8 common_key[Crypto::kAes128KeySize], u8 title_key[Crypto::kAes128KeySize]) const;
 
 	// (De)serialiser
-	void HashSerialisedData(EsCrypto::EsSignType sign_type, u8* hash) const;
-	void SerialiseWithoutSign_v0(EsCrypto::EsSignType sign_type);
-	void SerialiseWithoutSign_v1(EsCrypto::EsSignType sign_type);
+	void HashSerialisedData(ESCrypto::ESSignType sign_type, u8* hash) const;
+	void SerialiseWithoutSign_v0(ESCrypto::ESSignType sign_type);
+	void SerialiseWithoutSign_v1(ESCrypto::ESSignType sign_type);
 	u8 GetRawBinaryFormatVersion(const u8* raw_tik_body);
 	void Deserialise_v0(const u8* tik_data);
 	void Deserialise_v1(const u8* tik_data);

@@ -2,20 +2,19 @@
 #include "es_ticket.h"
 #include "es_cert_chain.h"
 
-class EsCdnTicket
+class ESCdnTicket
 {
 public:
-	EsCdnTicket();
-	~EsCdnTicket();
+	ESCdnTicket();
+	~ESCdnTicket();
 
 	void DeserialiseTicket(const u8* ticket_data, size_t size);
 	bool ValidateSignature();
 	bool ValidateSignature(const Crypto::sRsa4096Key& root_key);
 
-	const EsTicket& GetTicket();
-	const EsCertChain& GetCerts();
+	const ESTicket& GetTicket();
+	const ESCertChain& GetCerts();
 private:
-	EsTicket ticket_;
-	EsCertChain certs_;
+	ESTicket ticket_;
+	ESCertChain certs_;
 };
-

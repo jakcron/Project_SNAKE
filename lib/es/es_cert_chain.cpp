@@ -2,16 +2,16 @@
 
 
 
-EsCertChain::EsCertChain()
+ESCertChain::ESCertChain()
 {
 }
 
 
-EsCertChain::~EsCertChain()
+ESCertChain::~ESCertChain()
 {
 }
 
-const EsCert & EsCertChain::operator[](size_t index) const
+const ESCert & ESCertChain::operator[](size_t index) const
 {
 	if (index >= certs_.size())
 	{
@@ -21,7 +21,7 @@ const EsCert & EsCertChain::operator[](size_t index) const
 	return certs_[index];
 }
 
-const EsCert & EsCertChain::operator[](const std::string & signer) const
+const ESCert & ESCertChain::operator[](const std::string & signer) const
 {
 	for (const auto& cert : certs_)
 	{
@@ -34,17 +34,17 @@ const EsCert & EsCertChain::operator[](const std::string & signer) const
 	throw ProjectSnakeException(kModuleName, "Certificate (" + signer + ") does not exist");
 }
 
-const u8* EsCertChain::GetSerialisedData() const
+const u8* ESCertChain::GetSerialisedData() const
 {
 	return serialised_data_.data_const();
 }
 
-size_t EsCertChain::GetSerialisedDataSize() const
+size_t ESCertChain::GetSerialisedDataSize() const
 {
 	return serialised_data_.size();
 }
 
-void EsCertChain::SerialiseCertChain()
+void ESCertChain::SerialiseCertChain()
 {
 	size_t total_size = 0;
 	for (const auto& cert : certs_)
@@ -66,19 +66,19 @@ void EsCertChain::SerialiseCertChain()
 	}
 }
 
-void EsCertChain::AddCertificate(const u8* cert_data)
+void ESCertChain::AddCertificate(const u8* cert_data)
 {
-	EsCert cert;
+	ESCert cert;
 	cert.DeserialiseCert(cert_data);
 	certs_.push_back(cert);
 }
 
-void EsCertChain::AddCertificate(const EsCert & cert)
+void ESCertChain::AddCertificate(const ESCert & cert)
 {
 	AddCertificate(cert.GetSerialisedData());
 }
 
-void EsCertChain::DeserialiseCertChain(const u8* data, size_t size)
+void ESCertChain::DeserialiseCertChain(const u8* data, size_t size)
 {
 	size_t read_size = 0;
 	while ((size - read_size) > 0x40)
@@ -95,7 +95,7 @@ void EsCertChain::DeserialiseCertChain(const u8* data, size_t size)
 	memcpy(serialised_data_.data(), data, read_size);
 }
 
-bool EsCertChain::ValidateChain(const Crypto::sRsa4096Key& root_key) const
+bool ESCertChain::ValidateChain(const Crypto::sRsa4096Key& root_key) const
 {
 	int fail_count = 0;
 	for (size_t i = 0; i < certs_.size(); i++)
@@ -118,7 +118,7 @@ bool EsCertChain::ValidateChain(const Crypto::sRsa4096Key& root_key) const
 	return fail_count == 0;
 }
 
-bool EsCertChain::ValidateChainExceptCa() const
+bool ESCertChain::ValidateChainExceptCa() const
 {
 	int fail_count = 0;
 	for (size_t i = 0; i < certs_.size(); i++)
@@ -138,12 +138,12 @@ bool EsCertChain::ValidateChainExceptCa() const
 	return fail_count == 0;
 }
 
-const std::vector<EsCert>& EsCertChain::GetCertificates() const
+const std::vector<ESCert>& ESCertChain::GetCertificates() const
 {
 	return certs_;
 }
 
-size_t EsCertChain::GetCertificateNum() const
+size_t ESCertChain::GetCertificateNum() const
 {
 	return certs_.size();
 }

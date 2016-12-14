@@ -2,16 +2,16 @@
 
 
 
-EsCdnTmd::EsCdnTmd()
+ESCdnTmd::ESCdnTmd()
 {
 }
 
 
-EsCdnTmd::~EsCdnTmd()
+ESCdnTmd::~ESCdnTmd()
 {
 }
 
-void EsCdnTmd::DeserialiseTmd(const u8 * tmd_data, size_t size)
+void ESCdnTmd::DeserialiseTmd(const u8 * tmd_data, size_t size)
 {
 	tmd_.DeserialiseTmd(tmd_data);
 	if (size > tmd_.GetSerialisedDataSize()) {
@@ -19,22 +19,22 @@ void EsCdnTmd::DeserialiseTmd(const u8 * tmd_data, size_t size)
 	}
 }
 
-bool EsCdnTmd::ValidateSignature()
+bool ESCdnTmd::ValidateSignature()
 {
 	return certs_.ValidateChainExceptCa() && tmd_.ValidateSignature(certs_[tmd_.GetIssuer()]);
 }
 
-bool EsCdnTmd::ValidateSignature(const Crypto::sRsa4096Key & root_key)
+bool ESCdnTmd::ValidateSignature(const Crypto::sRsa4096Key & root_key)
 {
 	return certs_.ValidateChain(root_key) && tmd_.ValidateSignature(certs_[tmd_.GetIssuer()]);
 }
 
-const EsTmd & EsCdnTmd::GetTmd()
+const ESTmd & ESCdnTmd::GetTmd()
 {
 	return tmd_;
 }
 
-const EsCertChain & EsCdnTmd::GetCerts()
+const ESCertChain & ESCdnTmd::GetCerts()
 {
 	return certs_;
 }

@@ -5,8 +5,11 @@
 #include "crypto.h"
 
 #include "es_cert.h"
+#include "es_content_info.h"
 
-class EsTmd
+#include "es_version.h"
+
+class ESTmd
 {
 public:
 	// public enums / structs
@@ -16,40 +19,18 @@ public:
 		ES_TMD_VER_1,
 	};
 
-	enum ESContentType
-	{
-		ES_CONTENT_TYPE_ENCRYPTED = BIT(0),
-		ES_CONTENT_TYPE_DISC = BIT(1),
-		ES_CONTENT_TYPE_HASHED = BIT(1),
-		ES_CONTENT_TYPE_CFM = BIT(3),
-		ES_CONTENT_TYPE_SHA1_HASH = BIT(13),
-		ES_CONTENT_TYPE_OPTIONAL = BIT(14),
-		ES_CONTENT_TYPE_SHARED = BIT(15),
-	};
-
 	enum ESTitleType
 	{
 		ES_TITLE_TYPE_DATA = BIT(3),
 		ES_TITLE_TYPE_CTR = BIT(6)
 	};
 
-#pragma pack (push, 1)
-	struct sContentInfo
-	{
-		u32 id;
-		u16 index;
-		u16 flags;
-		u64 size;
-		u8 hash[Crypto::kSha256HashLen];
-	};
-#pragma pack (pop)
-
 	// Constructor/destructor
-	EsTmd();
-	~EsTmd();
+	ESTmd();
+	~ESTmd();
 
 	// Operator overloads
-	void operator=(const EsTmd& other);
+	void operator=(const ESTmd& other);
 
 	// Export serialised data
 	const u8* GetSerialisedData() const;
@@ -68,19 +49,17 @@ public:
 	void SetTitleId(u64 title_id);
 	void SetTitleType(ESTitleType type);
 	void SetCompanyCode(const std::string& company_code);
-	void SetCtrSaveSize(u32 size);
-	void SetTwlSaveSize(u32 public_size, u32 private_size);
-	void SetTwlFlag(u8 flag);
+	void SetPlatformReservedData(const u8* data, u32 size);
 	void SetAccessRights(u32 access_rights);
 	void SetTitleVersion(u16 title_version);
 	void SetBootContentIndex(u16 index);
-	void AddContent(u32 id, u16 index, u16 flags, u64 size, u8 hash[Crypto::kSha256HashLen]);
+	void AddContent(const ESContentInfo& content_info);
 
 	// Ticket Deserialisation
 	void DeserialiseTmd(const u8* tmd_data);
 	bool ValidateSignature(const Crypto::sRsa2048Key& key) const;
 	bool ValidateSignature(const Crypto::sRsa4096Key& key) const;
-	bool ValidateSignature(const EsCert& signer) const;
+	bool ValidateSignature(const ESCert& signer) const;
 	const std::string& GetIssuer() const;
 	u8 GetFormatVersion() const;
 	u8 GetCaCrlVersion() const;
@@ -89,23 +68,16 @@ public:
 	u64 GetTitleId() const;
 	ESTitleType GetTitleType() const;
 	const std::string& GetCompanyCode() const;
-	u32 GetCtrSaveDataSize() const;
-	u32 GetTwlPublicSaveDataSize() const;
-	u32 GetTwlPrivateSaveDataSize() const;
-	u8 GetTwlFlag() const;
+	const u8* GetPlatformReservedData() const;
 	u32 GetAccessRights() const;
 	u16 GetTitleVersion() const;
 	u16 GetContentNum() const;
 	u16 GetBootContentIndex() const;
-	const std::vector<sContentInfo>& GetContentList() const;
+	const std::vector<ESContentInfo>& GetContentList() const;
 
-
-	// Flag utils
-	static bool IsEncrypted(u16 flag);
-	static bool IsOptional(u16 flag);
-	static bool IsSha1Hash(u16 flag);
 private:
 	const std::string kModuleName = "ES_TMD";
+	static const ESTmdFormatVersion kDefaultVersion = ESTmdFormatVersion::ES_TMD_VER_1;
 	static const int kSignatureIssuerLen = 0x40;
 	static const int kCompanyCodeLen = 2;
 	static const u8 kFormatVersion = 1;
@@ -117,26 +89,6 @@ private:
 
 	// Private Structures
 #pragma pack (push, 1)
-	struct sPlatormReservedRegion
-	{
-	private:
-		u32 public_save_size_;
-		u32 private_save_size_;
-		u8 reserved1_[4];
-		u8 twl_flag_;
-		u8 reserved2_[0x31];
-	public:
-		u32 public_save_data_size() const { return le_word(public_save_size_); }
-		u32 private_save_data_size() const { return le_word(private_save_size_); }
-		u8 twl_flag() const { return twl_flag_; }
-
-		void clear() { memset(this, 0, sizeof(sPlatormReservedRegion)); }
-
-		void set_public_save_data_size(u32 size) { public_save_size_ = le_word(size); }
-		void set_private_save_data_size(u32 size) { private_save_size_ = le_word(size); }
-		void set_twl_flag(u8 flag) { twl_flag_ = flag; }
-	};
-
 	// version 0
 	struct sTitleMetadataBody_v0
 	{
@@ -210,7 +162,7 @@ private:
 		void set_index(u16 index) { index_ = be_hword(index); }
 		void set_flag(u16 flag) { flag_ = be_hword(flag); }
 		void set_size(u64 size) { size_ = be_dword(size); }
-		void set_hash(u8 hash[Crypto::kSha1HashLen]) { memcpy(hash_, hash, Crypto::kSha1HashLen); }
+		void set_hash(const u8 hash[Crypto::kSha1HashLen]) { memcpy(hash_, hash, Crypto::kSha1HashLen); }
 	};
 
 	
@@ -297,6 +249,7 @@ private:
 		u64 size_;
 		u8 hash_[Crypto::kSha256HashLen];
 	public:
+
 		u32 id() const { return be_word(id_); }
 		u16 index() const { return be_hword(index_); }
 		u16 flag() const { return be_hword(flag_); }
@@ -310,8 +263,8 @@ private:
 		void set_flag(u16 flag) { flag_ = be_hword(flag); }
 		void set_size(u64 size) { size_ = be_dword(size); }
 		// these try to ensure correct hashtype flag when used
-		void set_sha1_hash(u8 hash[Crypto::kSha1HashLen]) { flag_ |= ESContentType::ES_CONTENT_TYPE_SHA1_HASH; memset(hash_, 0, Crypto::kSha256HashLen); memcpy(hash_, hash, Crypto::kSha1HashLen); }
-		void set_sha256_hash(u8 hash[Crypto::kSha256HashLen]) { flag_ &= ~ESContentType::ES_CONTENT_TYPE_SHA1_HASH; memcpy(hash_, hash, Crypto::kSha256HashLen); }
+		void set_sha1_hash(const u8 hash[Crypto::kSha1HashLen]) { memset(hash_, 0, Crypto::kSha256HashLen); memcpy(hash_, hash, Crypto::kSha1HashLen); }
+		void set_sha256_hash(const u8 hash[Crypto::kSha256HashLen]) { memcpy(hash_, hash, Crypto::kSha256HashLen); }
 	};
 #pragma pack (pop)
 
@@ -327,19 +280,17 @@ private:
 	u64 title_id_;
 	ESTitleType title_type_;
 	std::string company_code_;
-	u32 public_save_data_size_;
-	u32 private_save_data_size_;
-	u8 twl_flag_;
+	u8 platform_reserved_data_[kPlatformReservedDataSize];
 	u32 access_rights_;
 	u16 title_version_;
 	u16 content_num_;
 	u16 boot_content_index_;
-	std::vector<sContentInfo> content_list_;
+	std::vector<ESContentInfo> content_list_;
 
 	// (De)serialiser
-	void HashSerialisedData(EsCrypto::EsSignType sign_type, u8* hash) const;
-	void SerialiseWithoutSign_v0(EsCrypto::EsSignType sign_type);
-	void SerialiseWithoutSign_v1(EsCrypto::EsSignType sign_type);
+	void HashSerialisedData(ESCrypto::ESSignType sign_type, u8* hash) const;
+	void SerialiseWithoutSign_v0(ESCrypto::ESSignType sign_type);
+	void SerialiseWithoutSign_v1(ESCrypto::ESSignType sign_type);
 	u8 GetRawBinaryFormatVersion(const u8* raw_tmd_body);
 	void Deserialise_v0(const u8* tmd_data);
 	void Deserialise_v1(const u8* tmd_data);

@@ -2,7 +2,7 @@
 #include "ByteBuffer.h"
 #include "es_crypto.h"
 
-class EsCert
+class ESCert
 {
 public:
 	enum PublicKeyType
@@ -12,10 +12,10 @@ public:
 		ECDSA,
 	};
 
-	EsCert();
-	~EsCert();
+	ESCert();
+	~ESCert();
 
-	void operator=(const EsCert& other);
+	void operator=(const ESCert& other);
 
 	// Export serialised data
 	const u8* GetSerialisedData() const;
@@ -37,7 +37,7 @@ public:
 	void DeserialiseCert(const u8* cert_data);
 	bool ValidateSignature(const Crypto::sRsa2048Key& key) const;
 	bool ValidateSignature(const Crypto::sRsa4096Key& key) const;
-	bool ValidateSignature(const EsCert& signer) const;
+	bool ValidateSignature(const ESCert& signer) const;
 	const std::string& GetIssuer() const;
 	const std::string& GetName() const;
 	const std::string& GetChildIssuer() const;
@@ -51,7 +51,7 @@ private:
 	const std::string kModuleName = "ES_CERT";
 	static const size_t kMaxSerialisedData = 0x2000;
 	static const int kPublicKeyBufferLen = 0x500;
-	static const int kStringMax = EsCrypto::kSignedStringMaxLen;
+	static const int kStringMax = ESCrypto::kSignedStringMaxLen;
 
 	// Private Structures
 #pragma pack (push, 1)
@@ -124,8 +124,8 @@ private:
 	// Deserialisation methods
 	void ClearDeserialisedVariables();
 	void CreateChildIssuer();
-	void HashSerialisedData(EsCrypto::EsSignType type, u8* hash) const;
-	void SerialiseWithoutSign(EsCrypto::EsSignType type);
+	void HashSerialisedData(ESCrypto::ESSignType type, u8* hash) const;
+	void SerialiseWithoutSign(ESCrypto::ESSignType type);
 
 	// utils
 	bool IsValidPublicKeyType(PublicKeyType type) const;

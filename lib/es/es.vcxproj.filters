@@ -39,6 +39,12 @@
     <ClInclude Include="es_cdn_ticket.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="es_content_info.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="es_content.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="es_cert.cpp">
@@ -60,6 +66,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="es_cdn_ticket.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="es_content_info.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="es_content.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="es_version.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
