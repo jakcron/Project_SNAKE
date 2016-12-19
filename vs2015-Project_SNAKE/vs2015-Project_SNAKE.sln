@@ -8,17 +8,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lib", "lib", "{A6EEF765-3C6
 		..\lib\makefile = ..\lib\makefile
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "common", "..\lib\common\common.vcxproj", "{0770E726-C080-4986-AADC-DD7D38148393}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "crypto", "..\lib\crypto\crypto.vcxproj", "{D7C46057-071C-4B7A-B397-8185234AB758}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ctr", "..\lib\ctr\ctr.vcxproj", "{B69F1C8B-3C00-4D9E-8C27-6C6A5B4CBB95}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ctr - 3DS", "..\lib\ctr\ctr.vcxproj", "{B69F1C8B-3C00-4D9E-8C27-6C6A5B4CBB95}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ctr_icon", "..\lib\ctr_icon\ctr_icon.vcxproj", "{3597C367-8040-47A2-B8E9-A5BAD9C74577}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "es", "..\lib\es\es.vcxproj", "{0F5381D5-E27F-4A1A-B6B2-9FB2A06F0846}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "es - Nintendo EShop", "..\lib\es\es.vcxproj", "{0F5381D5-E27F-4A1A-B6B2-9FB2A06F0846}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "yaml", "..\lib\yaml\yaml.vcxproj", "{19390B8A-9A03-4A41-B054-24D5589D6CAE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "yaml - Yaml Parser", "..\lib\yaml\yaml.vcxproj", "{19390B8A-9A03-4A41-B054-24D5589D6CAE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "programs", "programs", "{EDCB22AF-6E4B-404B-AC2C-6D924F7EC346}"
 	ProjectSection(SolutionItems) = preProject
@@ -42,6 +40,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ctrtool_legacy", "..\src\ct
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "keystore", "..\lib\keystore\keystore.vcxproj", "{8432B1FC-A8B2-48BC-88B2-430866DEDF63}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ctr_makeromfs", "..\src\ctr_makeromfs\ctr_makeromfs.vcxproj", "{42A60320-4F55-491B-8571-A6653E130386}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fnd - Foundation", "..\lib\fnd\fnd.vcxproj", "{FD7FE6FC-83DD-4BE0-B683-159C6EF09978}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -50,14 +52,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{0770E726-C080-4986-AADC-DD7D38148393}.Debug|x64.ActiveCfg = Debug|x64
-		{0770E726-C080-4986-AADC-DD7D38148393}.Debug|x64.Build.0 = Debug|x64
-		{0770E726-C080-4986-AADC-DD7D38148393}.Debug|x86.ActiveCfg = Debug|Win32
-		{0770E726-C080-4986-AADC-DD7D38148393}.Debug|x86.Build.0 = Debug|Win32
-		{0770E726-C080-4986-AADC-DD7D38148393}.Release|x64.ActiveCfg = Release|x64
-		{0770E726-C080-4986-AADC-DD7D38148393}.Release|x64.Build.0 = Release|x64
-		{0770E726-C080-4986-AADC-DD7D38148393}.Release|x86.ActiveCfg = Release|Win32
-		{0770E726-C080-4986-AADC-DD7D38148393}.Release|x86.Build.0 = Release|Win32
 		{D7C46057-071C-4B7A-B397-8185234AB758}.Debug|x64.ActiveCfg = Debug|x64
 		{D7C46057-071C-4B7A-B397-8185234AB758}.Debug|x64.Build.0 = Debug|x64
 		{D7C46057-071C-4B7A-B397-8185234AB758}.Debug|x86.ActiveCfg = Debug|Win32
@@ -146,12 +140,27 @@ Global
 		{8432B1FC-A8B2-48BC-88B2-430866DEDF63}.Release|x64.Build.0 = Release|x64
 		{8432B1FC-A8B2-48BC-88B2-430866DEDF63}.Release|x86.ActiveCfg = Release|Win32
 		{8432B1FC-A8B2-48BC-88B2-430866DEDF63}.Release|x86.Build.0 = Release|Win32
+		{42A60320-4F55-491B-8571-A6653E130386}.Debug|x64.ActiveCfg = Debug|x64
+		{42A60320-4F55-491B-8571-A6653E130386}.Debug|x64.Build.0 = Debug|x64
+		{42A60320-4F55-491B-8571-A6653E130386}.Debug|x86.ActiveCfg = Debug|Win32
+		{42A60320-4F55-491B-8571-A6653E130386}.Debug|x86.Build.0 = Debug|Win32
+		{42A60320-4F55-491B-8571-A6653E130386}.Release|x64.ActiveCfg = Release|x64
+		{42A60320-4F55-491B-8571-A6653E130386}.Release|x64.Build.0 = Release|x64
+		{42A60320-4F55-491B-8571-A6653E130386}.Release|x86.ActiveCfg = Release|Win32
+		{42A60320-4F55-491B-8571-A6653E130386}.Release|x86.Build.0 = Release|Win32
+		{FD7FE6FC-83DD-4BE0-B683-159C6EF09978}.Debug|x64.ActiveCfg = Debug|x64
+		{FD7FE6FC-83DD-4BE0-B683-159C6EF09978}.Debug|x64.Build.0 = Debug|x64
+		{FD7FE6FC-83DD-4BE0-B683-159C6EF09978}.Debug|x86.ActiveCfg = Debug|Win32
+		{FD7FE6FC-83DD-4BE0-B683-159C6EF09978}.Debug|x86.Build.0 = Debug|Win32
+		{FD7FE6FC-83DD-4BE0-B683-159C6EF09978}.Release|x64.ActiveCfg = Release|x64
+		{FD7FE6FC-83DD-4BE0-B683-159C6EF09978}.Release|x64.Build.0 = Release|x64
+		{FD7FE6FC-83DD-4BE0-B683-159C6EF09978}.Release|x86.ActiveCfg = Release|Win32
+		{FD7FE6FC-83DD-4BE0-B683-159C6EF09978}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{0770E726-C080-4986-AADC-DD7D38148393} = {A6EEF765-3C6A-4CA7-BE4D-F12DDEAF3F37}
 		{D7C46057-071C-4B7A-B397-8185234AB758} = {A6EEF765-3C6A-4CA7-BE4D-F12DDEAF3F37}
 		{B69F1C8B-3C00-4D9E-8C27-6C6A5B4CBB95} = {A6EEF765-3C6A-4CA7-BE4D-F12DDEAF3F37}
 		{3597C367-8040-47A2-B8E9-A5BAD9C74577} = {A6EEF765-3C6A-4CA7-BE4D-F12DDEAF3F37}
@@ -163,5 +172,7 @@ Global
 		{7E93F15A-E190-4107-805C-66BB893D56EC} = {EDCB22AF-6E4B-404B-AC2C-6D924F7EC346}
 		{8A8D09F5-6D74-4899-8F4B-85536118DC0A} = {EDCB22AF-6E4B-404B-AC2C-6D924F7EC346}
 		{8432B1FC-A8B2-48BC-88B2-430866DEDF63} = {A6EEF765-3C6A-4CA7-BE4D-F12DDEAF3F37}
+		{42A60320-4F55-491B-8571-A6653E130386} = {EDCB22AF-6E4B-404B-AC2C-6D924F7EC346}
+		{FD7FE6FC-83DD-4BE0-B683-159C6EF09978} = {A6EEF765-3C6A-4CA7-BE4D-F12DDEAF3F37}
 	EndGlobalSection
 EndGlobal

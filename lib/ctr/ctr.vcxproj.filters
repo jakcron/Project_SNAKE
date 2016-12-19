@@ -21,9 +21,6 @@
     <ClInclude Include="cia_header.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cxi_extended_header.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="exefs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -36,9 +33,6 @@
     <ClInclude Include="ncch_header.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ncsd_header.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="romfs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -46,15 +40,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="smdh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="cci_builder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ctr_card_utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="cci_cardinfo_header.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cia_reader.h">
@@ -66,15 +51,42 @@
     <ClInclude Include="romfs_dir_filter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ctr_program_id.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ctr_tmd_reserved_data.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cci_header.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="card_info_header.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="extended_header.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="system_control_info.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="arm11_local_caps.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="arm11_kernel_caps.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="arm9_access_control.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="access_descriptor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cia_builder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cia_header.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="cxi_extended_header.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="exefs.cpp">
@@ -89,9 +101,6 @@
     <ClCompile Include="ncch_header.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ncsd_header.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="romfs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -101,15 +110,6 @@
     <ClCompile Include="smdh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cci_builder.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ctr_card_utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="cci_cardinfo_header.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="cia_reader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -117,6 +117,30 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="romfs_dir_filter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cci_header.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="card_info_header.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="extended_header.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="system_control_info.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="arm11_local_caps.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="arm11_kernel_caps.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="arm9_access_control.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="access_descriptor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

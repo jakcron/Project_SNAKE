@@ -6,8 +6,23 @@ CiaHeader::CiaHeader()
 	ClearDeserialisedVariables();
 }
 
+CiaHeader::CiaHeader(const u8 * data)
+{
+	DeserialiseHeader(data);
+}
+
+CiaHeader::CiaHeader(const CiaHeader & other)
+{
+	DeserialiseHeader(other.GetSerialisedData());
+}
+
 CiaHeader::~CiaHeader()
 {
+}
+
+void CiaHeader::operator=(const CiaHeader & other)
+{
+	DeserialiseHeader(other.GetSerialisedData());
 }
 
 const u8* CiaHeader::GetSerialisedData() const

@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include "project_snake_exception.h"
+#include <fnd/project_snake_exception.h>
 #include "libyaml/yaml.h"
 
 class YamlReader

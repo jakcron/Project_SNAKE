@@ -1,4 +1,6 @@
 #include "cia_reader.h"
+#include "ctr_program_id.h"
+#include "ctr_tmd_reserved_data.h"
 
 
 
@@ -36,6 +38,8 @@ void CiaReader::ImportCia(const u8 * cia_data)
 	if (header_.GetTmdSize() > 0)
 	{
 		tmd_.DeserialiseTmd(cia_data + header_.GetTmdOffset());
+
+		DeserialiseTmdPlatformReservedData();
 	}
 
 	if (header_.GetFooterSize() > 0)
@@ -53,28 +57,21 @@ void CiaReader::ImportCia(const u8 * cia_data)
 	size_t content_pos = 0;
 	for (const auto& tmd_content : tmd_.GetContentList())
 	{
-		sContentInfo content;
-		memset(&content, 0, sizeof(sContentInfo));
-
-		// save pointer
-		content.data = cia_data + header_.GetContentOffset() + content_pos;
-
-		// copy tmd data
-		content.id = tmd_content.id;
-		content.index = tmd_content.index;
-		content.flags = tmd_content.flags;
-		content.size = tmd_content.size;
-		memcpy(content.hash, tmd_content.hash, (content.flags & EsTmd::ES_CONTENT_TYPE_SHA1_HASH) == 0 ? Crypto::kSha256HashLen : Crypto::kSha1HashLen);
+		ESContent content = ESContent(tmd_content, cia_data + header_.GetContentOffset() + content_pos);
+		
+		// enable content
+		content.EnableContent(tik_.IsContentEnabled(content.GetContentIndex()));
 		
 		// note related data
-		content.is_cia_enabled = header_.IsContentEnabled(content.index);
-		content.is_tik_enabled = tik_.IsContentEnabled(content.index);
-
+		if (header_.IsContentEnabled(content.GetContentIndex()) != tik_.IsContentEnabled(content.GetContentIndex()))
+		{
+			throw ProjectSnakeException(kModuleName, "Cia content enabled inconsistient between ticket and cia header");
+		}
 		// add to list
 		content_list_.push_back(content);
 
 		// increment pos
-		content_pos += align(content.size, 0x10);
+		content_pos += align(content.GetSize(), 0x10);
 	}
 }
 
@@ -93,27 +90,42 @@ u8 CiaReader::GetCommonKeyIndex() const
 	return tik_.GetCommonKeyIndex();
 }
 
-void CiaReader::SetCommonKey(const u8 common_key[Crypto::kAes128KeySize])
+u32 CiaReader::GetCtrSaveSize() const
 {
-	SetTitleKey(tik_.GetTitleKey(common_key));
+	return ctr_save_size_;
 }
 
-void CiaReader::SetTitleKey(const u8 title_key[Crypto::kAes128KeySize])
+u32 CiaReader::GetTwlPublicSaveSize() const
 {
-	memcpy(title_key_, title_key, Crypto::kAes128KeySize);
+	return twl_public_save_size_;
 }
 
-const EsCertChain & CiaReader::GetCertificateChain() const
+u32 CiaReader::GetTwlPrivateSaveSize() const
+{
+	return twl_private_save_size_;
+}
+
+u8 CiaReader::GetSrlFlag() const
+{
+	return srl_flag_;
+}
+
+const u8 * CiaReader::GetTitleKey(const u8 * common_key)
+{
+	return tik_.GetTitleKey(common_key);
+}
+
+const ESCertChain & CiaReader::GetCertificateChain() const
 {
 	return certs_;
 }
 
-const EsTicket & CiaReader::GetTicket() const
+const ESTicket & CiaReader::GetTicket() const
 {
 	return tik_;
 }
 
-const EsTmd & CiaReader::GetTmd() const
+const ESTmd & CiaReader::GetTmd() const
 {
 	return tmd_;
 }
@@ -123,52 +135,9 @@ const CiaFooter & CiaReader::GetFooter() const
 	return footer_;
 }
 
-const std::vector<CiaReader::sContentInfo>& CiaReader::GetContentList() const
+std::vector<ESContent>& CiaReader::GetContentList()
 {
 	return content_list_;
-}
-
-void CiaReader::DecryptContentToBuffer(const sContentInfo & content, ByteBuffer & out)
-{
-	if (out.alloc(content.size) != 0)
-	{
-		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for content");
-	}
-
-	// decrypt
-	u8 iv[Crypto::kAesBlockSize];
-	EsCrypto::SetupContentAesIv(content.index, iv);
-	Crypto::AesCbcDecrypt(content.data, content.size, title_key_, iv, out.data());
-}
-
-bool CiaReader::VerifyContent(const sContentInfo& content)
-{
-	bool hash_valid = false;
-
-	const u8* data = content.data;
-	ByteBuffer dec;
-	if (EsTmd::IsEncrypted(content.flags))
-	{
-		DecryptContentToBuffer(content, dec);
-
-		// override pointer
-		data = dec.data_const();
-	}
-
-	if (EsTmd::IsSha1Hash(content.flags))
-	{
-		u8 hash[Crypto::kSha1HashLen];
-		Crypto::Sha1(data, content.size, hash);
-		hash_valid = memcmp(hash, content.hash, Crypto::kSha1HashLen) == 0;
-	}
-	else
-	{
-		u8 hash[Crypto::kSha256HashLen];
-		Crypto::Sha256(data, content.size, hash);
-		hash_valid = memcmp(hash, content.hash, Crypto::kSha256HashLen) == 0;
-	}
-
-	return hash_valid;
 }
 
 bool CiaReader::ValidateCertificates(const Crypto::sRsa4096Key & root_key) const
@@ -189,4 +158,30 @@ bool CiaReader::ValidateTicket() const
 bool CiaReader::ValidateTmd() const
 {
 	return tmd_.ValidateSignature(certs_[tmd_.GetIssuer()]);
+}
+
+void CiaReader::DeserialiseTmdPlatformReservedData()
+{
+	// deserialise platform reserved region
+	const sCtrTmdPlatormReservedRegion* tmd_data = (const sCtrTmdPlatormReservedRegion*)tmd_.GetPlatformReservedData();
+
+	// TWL title
+	if ((CtrProgramId::get_category(tmd_.GetTitleId()) & CtrProgramId::CATEGORY_FLAG_TWL_TITLE) == CtrProgramId::CATEGORY_FLAG_TWL_TITLE)
+	{
+
+		twl_public_save_size_ = tmd_data->public_save_data_size();
+		twl_private_save_size_ = tmd_data->private_save_data_size();
+		srl_flag_ = tmd_data->srl_flag();
+
+		ctr_save_size_ = 0;
+	}
+	// CTR title
+	else
+	{
+		ctr_save_size_ = tmd_data->public_save_data_size();
+
+		twl_public_save_size_ = 0;
+		twl_private_save_size_ = 0;
+		srl_flag_ = 0;
+	}
 }

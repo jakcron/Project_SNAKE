@@ -22,6 +22,7 @@
     <ProjectGuid>{B69F1C8B-3C00-4D9E-8C27-6C6A5B4CBB95}</ProjectGuid>
     <RootNamespace>ctr</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>ctr - 3DS</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -82,7 +83,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\common;..\crypto;..\es;..\oschar;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\;</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -112,42 +113,50 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="cci_builder.h" />
+    <ClInclude Include="access_descriptor.h" />
+    <ClInclude Include="arm11_kernel_caps.h" />
+    <ClInclude Include="arm11_local_caps.h" />
+    <ClInclude Include="arm9_access_control.h" />
+    <ClInclude Include="card_info_header.h" />
+    <ClInclude Include="cci_header.h" />
     <ClInclude Include="cia_builder.h" />
     <ClInclude Include="cia_footer.h" />
     <ClInclude Include="cia_header.h" />
     <ClInclude Include="cia_reader.h" />
-    <ClInclude Include="ctr_card_utils.h" />
-    <ClInclude Include="cxi_extended_header.h" />
+    <ClInclude Include="ctr_program_id.h" />
+    <ClInclude Include="ctr_tmd_reserved_data.h" />
     <ClInclude Include="exefs.h" />
     <ClInclude Include="exefs_code.h" />
+    <ClInclude Include="extended_header.h" />
     <ClInclude Include="ivfc.h" />
     <ClInclude Include="ncch_header.h" />
-    <ClInclude Include="cci_cardinfo_header.h" />
-    <ClInclude Include="ncsd_header.h" />
     <ClInclude Include="romfs.h" />
     <ClInclude Include="romfs_dir_filter.h" />
     <ClInclude Include="romfs_dir_scanner.h" />
     <ClInclude Include="smdh.h" />
+    <ClInclude Include="system_control_info.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="cci_builder.cpp" />
+    <ClCompile Include="access_descriptor.cpp" />
+    <ClCompile Include="arm11_kernel_caps.cpp" />
+    <ClCompile Include="arm11_local_caps.cpp" />
+    <ClCompile Include="arm9_access_control.cpp" />
+    <ClCompile Include="card_info_header.cpp" />
+    <ClCompile Include="cci_header.cpp" />
     <ClCompile Include="cia_builder.cpp" />
     <ClCompile Include="cia_footer.cpp" />
     <ClCompile Include="cia_header.cpp" />
     <ClCompile Include="cia_reader.cpp" />
-    <ClCompile Include="ctr_card_utils.cpp" />
-    <ClCompile Include="cxi_extended_header.cpp" />
     <ClCompile Include="exefs.cpp" />
     <ClCompile Include="exefs_code.cpp" />
+    <ClCompile Include="extended_header.cpp" />
     <ClCompile Include="ivfc.cpp" />
     <ClCompile Include="ncch_header.cpp" />
-    <ClCompile Include="cci_cardinfo_header.cpp" />
-    <ClCompile Include="ncsd_header.cpp" />
     <ClCompile Include="romfs.cpp" />
     <ClCompile Include="romfs_dir_filter.cpp" />
     <ClCompile Include="romfs_dir_scanner.cpp" />
     <ClCompile Include="smdh.cpp" />
+    <ClCompile Include="system_control_info.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="makefile" />

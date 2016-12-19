@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
-#include "oschar.h"
-#include "types.h"
+#include <fnd/types.h>
+#include <oschar/oschar.h>
 
 class RomfsDirScanner
 {

@@ -1,13 +1,11 @@
 #pragma once
 #include <vector>
-#include "types.h"
-#include "ByteBuffer.h"
-#include "crypto.h"
-
-#include "es_cert.h"
-#include "es_content_info.h"
-
-#include "es_version.h"
+#include <fnd/types.h>
+#include <fnd/ByteBuffer.h>
+#include <es/es_crypto.h>
+#include <es/es_cert.h>
+#include <es/es_content_info.h>
+#include <es/es_version.h>
 
 class ESTmd
 {

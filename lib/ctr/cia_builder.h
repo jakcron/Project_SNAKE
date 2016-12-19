@@ -1,17 +1,15 @@
 #pragma once
-#include "types.h"
-
 #include <string>
 #include <vector>
-
-#include "ByteBuffer.h"
-#include "crypto.h"
-
-#include "cia_header.h"
-#include "es_cert_chain.h"
-#include "es_ticket.h"
-#include "es_tmd.h"
-#include "cia_footer.h"
+#include <fnd/types.h>
+#include <fnd/ByteBuffer.h>
+#include <crypto/crypto.h>
+#include <ctr/cia_header.h>
+#include <ctr/cia_footer.h>
+#include <es/es_cert_chain.h>
+#include <es/es_ticket.h>
+#include <es/es_tmd.h>
+#include <es/es_content.h>
 
 class CiaBuilder
 {
@@ -39,7 +37,7 @@ public:
 	void SetVersion(u8 major, u8 minor, u8 build);
 	void SetVersion(u16 version);
 
-	void SetCxiMetaData(const std::vector<u64>& dependency_list, u64 firmware_title_id, const u8* icon_data, size_t icon_size);
+	void SetFooter(const std::vector<u64>& dependency_list, u64 firmware_title_id, const u8* icon_data, size_t icon_size);
 	
 	
 private:
@@ -47,31 +45,21 @@ private:
 
 	static const int kIoBufferLen = 0x100000;
 
-	struct EsSigner {
-		EsCert cert;
+	struct ESSigner {
+		ESCert cert;
 		Crypto::sRsa2048Key rsa_key;
 	};
 
-	struct ContentInfo {
-		const u8* data;
-		u32 id;
-		u16 index;
-		u16 flag;
-		u64 size;
-		u8 hash[Crypto::kSha256HashLen];
-	};
+	std::vector<ESContent> content_;
 
-	std::vector<u16> content_index_;
-	std::vector<ContentInfo> content_;
-
-	EsCert ca_cert_;
-	EsSigner tik_sign_;
-	EsSigner tmd_sign_;
+	ESCert ca_cert_;
+	ESSigner tik_sign_;
+	ESSigner tmd_sign_;
 	CiaHeader header_;
-	EsCertChain certs_;
-	EsTicket tik_;
-	EsTmd tmd_;
-	CiaFooter cxi_meta_;
+	ESCertChain certs_;
+	ESTicket tik_;
+	ESTmd tmd_;
+	CiaFooter footer_;
 
 	u64 total_content_size_;
 

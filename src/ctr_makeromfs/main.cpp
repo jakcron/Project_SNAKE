@@ -1,7 +1,7 @@
-#include "romfs.h"
-#include "ivfc.h"
-#include "ByteBuffer.h"
 #include <fstream>
+#include <fnd/ByteBuffer.h>
+#include <ctr/romfs.h>
+#include <ctr/ivfc.h>
 
 int main(int argc, char** argv)
 {
@@ -17,27 +17,6 @@ int main(int argc, char** argv)
 
 	Ivfc ivfc;
 	ivfc.CreateIvfcHashTree(romfs.data_blob(), romfs.data_size());
-
-
-	/*
-	fseek(fp, header_.romfs_offset(), SEEK_SET);
-	fwrite(ivfc_.header_blob(), 1, ivfc_.header_size(), fp);
-
-	// write level2 a.k.a. romfs
-	for (u32 i = 0; i < romfs_.data_size() / Ivfc::kBlockSize; i++)
-	{
-		fwrite(romfs_.data_blob() + i*Ivfc::kBlockSize, 1, Ivfc::kBlockSize, fp);
-	}
-	if (romfs_.data_size() % Ivfc::kBlockSize)
-	{
-		u8 block[Ivfc::kBlockSize] = { 0 };
-		memcpy(block, romfs_.data_blob() + (romfs_.data_size() / Ivfc::kBlockSize)*Ivfc::kBlockSize, romfs_.data_size() % Ivfc::kBlockSize);
-		fwrite(block, 1, Ivfc::kBlockSize, fp);
-	}
-
-	fwrite(ivfc_.level0_blob(), 1, ivfc_.level0_size(), fp);
-	fwrite(ivfc_.level1_blob(), 1, ivfc_.level1_size(), fp);
-	*/
 
 	// write to file
 	std::ofstream outfile(argv[2], std::ofstream::binary);

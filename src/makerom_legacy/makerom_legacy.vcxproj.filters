@@ -15,12 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="makefile">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="reimplement_notes.txt">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="makefile" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -32,18 +30,12 @@
     <ClCompile Include="RsfSettings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FileTypeA.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="UserSettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RsfSettings.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FileTypeA.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

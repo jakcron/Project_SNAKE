@@ -1,7 +1,7 @@
 #pragma once
-#include "types.h"
-#include "ByteBuffer.h"
-#include "romfs_dir_scanner.h"
+#include <fnd/types.h>
+#include <fnd/ByteBuffer.h>
+#include <ctr/romfs_dir_scanner.h>
 
 class Romfs
 {

@@ -2,7 +2,7 @@
 SRC_DIR = . polarssl
 OBJS = $(foreach dir,$(SRC_DIR),$(subst .cpp,.o,$(wildcard $(dir)/*.cpp))) $(foreach dir,$(SRC_DIR),$(subst .c,.o,$(wildcard $(dir)/*.c)))
 
-INC_DIR = ../common
+INC_DIR = ..
 INCS = $(foreach dir,$(INC_DIR), -I"$(dir)")
 
 # Compiler Settings

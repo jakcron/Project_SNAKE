@@ -1,7 +1,8 @@
+#include <es/es_version.h>
 #include "cia_builder.h"
-#include "es_version.h"
 
-#include "program_id.h"
+#include "ctr_program_id.h"
+#include "ctr_tmd_reserved_data.h"
 
 void CiaBuilder::MakeCertificateChain()
 {
@@ -16,16 +17,16 @@ void CiaBuilder::MakeTicket()
 	tik_.SetTicketId(ticket_id_);
 	tik_.SetTitleVersion(title_version_);
 	tik_.SetTitleId(title_id_);
-	tik_.SetLicenseType(EsTicket::ES_LICENSE_PERMANENT);
+	tik_.SetLicenseType(ESTicket::ES_LICENSE_PERMANENT);
 	
 	// enable all contents' indexes
 	for (auto& content : content_)
 	{
-		tik_.EnableContent(content.index);
+		tik_.EnableContent(content.GetContentIndex());
 	}
 
 	// enable demo launch restriction
-	if (launch_num_ > 0 && ProgramId::get_category(title_id_) == ProgramId::CATEGORY_DEMO)
+	if (launch_num_ > 0 && CtrProgramId::get_category(title_id_) == CtrProgramId::CATEGORY_DEMO)
 	{
 		tik_.AddLimit(tik_.ES_LC_NUM_LAUNCH, launch_num_);
 	}
@@ -43,16 +44,20 @@ void CiaBuilder::MakeTicket()
 
 void CiaBuilder::MakeTmd()
 {
+	sCtrTmdPlatormReservedRegion ctr_region;
+	ctr_region.clear();
+	ctr_region.set_public_save_data_size(save_data_size_);
+
 	tmd_.SetTitleId(title_id_);
 	tmd_.SetTitleVersion(title_version_);
-	tmd_.SetCtrSaveSize(save_data_size_);
-	tmd_.SetTitleType(EsTmd::ES_TITLE_TYPE_CTR);
+	tmd_.SetPlatformReservedData((const u8*)&ctr_region, sizeof(sCtrTmdPlatormReservedRegion));
+	tmd_.SetTitleType(ESTmd::ES_TITLE_TYPE_CTR);
 
 
 	total_content_size_ = 0;
 	for (size_t i = 0; i < content_.size(); i++) {
-		total_content_size_ += content_[i].size;
-		tmd_.AddContent(content_[i].id, content_[i].index, content_[i].flag, content_[i].size, content_[i].hash);
+		total_content_size_ += content_[i].GetSize();
+		tmd_.AddContent(content_[i]);
 	}
 
 	tmd_.SetIssuer(tmd_sign_.cert.GetChildIssuer());
@@ -66,12 +71,12 @@ void CiaBuilder::MakeHeader()
 	header_.SetCertificateChainSize(certs_.GetSerialisedDataSize());
 	header_.SetTicketSize(tik_.GetSerialisedDataSize());
 	header_.SetTmdSize(tmd_.GetSerialisedDataSize());
-	header_.SetFooterSize(cxi_meta_.GetSerialisedDataSize());
+	header_.SetFooterSize(footer_.GetSerialisedDataSize());
 	header_.SetContentSize(total_content_size_);
 	// enable all contents' indexes
 	for (auto& content : content_)
 	{
-		header_.EnableContent(content.index);
+		header_.EnableContent(content.GetContentIndex());
 	}
 	header_.SerialiseHeader();
 }
@@ -136,25 +141,27 @@ void CiaBuilder::WriteToFile(const std::string & path)
 
 	// content
 	for (size_t i = 0; i < content_.size(); i++) {
-		if (content_[i].flag & EsTmd::ES_CONTENT_TYPE_ENCRYPTED) {
-			EsCrypto::SetupContentAesIv(content_[i].index, content_iv_);
+		bool is_content_encrypted = content_[i].IsFlagSet(ESContentInfo::ES_CONTENT_TYPE_ENCRYPTED);
+
+		if (is_content_encrypted) {
+			ESCrypto::SetupContentAesIv(content_[i].GetContentIndex(), content_iv_);
 		}
 
 		// write blocks
-		for (size_t j = 0; j < (content_[i].size / kIoBufferLen); j++) {
-			WriteContentBlockToFile(content_[i].data + (kIoBufferLen * j), kIoBufferLen, content_[i].flag & EsTmd::ES_CONTENT_TYPE_ENCRYPTED, fp);
+		for (size_t j = 0; j < (content_[i].GetSize() / kIoBufferLen); j++) {
+			WriteContentBlockToFile(content_[i].GetData() + (kIoBufferLen * j), kIoBufferLen, is_content_encrypted, fp);
 		}
 
 		// write final unaligned block
-		if (content_[i].size % kIoBufferLen) {
-			WriteContentBlockToFile(content_[i].data + ((content_[i].size / kIoBufferLen) * kIoBufferLen), content_[i].size % kIoBufferLen, content_[i].flag & EsTmd::ES_CONTENT_TYPE_ENCRYPTED, fp);
+		if (content_[i].GetSize() % kIoBufferLen) {
+			WriteContentBlockToFile(content_[i].GetData() + ((content_[i].GetSize() / kIoBufferLen) * kIoBufferLen), content_[i].GetSize() % kIoBufferLen, is_content_encrypted, fp);
 		}
 	}
 
-	// meta
+	// footer
 	if (header_.GetFooterSize() > 0) {
 		fwrite(padding, header_.GetFooterOffset() - (header_.GetContentOffset() + header_.GetContentSize()), 1, fp);
-		fwrite(cxi_meta_.GetSerialisedData(), cxi_meta_.GetSerialisedDataSize(), 1, fp);
+		fwrite(footer_.GetSerialisedData(), footer_.GetSerialisedDataSize(), 1, fp);
 	}
 }
 
@@ -171,20 +178,20 @@ void CiaBuilder::WriteToBuffer(ByteBuffer& out)
 	memcpy(out.data() + header_.GetCertificateChainOffset(), certs_.GetSerialisedData(), certs_.GetSerialisedDataSize());
 	memcpy(out.data() + header_.GetTicketOffset(), tik_.GetSerialisedData(), tik_.GetSerialisedDataSize());
 	memcpy(out.data() + header_.GetTmdOffset(), tmd_.GetSerialisedData(), tmd_.GetSerialisedDataSize());
-	memcpy(out.data() + header_.GetFooterOffset(), cxi_meta_.GetSerialisedData(), cxi_meta_.GetSerialisedDataSize());
+	memcpy(out.data() + header_.GetFooterOffset(), footer_.GetSerialisedData(), footer_.GetSerialisedDataSize());
 
 	u64 pos = header_.GetContentOffset();
 	for (size_t i = 0; i < content_.size(); i++) {
-		if (content_[i].flag & EsTmd::ES_CONTENT_TYPE_ENCRYPTED) {
-			EsCrypto::SetupContentAesIv(content_[i].index, content_iv_);
-			Crypto::AesCbcEncrypt(content_[i].data, content_[i].size, titlekey_, content_iv_, out.data() + pos);
+		if (content_[i].IsFlagSet(ESContentInfo::ES_CONTENT_TYPE_ENCRYPTED)) {
+			ESCrypto::SetupContentAesIv(content_[i].GetContentIndex(), content_iv_);
+			Crypto::AesCbcEncrypt(content_[i].GetData(), content_[i].GetSize(), titlekey_, content_iv_, out.data() + pos);
 		}
 		else {
-			memcpy(out.data() + pos, content_[i].data, content_[i].size);
+			memcpy(out.data() + pos, content_[i].GetData(), content_[i].GetSize());
 		}
 
 
-		pos += content_[i].size;
+		pos += content_[i].GetSize();
 	}
 }
 
@@ -197,29 +204,21 @@ void CiaBuilder::SetCaCert(const u8 * cert)
 void CiaBuilder::SetTicketSigner(const Crypto::sRsa2048Key & rsa_key, const u8 * cert)
 {
 	tik_sign_.cert.DeserialiseCert(cert);
-	memcpy(tik_sign_.rsa_key.modulus, rsa_key.modulus, Crypto::kRsa2048Size);
-	memcpy(tik_sign_.rsa_key.priv_exponent, rsa_key.priv_exponent, Crypto::kRsa2048Size);
+	tik_sign_.rsa_key = rsa_key;
 }
 
 void CiaBuilder::SetTmdSigner(const Crypto::sRsa2048Key & rsa_key, const u8 * cert)
 {
 	tmd_sign_.cert.DeserialiseCert(cert);
-	memcpy(tmd_sign_.rsa_key.modulus, rsa_key.modulus, Crypto::kRsa2048Size);
-	memcpy(tmd_sign_.rsa_key.priv_exponent, rsa_key.priv_exponent, Crypto::kRsa2048Size);
+	tmd_sign_.rsa_key = rsa_key;
 }
 
 void CiaBuilder::AddContent(u32 id, u16 index, u16 flags, const u8* data, u64 size)
 {
-	ContentInfo info;
-	info.id = id;
-	info.index = index;
-	info.flag = flags;
-	info.data = data;
-	info.size = size;
-	Crypto::Sha256(info.data, info.size, info.hash);
+	ESContent content = ESContent(ESContentInfo(id, index, flags, size, nullptr), data);
+	content.UpdateContentHash();
 
-	content_index_.push_back(info.index);
-	content_.push_back(info);
+	content_.push_back(content);
 }
 
 void CiaBuilder::SetTitleKey(const u8 * key)
@@ -255,7 +254,7 @@ void CiaBuilder::SetDemoLaunchLimit(u32 launch_num)
 
 void CiaBuilder::SetVersion(u8 major, u8 minor, u8 build)
 {
-	SetVersion(EsVersion::make_version(major, minor, build));
+	SetVersion(ESVersion::make_version(major, minor, build));
 }
 
 void CiaBuilder::SetVersion(u16 version)
@@ -263,13 +262,13 @@ void CiaBuilder::SetVersion(u16 version)
 	title_version_ = version;
 }
 
-void CiaBuilder::SetCxiMetaData(const std::vector<u64>& dependency_list, u64 firmware_title_id, const u8* icon_data, size_t icon_size)
+void CiaBuilder::SetFooter(const std::vector<u64>& dependency_list, u64 firmware_title_id, const u8* icon_data, size_t icon_size)
 {
-	cxi_meta_.SetDependencyList(dependency_list);
-	cxi_meta_.SetFirmwareTitleId(firmware_title_id);
+	footer_.SetDependencyList(dependency_list);
+	footer_.SetFirmwareTitleId(firmware_title_id);
 	if (icon_size > 0 && icon_data != NULL)
 	{
-		cxi_meta_.SetIcon(icon_data, icon_size);
+		footer_.SetIcon(icon_data, icon_size);
 	}
-	cxi_meta_.SerialiseFooter();
+	footer_.SerialiseFooter();
 }

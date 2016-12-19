@@ -1,11 +1,12 @@
 #pragma once
-#include "types.h"
-#include "ByteBuffer.h"
-#include "crypto.h"
+#include <fnd/types.h>
+#include <fnd/ByteBuffer.h>
+#include <crypto/crypto.h>
 
 class NcchHeader
 {
 public:
+	// Public enums
 	enum FormatVersion
 	{
 		NCCH_FORMAT_0, // prototype NCCH format
@@ -36,7 +37,10 @@ public:
 		SNAKE = 2
 	};
 
+	// Constructor/Destructor
 	NcchHeader();
+	NcchHeader(const u8* data);
+	NcchHeader(const NcchHeader& other);
 	~NcchHeader();
 
 	void operator=(const NcchHeader& other);
@@ -63,8 +67,8 @@ public:
 	void SetExheaderData(u32 size, u32 accessdesc_size, const u8 hash[Crypto::kSha256HashLen]);
 	void SetPlainRegionData(u32 size);
 	void SetLogoData(u32 size, const u8 hash[Crypto::kSha256HashLen]);
-	void SetExefsData(u32 size, u32 hashedDataSize, const u8 hash[Crypto::kSha256HashLen]);
-	void SetRomfsData(u32 size, u32 hashedDataSize, const u8 hash[Crypto::kSha256HashLen]);
+	void SetExefsData(u64 size, u32 hashedDataSize, const u8 hash[Crypto::kSha256HashLen]);
+	void SetRomfsData(u64 size, u32 hashedDataSize, const u8 hash[Crypto::kSha256HashLen]);
 	
 
 	// Header Deserialisation
@@ -74,8 +78,7 @@ public:
 	u64 GetNcchSize() const;
 	u64 GetTitleId() const;
 	const std::string& GetCompanyCode() const;
-	u16 GetFormatVersion() const; // consider private
-	u32 GetSeedChecksum() const; // consider private
+	FormatVersion GetFormatVersion() const;
 	u64 GetProgramId() const;
 	const u8* GetLogoHash() const;
 	const std::string& GetProductCode() const;
@@ -85,7 +88,6 @@ public:
 	Platform GetPlatform() const;
 	FormType GetFormType() const;
 	ContentType GetContentType() const;
-	u32 GetBlockSize() const; // consider private
 	bool IsEncrypted() const;
 	bool IsFixedAesKey() const;
 	bool HasPreloadSeed() const;
@@ -103,13 +105,24 @@ public:
 	const u8* GetExefsHash() const;
 	const u8* GetRomfsHash() const;
 
+protected:
+	u32 GetSeedChecksum() const; // consider private
+	u32 GetBlockSize() const; // consider private
+
 private:
 	const std::string kModuleName = "NCCH_HEADER";
 	const char kNcchStructSignature[4] = { 'N', 'C', 'C', 'H' };
+	static const FormatVersion kDefaultFormatVersion = NCCH_FORMAT_1;
 	static const u32 kDefaultBlockSize = 0x200;
 	static const int kCompanyCodeLen = 0x2;
 	static const int kProductCodeLen = 0x10;
 
+	enum NcchFormatId
+	{
+		NCCH_CFA = 0,
+		NCCH_PROTOTYPE = 1,
+		NCCH_CXI = 2,
+	};
 
 	enum OtherFlag
 	{
@@ -151,7 +164,7 @@ private:
 		u32 size_;
 		u64 title_id_;
 		char company_code_[kCompanyCodeLen];
-		u16 format_version_;
+		u16 format_id_;
 		u32 seed_checksum_;
 		u64 program_id_;
 		u8 reserved1_[0x10];
@@ -182,7 +195,7 @@ private:
 		u32 size() const { return le_word(size_); }
 		u64 title_id() const { return le_dword(title_id_); }
 		const char* company_code() const { return company_code_; }
-		u16 format_version() const { return le_hword(format_version_); }
+		NcchFormatId format_id() const { return (NcchFormatId)le_hword(format_id_); }
 		u32 seed_checksum() const { return le_word(seed_checksum_); }
 		u64 program_id() const { return le_dword(program_id_); }
 		const u8* logo_hash() const { return logo_hash_; }
@@ -203,11 +216,13 @@ private:
 		const u8* exefs_hash() const { return exefs_hash_; }
 		const u8* romfs_hash() const { return romfs_hash_; }
 
+		void clear() { memset(this, 0, sizeof(sNcchHeader)); }
+
 		void set_struct_signature(const char signature[4]) { memcpy(struct_signature_, signature, 4); }
 		void set_size(u32 size) { size_ = le_word(size); }
 		void set_title_id(u64 title_id) { title_id_ = le_dword(title_id); }
 		void set_company_code(const char company_code[kCompanyCodeLen]) { memcpy(company_code_, company_code, kCompanyCodeLen); }
-		void set_format_version(u16 version) { format_version_ = le_hword(version); }
+		void set_format_id(NcchFormatId id) { format_id_ = le_hword((u16)id); }
 		void set_seed_checksum(u32 checksum) { seed_checksum_ = le_word(checksum); }
 		void set_program_id(u64 program_id) { program_id_ = le_dword(program_id); }
 		void set_logo_hash(const u8 hash[Crypto::kSha256HashLen]) { memcpy(logo_hash_, hash, Crypto::kSha256HashLen); }
@@ -233,6 +248,8 @@ private:
 	{
 		u8 rsa_signature[Crypto::kRsa2048Size];
 		sNcchHeader body;
+
+		void clear() { memset(this, 0, sizeof(sSignedNcchHeader)); }
 	};
 
 	struct sSeedValidateStruct
@@ -247,6 +264,8 @@ private:
 			Crypto::Sha256((const u8*)this, sizeof(sSeedValidateStruct), hash);
 			return le_word(*((u32*)(hash)));
 		}
+
+		void clear() { memset(this, 0, sizeof(sSeedValidateStruct)); }
 
 		void set_seed(const u8* seed) { memcpy(seed_, seed, Crypto::kSha256HashLen); }
 		void set_program_id(u64 program_id) { program_id_ = le_dword(program_id); }
@@ -274,6 +293,7 @@ private:
 		u8 hash[Crypto::kSha256HashLen];
 
 		void set_hash(const u8 in_hash[Crypto::kSha256HashLen]) { memcpy(hash, in_hash, Crypto::kSha256HashLen); }
+		void clear() { memset(this, 0, sizeof(sNcchSection)); }
 	};
 
 	// sections
@@ -286,7 +306,7 @@ private:
 
 	// variables
 	u64 ncch_binary_size_;
-	u16 format_version_;
+	NcchFormatId format_id_;
 	u64 title_id_;
 	u64 program_id_;
 	u32 seed_checksum_;
@@ -303,5 +323,7 @@ private:
 	bool is_seeded_keyy_;
 	bool is_manual_disclosed_;
 	u8 preload_seed_[Crypto::kAes128KeySize];
+
+	void ClearDeserialisedVariables();
 };
 

@@ -40,7 +40,7 @@ int KeyStore::ParseKeySpecFile(const char* path)
 	return ERR_NOERROR;
 }
 
-int KeyStore::GetEsCert(EsIdentType id, EsCert& cert)
+int KeyStore::GetEsCert(EsIdentType id, ESCert& cert)
 {
 	return GetEsCertificate(es_.certifcates, id, cert);
 }
@@ -153,7 +153,7 @@ int KeyStore::SaveRsa4096Key(const YamlElement * node, Crypto::sRsa4096Key & rsa
 	return ERR_NOERROR;
 }
 
-int KeyStore::SaveEsCertificate(const YamlElement* node, EsCert& certificate)
+int KeyStore::SaveEsCertificate(const YamlElement* node, ESCert& certificate)
 {
 	if (node == nullptr)
 	{
@@ -209,7 +209,7 @@ int KeyStore::SaveEsRsaKeys()
 
 int KeyStore::SaveEsCertificates()
 {
-	EsCert certificate;
+	ESCert certificate;
 	if (SaveEsCertificate(yaml_.GetDataElement(kEsNodeStr + "/" + kCaCertStr), certificate) == ERR_NOERROR)
 	{
 		AddEsCertificate(ES_IDENT_CA, certificate, es_.certifcates);
@@ -483,7 +483,7 @@ int KeyStore::GetRsa4096Key(const std::vector<sRsa4096Key>& key_list, u8 id, Cry
 	return ERR_DATA_NOT_EXIST;
 }
 
-int KeyStore::AddEsCertificate(u8 id, const EsCert& certificate, std::vector<sEsCertificate>& cert_list)
+int KeyStore::AddEsCertificate(u8 id, const ESCert& certificate, std::vector<sEsCertificate>& cert_list)
 {
 	for (size_t i = 0; i < cert_list.size(); i++)
 	{
@@ -500,7 +500,7 @@ int KeyStore::AddEsCertificate(u8 id, const EsCert& certificate, std::vector<sEs
 	return ERR_NOERROR;
 }
 
-int KeyStore::GetEsCertificate(const std::vector<sEsCertificate>& cert_list, u8 id, EsCert & cert_output)
+int KeyStore::GetEsCertificate(const std::vector<sEsCertificate>& cert_list, u8 id, ESCert & cert_output)
 {
 	for (size_t i = 0; i < cert_list.size(); i++)
 	{

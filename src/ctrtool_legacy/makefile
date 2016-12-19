@@ -3,12 +3,12 @@ SRC_DIR = .
 OBJS = $(foreach dir,$(SRC_DIR),$(subst .cpp,.o,$(wildcard $(dir)/*.cpp))) $(foreach dir,$(SRC_DIR),$(subst .c,.o,$(wildcard $(dir)/*.c)))
 
 #local dependencies
-DEPENDS = ctr oschar es crypto common
+DEPENDS = ctr oschar es crypto fnd
 
 LIB_DIR = ../../lib
 
 LIBS = -L"$(LIB_DIR)" $(foreach dep,$(DEPENDS), -l"$(dep)")
-INCS = $(foreach dep,$(DEPENDS), -I"$(LIB_DIR)/$(dep)")
+INCS = -I"$(LIB_DIR)/"
 
 OUTPUT = ../../bin/$(shell basename $(CURDIR))
 

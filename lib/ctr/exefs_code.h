@@ -1,7 +1,7 @@
 #pragma once
-#include "types.h"
-#include "elf.h"
-#include "ByteBuffer.h"
+#include <fnd/types.h>
+#include <fnd/elf.h>
+#include <fnd/ByteBuffer.h>
 
 class ExefsCode
 {

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <fnd/project_snake_exception.h>
 
 class YamlElement
 {

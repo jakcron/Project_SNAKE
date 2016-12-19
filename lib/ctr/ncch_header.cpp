@@ -5,7 +5,18 @@
 
 NcchHeader::NcchHeader()
 {
+	ClearDeserialisedVariables();
 	SetBlockSize(kDefaultBlockSize);
+}
+
+NcchHeader::NcchHeader(const u8 * data)
+{
+	DeserialiseHeader(data);
+}
+
+NcchHeader::NcchHeader(const NcchHeader & other)
+{
+	DeserialiseHeader(other.GetSerialisedData());
 }
 
 NcchHeader::~NcchHeader()
@@ -30,54 +41,53 @@ size_t NcchHeader::GetSerialisedDataSize() const
 
 void NcchHeader::SerialiseHeader(const Crypto::sRsa2048Key& ncch_rsa_key)
 {
-	SerialiseHeader(ncch_rsa_key, NCCH_FORMAT_1);
+	SerialiseHeader(ncch_rsa_key, kDefaultFormatVersion);
 }
 
 void NcchHeader::SerialiseHeader(const Crypto::sRsa2048Key& ncch_rsa_key, FormatVersion format_version)
 {
 	// allocate memory for header
-	serialised_data_.alloc(Crypto::kRsa2048Size + sizeof(sNcchHeader));
+	serialised_data_.alloc(sizeof(sSignedNcchHeader));
 
 	// pointers in the serialised data
-	u8* rsaSignature = serialised_data_.data();
-	sNcchHeader* hdr = (sNcchHeader*)(serialised_data_.data() + Crypto::kRsa2048Size);
+	sSignedNcchHeader* hdr = (sSignedNcchHeader*)serialised_data_.data();
 
 	if (format_version == NCCH_FORMAT_0) 
 	{
-		format_version_ = 1;
+		format_id_ = NCCH_PROTOTYPE;
 
 		if (block_size_ >= 0x100) 
 		{
 			throw ProjectSnakeException(kModuleName, "Block size is invalid for current NCCH format");
 		}
 
-		hdr->set_block_size(block_size_);
+		hdr->body.set_block_size(block_size_);
 	}
 	else if (format_version == NCCH_FORMAT_1)
 	{
-		format_version_ = form_type_ == FormType::SIMPLE_CONTENT ? 0 : 2;
+		format_id_ = form_type_ == FormType::SIMPLE_CONTENT ? NCCH_CFA : NCCH_CXI;
 		block_size_bit_ = log2l(block_size_) - 9;
 		if (BIT(block_size_bit_) != block_size_) 
 		{
 			throw ProjectSnakeException(kModuleName, "Block size is invalid for current NCCH format");
 		}
-		hdr->set_block_size(block_size_bit_ - 9);
+		hdr->body.set_block_size(block_size_bit_ - 9);
 	}
 
 	// set property variables
-	hdr->set_struct_signature(kNcchStructSignature);
-	hdr->set_title_id(title_id_);
-	hdr->set_company_code(company_code_.c_str());
-	hdr->set_format_version(format_version_);
-	hdr->set_seed_checksum(seed_checksum_);
-	hdr->set_program_id(program_id_);
-	hdr->set_logo_hash(logo_.hash);
-	hdr->set_product_code(product_code_.c_str(), product_code_.length());
-	hdr->set_key_id(key_id_);
-	hdr->set_platform(platform_);
-	hdr->set_content_type(content_type_);
-	hdr->set_other_flag(0);
-	hdr->set_other_flag_bit(NO_MOUNT_ROMFS, romfs_.size == 0);
+	hdr->body.set_struct_signature(kNcchStructSignature);
+	hdr->body.set_title_id(title_id_);
+	hdr->body.set_company_code(company_code_.c_str());
+	hdr->body.set_format_id(format_id_);
+	hdr->body.set_seed_checksum(seed_checksum_);
+	hdr->body.set_program_id(program_id_);
+	hdr->body.set_logo_hash(logo_.hash);
+	hdr->body.set_product_code(product_code_.c_str(), product_code_.length());
+	hdr->body.set_key_id(key_id_);
+	hdr->body.set_platform(platform_);
+	hdr->body.set_content_type(content_type_);
+	hdr->body.set_other_flag(0);
+	hdr->body.set_other_flag_bit(NO_MOUNT_ROMFS, romfs_.size == 0);
 
 	// set form type
 	if (exefs_.size > 0) 
@@ -92,7 +102,7 @@ void NcchHeader::SerialiseHeader(const Crypto::sRsa2048Key& ncch_rsa_key, Format
 	{
 		form_type_ = FormType::UNASSIGNED;
 	}
-	hdr->set_form_type(form_type_);
+	hdr->body.set_form_type(form_type_);
 
 
 	// set encryption parameters
@@ -100,59 +110,61 @@ void NcchHeader::SerialiseHeader(const Crypto::sRsa2048Key& ncch_rsa_key, Format
 	{
 		if (is_fixed_aes_key_) 
 		{
-			hdr->set_other_flag_bit(FIXED_AES_KEY, is_fixed_aes_key_);
-			hdr->set_key_id(0);
+			hdr->body.set_other_flag_bit(FIXED_AES_KEY, is_fixed_aes_key_);
+			hdr->body.set_key_id(0);
 		}
 		else
 		{
-			hdr->set_key_id(key_id_);
-			hdr->set_other_flag_bit(SEED_KEY, is_seeded_keyy_);
+			hdr->body.set_key_id(key_id_);
+			hdr->body.set_other_flag_bit(SEED_KEY, is_seeded_keyy_);
 			if (is_seeded_keyy_)
 			{
-				hdr->set_other_flag_bit(MANUAL_DISCLOSURE, is_manual_disclosed_);
+				hdr->body.set_other_flag_bit(MANUAL_DISCLOSURE, is_manual_disclosed_);
 			}
 			
 		}
 	}
 	else
 	{
-		hdr->set_other_flag_bit(NO_AES, false);
-		hdr->set_key_id(0);
+		hdr->body.set_other_flag_bit(NO_AES, false);
+		hdr->body.set_key_id(0);
 	}
 
 	
 
 	// set layout variables
 	FinaliseNcchLayout();
-	hdr->set_size(SizeToBlockNum(ncch_binary_size_));
+	hdr->body.set_size(SizeToBlockNum(ncch_binary_size_));
 	if (exheader_.size) 
 	{
-		hdr->set_exheader_hash(exheader_.hash);
-		hdr->set_exheader_size(exheader_.size);
+		hdr->body.set_exheader_hash(exheader_.hash);
+		hdr->body.set_exheader_size(exheader_.size);
 	}
 	if (plain_region_.size)
 	{
-		hdr->set_plain_region(SizeToBlockNum(plain_region_.offset), SizeToBlockNum(plain_region_.size));
+		hdr->body.set_plain_region(SizeToBlockNum(plain_region_.offset), SizeToBlockNum(plain_region_.size));
 	}
 	if (logo_.size)
 	{
-		hdr->set_logo(SizeToBlockNum(logo_.offset), SizeToBlockNum(logo_.size));
-		hdr->set_logo_hash(logo_.hash);
+		hdr->body.set_logo(SizeToBlockNum(logo_.offset), SizeToBlockNum(logo_.size));
+		hdr->body.set_logo_hash(logo_.hash);
 	}
 	if (exefs_.size)
 	{
-		hdr->set_exefs(SizeToBlockNum(exefs_.offset), SizeToBlockNum(exefs_.size), SizeToBlockNum(exefs_.hashed_size));
-		hdr->set_exefs_hash(exefs_.hash);
+		hdr->body.set_exefs(SizeToBlockNum(exefs_.offset), SizeToBlockNum(exefs_.size), SizeToBlockNum(exefs_.hashed_size));
+		hdr->body.set_exefs_hash(exefs_.hash);
 	}
 	if (romfs_.size)
 	{
-		hdr->set_romfs(SizeToBlockNum(romfs_.offset), SizeToBlockNum(romfs_.size), SizeToBlockNum(romfs_.hashed_size));
-		hdr->set_romfs_hash(romfs_.hash);
+		hdr->body.set_romfs(SizeToBlockNum(romfs_.offset), SizeToBlockNum(romfs_.size), SizeToBlockNum(romfs_.hashed_size));
+		hdr->body.set_romfs_hash(romfs_.hash);
 	}
 	
 	// sign header
 	u8 hash[Crypto::kSha256HashLen];
-	Crypto::RsaSign(ncch_rsa_key, Crypto::HASH_SHA256, hash, rsaSignature);
+	Crypto::Sha256((const u8*)&hdr->body, sizeof(sNcchHeader), hash);
+
+	Crypto::RsaSign(ncch_rsa_key, Crypto::HASH_SHA256, hash, hdr->rsa_signature);
 }
 
 // Basic Data
@@ -243,14 +255,14 @@ void NcchHeader::SetLogoData(u32 size, const u8 hash[Crypto::kSha256HashLen])
 	memcpy(logo_.hash, hash, Crypto::kSha256HashLen);
 }
 
-void NcchHeader::SetExefsData(u32 size, u32 hashed_data_size, const u8 hash[Crypto::kSha256HashLen])
+void NcchHeader::SetExefsData(u64 size, u32 hashed_data_size, const u8 hash[Crypto::kSha256HashLen])
 {
 	exefs_.size = size;
 	exefs_.hashed_size = hashed_data_size;
 	memcpy(exefs_.hash, hash, Crypto::kSha256HashLen);
 }
 
-void NcchHeader::SetRomfsData(u32 size, u32 hashed_data_size, const u8 hash[Crypto::kSha256HashLen])
+void NcchHeader::SetRomfsData(u64 size, u32 hashed_data_size, const u8 hash[Crypto::kSha256HashLen])
 {
 	romfs_.size = size;
 	romfs_.hashed_size = hashed_data_size;
@@ -259,6 +271,7 @@ void NcchHeader::SetRomfsData(u32 size, u32 hashed_data_size, const u8 hash[Cryp
 
 void NcchHeader::DeserialiseHeader(const u8* ncch_data)
 {
+	ClearDeserialisedVariables();
 	// allocate and save a copy of serialised data
 	if (serialised_data_.alloc(sizeof(sSignedNcchHeader))) 
 	{
@@ -275,13 +288,13 @@ void NcchHeader::DeserialiseHeader(const u8* ncch_data)
 	}
 
 	// determine format version
-	format_version_ = hdr->body.format_version();
-	if (format_version_ == 0 || format_version_ == 2)
+	format_id_ = hdr->body.format_id();
+	if (format_id_ == NCCH_CFA || format_id_ == NCCH_CXI)
 	{
 		block_size_bit_ = hdr->body.block_size() + 9;
 		block_size_ = 1 << block_size_bit_;
 	}
-	else if (format_version_ == 1)
+	else if (format_id_ == NCCH_PROTOTYPE)
 	{
 		block_size_ = hdr->body.block_size();
 	}
@@ -362,9 +375,23 @@ const std::string & NcchHeader::GetCompanyCode() const
 	return company_code_;
 }
 
-u16 NcchHeader::GetFormatVersion() const
+NcchHeader::FormatVersion NcchHeader::GetFormatVersion() const
 {
-	return format_version_;
+	FormatVersion ver;
+	switch (format_id_)
+	{
+	case(NCCH_PROTOTYPE) :
+		ver = NCCH_FORMAT_0;
+		break;
+	case(NCCH_CFA):
+	case(NCCH_CXI):
+		ver = NCCH_FORMAT_1;
+		break;
+	default:
+		throw ProjectSnakeException(kModuleName, "Invalid format version\n");
+	}
+
+	return ver;
 }
 
 u32 NcchHeader::GetSeedChecksum() const
@@ -504,7 +531,7 @@ const u8 * NcchHeader::GetRomfsHash() const
 
 void NcchHeader::FinaliseNcchLayout()
 {
-	u32 size = Crypto::kRsa2048Size + sizeof(struct sNcchHeader);
+	u64 size = Crypto::kRsa2048Size + sizeof(struct sNcchHeader);
 	
 	// exheader
 	if (exheader_.size)
@@ -546,11 +573,11 @@ void NcchHeader::FinaliseNcchLayout()
 u32 NcchHeader::SizeToBlockNum(u64 size)
 {
 	u32 block_num = 0;
-	if (format_version_ == 0 || format_version_ == 2) 
+	if (format_id_ == NCCH_CFA || format_id_ == NCCH_CXI) 
 	{
 		block_num = (u32)(align(size, block_size_) >> block_size_bit_);
 	}
-	else if (format_version_ == 1)
+	else if (format_id_ == NCCH_PROTOTYPE)
 	{
 		block_num = (u32)(align(size, block_size_) / block_size_);
 	}
@@ -560,13 +587,41 @@ u32 NcchHeader::SizeToBlockNum(u64 size)
 u64 NcchHeader::BlockNumToSize(u32 block_num)
 {
 	u64 size = 0;
-	if (format_version_ == 0 || format_version_ == 2)
+	if (format_id_ == NCCH_CFA || format_id_ == NCCH_CXI)
 	{
 		size = ((u64)block_num) << block_size_bit_;
 	}
-	else if (format_version_ == 1)
+	else if (format_id_ == NCCH_PROTOTYPE)
 	{
 		size = block_num * block_size_;
 	}
 	return size;
+}
+
+void NcchHeader::ClearDeserialisedVariables()
+{
+	exheader_.clear();
+	access_descriptor_.clear();
+	plain_region_.clear();
+	logo_.clear();
+	exefs_.clear();
+	romfs_.clear();
+	ncch_binary_size_ = 0;
+	format_id_ = NcchFormatId::NCCH_CFA;
+	title_id_ = 0;
+	program_id_ = 0;
+	seed_checksum_ = 0;
+	company_code_ = std::string("\0");
+	product_code_ = std::string("\0");
+	key_id_ = 0;
+	platform_ = Platform::CTR;
+	form_type_ = FormType::UNASSIGNED;
+	content_type_ = ContentType::APPLICATION;
+	block_size_ = 0;
+	block_size_bit_ = 0;
+	is_encrypted_ = false;
+	is_fixed_aes_key_ = false;
+	is_seeded_keyy_ = false;
+	is_manual_disclosed_ = false;
+	memset(preload_seed_, 0, Crypto::kAes128KeySize);
 }

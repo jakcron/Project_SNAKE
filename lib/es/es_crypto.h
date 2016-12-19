@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdlib>
-#include "crypto.h"
+#include <fnd/types.h>
+#include <crypto/crypto.h>
 
 class ESCrypto
 {
@@ -20,12 +21,12 @@ public:
 	static const size_t kRsa2048SignLen = 0x140;
 	static const size_t kEcdsaSignLen = 0x80;
 
-	static int GenerateSignature(ESSignType type, const u8* hash, const Crypto::sRsa2048Key& private_key, u8* signature);
-	static int VerifySignature(const u8* hash, const Crypto::sRsa2048Key& public_key, const u8* signature);
-	static int GenerateSignature(ESSignType type, const u8* hash, const Crypto::sRsa4096Key& private_key, u8* signature);
-	static int VerifySignature(const u8* hash, const Crypto::sRsa4096Key& public_key, const u8* signature);
-	static int GenerateSignature(ESSignType type, const u8* hash, const Crypto::sEccPrivateKey& private_key, u8* signature);
-	static int VerifySignature(const u8* hash, const Crypto::sEccPoint& public_key, const u8* signature);
+	static int GenerateSignature(ESSignType type, const uint8_t* hash, const Crypto::sRsa2048Key& private_key, uint8_t* signature);
+	static int VerifySignature(const uint8_t* hash, const Crypto::sRsa2048Key& public_key, const uint8_t* signature);
+	static int GenerateSignature(ESSignType type, const uint8_t* hash, const Crypto::sRsa4096Key& private_key, uint8_t* signature);
+	static int VerifySignature(const uint8_t* hash, const Crypto::sRsa4096Key& public_key, const uint8_t* signature);
+	static int GenerateSignature(ESSignType type, const uint8_t* hash, const Crypto::sEccPrivateKey& private_key, uint8_t* signature);
+	static int VerifySignature(const uint8_t* hash, const Crypto::sEccPoint& public_key, const uint8_t* signature);
 
 	static ESSignType GetSignatureType(const void* signed_binary);
 	static size_t GetSignatureSize(const void* signed_binary);
@@ -38,19 +39,19 @@ public:
 	static bool IsSignHashSha1(ESSignType type);
 	static bool IsSignHashSha256(ESSignType type);
 
-	static void HashData(ESSignType type, const u8* data, size_t size, u8* hash);
+	static void HashData(ESSignType type, const uint8_t* data, size_t size, uint8_t* hash);
 
-	static void SetupContentAesIv(u16 index, u8 iv[Crypto::kAesBlockSize]);
+	static void SetupContentAesIv(uint16_t index, uint8_t iv[Crypto::kAesBlockSize]);
 
 	
 private:
-	static inline ESSignType get_sign_type(const void* signed_binary) { return (ESSignType)be_word(*(u32*)(signed_binary)); }
-	static inline void set_sign_type(ESSignType type, void* pre_signing) { *((u32*)(pre_signing)) = be_word(type); }
+	static inline ESSignType get_sign_type(const void* signed_binary) { return (ESSignType)be_word(*(uint32_t*)(signed_binary)); }
+	static inline void set_sign_type(ESSignType type, void* pre_signing) { *((uint32_t*)(pre_signing)) = be_word(type); }
 
-	static size_t GetApiSignSize(ESSignType type);
-	static size_t GetApiHashId(ESSignType type);
-	static size_t GetApiHashLen(ESSignType type);
+	static Crypto::HashType GetHashType(ESSignType type);
 
-	static int RsaSign(ESSignType type, const u8* hash, const u8* modulus, const u8* priv_exp, u8* signature);
-	static int RsaVerify(const u8* hash, const u8* modulus, const u8* signature);
+	static int RsaSign(ESSignType type, const uint8_t* hash, const Crypto::sRsa4096Key& private_key, uint8_t* signature);
+	static int RsaSign(ESSignType type, const uint8_t* hash, const Crypto::sRsa2048Key& private_key, uint8_t* signature);
+	static int RsaVerify(const uint8_t* hash, const Crypto::sRsa4096Key & public_key, const uint8_t* signature);
+	static int RsaVerify(const uint8_t* hash, const Crypto::sRsa2048Key & public_key, const uint8_t* signature);
 };

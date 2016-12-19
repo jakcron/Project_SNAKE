@@ -18,18 +18,8 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ncch_reader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="makefile">
-      <Filter>Resource Files</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="ncch_reader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <None Include="makefile" />
   </ItemGroup>
 </Project>

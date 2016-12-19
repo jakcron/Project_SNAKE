@@ -1,11 +1,10 @@
 #pragma once
-#include "types.h"
-#include "crypto.h"
-#include "es_crypto.h"
-#include "es_cert.h"
-#include "YamlFile.h"
-
 #include <vector>
+#include <fnd/types.h>
+#include <fnd/ByteBuffer.h>
+#include <es/es_crypto.h>
+#include <es/es_cert.h>
+#include <yaml/YamlFile.h>
 
 /*
 TODO:
@@ -56,7 +55,7 @@ public:
 	int ParseKeySpecFile(const char* path);
 
 	
-	int GetEsCert(EsIdentType id, EsCert& cert);
+	int GetEsCert(EsIdentType id, ESCert& cert);
 	int GetEsRsa2048Key(EsIdentType id, Crypto::sRsa2048Key& rsa_key);
 	int GetEsRsa4096Key(EsIdentType id, Crypto::sRsa4096Key& rsa_key);
 	int GetCommonKey(u8 index, u8* aes_key);
@@ -113,7 +112,7 @@ private:
 	struct sEsCertificate
 	{
 		u8 id;
-		EsCert certificate;
+		ESCert certificate;
 	};
 
 	struct sAesKey
@@ -152,7 +151,7 @@ private:
 	int SaveUnfixedKey(const YamlElement* node);
 	int SaveRsa2048Key(const YamlElement* node, Crypto::sRsa2048Key& rsa_key);
 	int SaveRsa4096Key(const YamlElement* node, Crypto::sRsa4096Key& rsa_key);
-	int SaveEsCertificate(const YamlElement* node, EsCert& certificate);
+	int SaveEsCertificate(const YamlElement* node, ESCert& certificate);
 
 
 	int AddAesKey(u8 id, const u8* key, std::vector<sAesKey>& key_list);
@@ -161,8 +160,8 @@ private:
 	int GetRsa2048Key(const std::vector<sRsa2048Key>& key_list, u8 id, Crypto::sRsa2048Key& key_output);
 	int AddRsa4096Key(u8 id, const Crypto::sRsa4096Key& key, std::vector<sRsa4096Key>& key_list);
 	int GetRsa4096Key(const std::vector<sRsa4096Key>& key_list, u8 id, Crypto::sRsa4096Key& key_output);
-	int AddEsCertificate(u8 id, const EsCert& certificate, std::vector<sEsCertificate>& cert_list);
-	int GetEsCertificate(const std::vector<sEsCertificate>& cert_list, u8 id, EsCert& cert_output);
+	int AddEsCertificate(u8 id, const ESCert& certificate, std::vector<sEsCertificate>& cert_list);
+	int GetEsCertificate(const std::vector<sEsCertificate>& cert_list, u8 id, ESCert& cert_output);
 
 	int DecodeHexString(const std::string& hex_str, size_t len, u8 *out);
 

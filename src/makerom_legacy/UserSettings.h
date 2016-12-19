@@ -1,11 +1,11 @@
 #pragma once
 #include <string>
 #include <vector>
-#include "types.h"
+#include <fnd/types.h>
+#include <fnd/ByteBuffer.h>
+#include <keystore/KeyStore.h>
 
-#include "ByteBuffer.h"
 #include "RsfSettings.h"
-#include "KeyStore.h"
 
 class UserSettings
 {
@@ -30,8 +30,10 @@ private:
 	{
 		FILE_UNDEFINED,
 		FILE_NCCH_GENERIC,
-		FILE_CXI,
-		FILE_CFA,
+		FILE_CXI, // CTR Executeable Image (NCCH)
+		FILE_CIP, // CTR Initial Process (processes embedded in FIRM binaries) (Like CXI without code padding) (forced code compression) (forced no encryption)
+		FILE_CAA, // CXI like, but
+		FILE_CFA, // CTR File Archive (NCCH)
 		FILE_CCI,
 		FILE_CIA,
 		FILE_TMD,

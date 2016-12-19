@@ -1,31 +1,19 @@
 #pragma once
+#include <fnd/types.h>
+#include <fnd/ByteBuffer.h>
+#include <crypto/crypto.h>
+#include <ctr/cia_header.h>
+#include <ctr/cia_footer.h>
+#include <es/es_crypto.h>
+#include <es/es_content.h>
+#include <es/es_cert_chain.h>
+#include <es/es_ticket.h>
+#include <es/es_tmd.h>
 
-#include "types.h"
-#include "ByteBuffer.h"
-#include "crypto.h"
-#include "es_crypto.h"
-
-#include "cia_header.h"
-#include "es_cert_chain.h"
-#include "es_ticket.h"
-#include "es_tmd.h"
-#include "cia_footer.h"
 
 class CiaReader
 {
 public:
-	struct sContentInfo
-	{
-		const u8* data;
-		u32 id;
-		u16 index;
-		u16 flags;
-		size_t size;
-		u8 hash[Crypto::kSha256HashLen];
-		bool is_cia_enabled;
-		bool is_tik_enabled;
-	};
-
 	CiaReader();
 	~CiaReader();
 
@@ -35,19 +23,20 @@ public:
 	u64 GetTitleId() const;
 	u16 GetTitleVersion() const;
 	u8 GetCommonKeyIndex() const;
-	void SetCommonKey(const u8 common_key[Crypto::kAes128KeySize]);
-	void SetTitleKey(const u8 title_key[Crypto::kAes128KeySize]);
+	u32 GetCtrSaveSize() const;
+	u32 GetTwlPublicSaveSize() const;
+	u32 GetTwlPrivateSaveSize() const;
+	u8 GetSrlFlag() const;
+	const u8* GetTitleKey(const u8* common_key);
 
 	// section access for further processing
-	const EsCertChain& GetCertificateChain() const;
-	const EsTicket& GetTicket() const;
-	const EsTmd& GetTmd() const;
+	const ESCertChain& GetCertificateChain() const;
+	const ESTicket& GetTicket() const;
+	const ESTmd& GetTmd() const;
 	const CiaFooter& GetFooter() const;
 
 	// Access content
-	const std::vector<sContentInfo>& GetContentList() const;
-	void DecryptContentToBuffer(const sContentInfo& content, ByteBuffer& out);
-	bool VerifyContent(const sContentInfo& content); // if the content is encrypted, it will be duplicated in memory, decrypted then verified 
+	std::vector<ESContent>& GetContentList();
 
 	// section validation
 	bool ValidateCertificates(const Crypto::sRsa4096Key& root_key) const; // verifies all certificates, using the root key to check certificates signed by "Root"
@@ -59,12 +48,18 @@ private:
 	const std::string kModuleName = "CIA_READER";
 
 	CiaHeader header_;
-	EsCertChain certs_;
-	EsTicket tik_;
-	EsTmd tmd_;
-	std::vector<sContentInfo> content_list_;
+	ESCertChain certs_;
+	ESTicket tik_;
+	ESTmd tmd_;
+	std::vector<ESContent> content_list_;
 	CiaFooter footer_;
 
-	u8 title_key_[Crypto::kAes128KeySize];
+	// tmd platform reserved data
+	u32 ctr_save_size_;
+	u32 twl_public_save_size_;
+	u32 twl_private_save_size_;
+	u8 srl_flag_;
+
+	void DeserialiseTmdPlatformReservedData();
 };
 

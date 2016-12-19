@@ -1,5 +1,5 @@
 #pragma once
-#include "romfs_dir_scanner.h"
+#include <ctr/romfs_dir_scanner.h>
 
 class RomfsDirFilter
 {

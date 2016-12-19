@@ -4,34 +4,34 @@
 #include "polarssl/sha2.h"
 #include "polarssl/rsa.h"
 
-void Crypto::Sha1(const u8* in, u32 size, u8 hash[kSha1HashLen])
+void Crypto::Sha1(const uint8_t* in, uint64_t size, uint8_t hash[kSha1HashLen])
 {
 	sha1(in, size, hash);
 }
 
-void Crypto::Sha256(const u8* in, u32 size, u8 hash[kSha256HashLen])
+void Crypto::Sha256(const uint8_t* in, uint64_t size, uint8_t hash[kSha256HashLen])
 {
 	sha2(in, size, hash, false);
 }
 
-void Crypto::AesCtr(const u8* in, u32 size, const u8 key[kAes128KeySize], u8 ctr[kAesBlockSize], u8* out)
+void Crypto::AesCtr(const uint8_t* in, uint64_t size, const uint8_t key[kAes128KeySize], uint8_t ctr[kAesBlockSize], uint8_t* out)
 {
 	aes_context ctx;
-	u8 block[kAesBlockSize] = { 0 };
+	uint8_t block[kAesBlockSize] = { 0 };
 	size_t counterOffset = 0;
 
 	aes_setkey_enc(&ctx, key, 128);
 	aes_crypt_ctr(&ctx, size, &counterOffset, ctr, block, in, out);
 }
 
-void Crypto::AesCbcDecrypt(const u8* in, u32 size, const u8 key[kAes128KeySize], u8 iv[kAesBlockSize], u8* out)
+void Crypto::AesCbcDecrypt(const uint8_t* in, uint64_t size, const uint8_t key[kAes128KeySize], uint8_t iv[kAesBlockSize], uint8_t* out)
 {
 	aes_context ctx;
 	aes_setkey_dec(&ctx, key, 128);
 	aes_crypt_cbc(&ctx, AES_DECRYPT, size, iv, in, out);
 }
 
-void Crypto::AesCbcEncrypt(const u8* in, u32 size, const u8 key[kAes128KeySize], u8 iv[kAesBlockSize], u8* out)
+void Crypto::AesCbcEncrypt(const uint8_t* in, uint64_t size, const uint8_t key[kAes128KeySize], uint8_t iv[kAesBlockSize], uint8_t* out)
 {
 	aes_context ctx;
 	aes_setkey_enc(&ctx, key, 128);
@@ -57,7 +57,7 @@ int Crypto::RsaSign(const sRsa1024Key & key, HashType hash_type, const uint8_t *
 
 int Crypto::RsaVerify(const sRsa1024Key & key, HashType hash_type, const uint8_t * hash, const uint8_t signature[kRsa1024Size])
 {
-	static const u8 public_exponent[3] = { 0x01, 0x00, 0x01 };
+	static const uint8_t public_exponent[3] = { 0x01, 0x00, 0x01 };
 
 	int ret;
 	rsa_context ctx;
@@ -93,7 +93,7 @@ int Crypto::RsaSign(const sRsa2048Key & key, HashType hash_type, const uint8_t *
 
 int Crypto::RsaVerify(const sRsa2048Key & key, HashType hash_type, const uint8_t * hash, const uint8_t signature[kRsa2048Size])
 {
-	static const u8 public_exponent[3] = { 0x01, 0x00, 0x01 };
+	static const uint8_t public_exponent[3] = { 0x01, 0x00, 0x01 };
 
 	int ret;
 	rsa_context ctx;
@@ -129,7 +129,7 @@ int Crypto::RsaSign(const sRsa4096Key & key, HashType hash_type, const uint8_t *
 
 int Crypto::RsaVerify(const sRsa4096Key & key, HashType hash_type, const uint8_t * hash, const uint8_t signature[kRsa4096Size])
 {
-	static const u8 public_exponent[3] = { 0x01, 0x00, 0x01 };
+	static const uint8_t public_exponent[3] = { 0x01, 0x00, 0x01 };
 
 	int ret;
 	rsa_context ctx;

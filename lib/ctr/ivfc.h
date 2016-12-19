@@ -1,8 +1,8 @@
 #pragma once
 #include <vector>
-#include "types.h"
-#include "ByteBuffer.h"
-#include "crypto.h"
+#include <fnd/types.h>
+#include <fnd/ByteBuffer.h>
+#include <crypto/crypto.h>
 
 class Ivfc
 {

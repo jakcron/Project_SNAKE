@@ -1,5 +1,5 @@
 #include "UserSettings.h"
-#include "es_version.h"
+#include <es/es_version.h>
 
 UserSettings::UserSettings()
 {
@@ -16,7 +16,7 @@ UserSettings::UserSettings()
 	cia_.encrypt_content = false;
 
 	cia_.device_id = 0;
-	cia_.title_version = EsVersion::make_version(0,0,0);
+	cia_.title_version = ESVersion::make_version(0,0,0);
 }
 
 UserSettings::~UserSettings()
@@ -101,7 +101,7 @@ void UserSettings::DisplayHelp(const char * bin_path, bool extended_help)
 		printf(" -minor         <version>           Minor version\n");
 		printf(" -micro         <version>           Micro version\n");
 		printf(" -dver          <version>           Data-title version\n");
-		printf(" -deviceid      <hex id>            Lock content to specific device\n");
+		printf(" -deviceid      <hex id>            Lock content to specific device_type\n");
 		printf(" -dlc                               Create DLC CIA\n");
 		//printf(" -srl           <srl file>          Package a TWL SRL in a CIA\n");
 		//printf(" -tad           <tad file>          Repackage a TWL TAD as a CIA\n");
@@ -263,25 +263,25 @@ int UserSettings::ProcessArgument(int argc, int argp, char ** argv)
 	}
 	else if (MATCH_ARG("-major")) {
 		PARAM_CHECK(1);
-		cia_.title_version = EsVersion::make_version(strtol(GET_PARAM(0), NULL, 0), EsVersion::get_minor(cia_.title_version), EsVersion::get_build(cia_.title_version));
+		cia_.title_version = ESVersion::make_version(strtol(GET_PARAM(0), NULL, 0), ESVersion::get_minor(cia_.title_version), ESVersion::get_build(cia_.title_version));
 
 		return SUCCESS_RET;
 	}
 	else if (MATCH_ARG("-minor")) {
 		PARAM_CHECK(1);
-		cia_.title_version = EsVersion::make_version(EsVersion::get_major(cia_.title_version), strtol(GET_PARAM(0), NULL, 0), EsVersion::get_build(cia_.title_version));
+		cia_.title_version = ESVersion::make_version(ESVersion::get_major(cia_.title_version), strtol(GET_PARAM(0), NULL, 0), ESVersion::get_build(cia_.title_version));
 
 		return SUCCESS_RET;
 	}
 	else if (MATCH_ARG("-build")) {
 		PARAM_CHECK(1);
-		cia_.title_version = EsVersion::make_version(EsVersion::get_major(cia_.title_version), EsVersion::get_minor(cia_.title_version), strtol(GET_PARAM(0), NULL, 0));
+		cia_.title_version = ESVersion::make_version(ESVersion::get_major(cia_.title_version), ESVersion::get_minor(cia_.title_version), strtol(GET_PARAM(0), NULL, 0));
 
 		return SUCCESS_RET;
 	}
 	else if (MATCH_ARG("-dver")) {
 		PARAM_CHECK(1);
-		cia_.title_version = EsVersion::make_data_version(strtol(GET_PARAM(0), NULL, 0), EsVersion::get_build(cia_.title_version));
+		cia_.title_version = ESVersion::make_data_version(strtol(GET_PARAM(0), NULL, 0), ESVersion::get_build(cia_.title_version));
 
 		return SUCCESS_RET;
 	}
@@ -455,8 +455,8 @@ int UserSettings::PostProcessArguments()
 		}
 
 		// check for excession of maxium content
-		if (common_.contents.size() > NcsdHeader::kSectionNum && common_.output_type == FILE_CCI) {
-			fprintf(stderr, "[MAKEROM ERROR] When creating CCI files, you cannot specify more than %d content.\n", NcsdHeader::kSectionNum);
+		if (common_.contents.size() > CciHeader::kSectionNum && common_.output_type == FILE_CCI) {
+			fprintf(stderr, "[MAKEROM ERROR] When creating CCI files, you cannot specify more than %d content.\n", CciHeader::kSectionNum);
 			return ERR_INVALID_ARG;
 		}
 
@@ -513,6 +513,8 @@ const char* UserSettings::GetFileTypeExtention(FileType file_type)
 	{
 	case (FILE_NCCH_GENERIC): return ".ncch";
 	case (FILE_CXI): return ".cxi";
+	case (FILE_CIP): return ".cip";
+	case (FILE_CAA): return ".caa";
 	case (FILE_CFA): return ".cfa";
 	case (FILE_CCI): return ".cci";
 	case (FILE_CIA): return ".cia";

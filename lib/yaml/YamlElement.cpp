@@ -1,5 +1,4 @@
 #include "YamlElement.h"
-#include "project_snake_exception.h"
 
 
 YamlElement::YamlElement() noexcept

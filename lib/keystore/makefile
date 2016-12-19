@@ -2,8 +2,8 @@
 SRC_DIR = .
 OBJS = $(foreach dir,$(SRC_DIR),$(subst .cpp,.o,$(wildcard $(dir)/*.cpp))) $(foreach dir,$(SRC_DIR),$(subst .c,.o,$(wildcard $(dir)/*.c)))
 
-INC_DIR = ../common ../crypto ../es ../yaml
-INCS = $(foreach dir,$(INC_DIR), -I"$(dir)")
+INC_DIR = ..
+INCS = $(foreach dir,$(INC_DIR), -I"$(dir)/")
 
 # Compiler Settings
 CXXFLAGS = -std=c++11 $(INCS) -D__STDC_FORMAT_MACROS -Wall -Wno-unused-but-set-variable -Wno-unused-value

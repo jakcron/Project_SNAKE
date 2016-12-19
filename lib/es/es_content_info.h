@@ -1,7 +1,6 @@
 #pragma once
-
-#include "ByteBuffer.h"
-#include "es_crypto.h"
+#include <fnd/ByteBuffer.h>
+#include <es/es_crypto.h>
 
 class ESContentInfo
 {

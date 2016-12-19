@@ -1,14 +1,14 @@
-#include "types.h"
-#include "ByteBuffer.h"
-#include "crypto.h"
-#include "program_id.h"
+#include <fnd/types.h>
+#include <fnd/ByteBuffer.h>
+#include <fnd/project_snake_exception.h>
+#include <crypto/crypto.h>
+#include <ctr/ctr_program_id.h>
 
-#include "ncsd_header.h"
-#include "ncch_header.h"
+#include <ctr/cci_header.h>
+#include <ctr/ncch_header.h>
 
-#include "cia_builder.h"
+#include <ctr/cia_builder.h>
 
-#include "project_snake_exception.h"
 
 // keys
 static const Crypto::sRsa2048Key es_tik_key =
@@ -70,36 +70,48 @@ void ReplaceFileExtention(std::string& path, const std::string& new_extention)
 
 int main(int argc, char** argv)
 {
-	if (argc != 2) {
+	if (argc != 2) 
+	{
 		printf("usage: %s <input CSU file>\n", argv[0]);
 		return 0;
 	}
 
 	ByteBuffer ncsd;
-	NcsdHeader hdr;
-
+	CciHeader hdr;
+	
 	// Open NCSD + Header
-	if (ncsd.OpenFile(argv[1]) != 0) {
-		printf("[ERROR] Failed to open \"%s\"\n", argv[1]);
-		return 1;
-	}
+	try {
+		if (ncsd.OpenFile(argv[1]) != 0)
+		{
+			throw ProjectSnakeException("Failed to open \"" + std::string(argv[1]) + "\".");
+		}
 
-	if (hdr.SetHeader(ncsd.data_const()) != 0 || hdr.ValidateHeaderSignature(ncsd_key) != 0) {
-		printf("[ERROR] Not a valid CSU file.\n");
-		return 1;
-	}
+		hdr.DeserialiseHeader(ncsd.data_const());
+	
+		// validate signature
+		if (hdr.ValidateSignature(ncsd_key) != true)
+		{
+			throw ProjectSnakeException("CCI has invalid RSA signature.");
+		}
 
 #ifdef SYSUPD_RESTRICT
-	if (ncsd_hdr.media_type() != NcsdHeader::MEDIA_TYPE_CARD1 || ncsd_hdr.card_device() != NcsdHeader::CARD_DEVICE_NONE) {
-		printf("[ERROR] Not a valid CSU file.\n");
-		return 1;
+		if (hdr.GetMediaType() != CciHeader::MEDIA_TYPE_CARD1 || hdr.GetBackupSecurityType() != CciHeader::CARD_DEVICE_NONE)
+		{
+			throw ProjectSnakeException("CCI is not a CTR System Utility");
+		}
+
+		if (CtrProgramId::get_unique_id(hdr.GetTitleId()) != 0xff402) 
+		{
+			throw ProjectSnakeException("CSU has invalid RSA signature.");
+		}
+#endif
+	}
+	catch (const ProjectSnakeException& except) {
+		printf("[MAKECSUCIA ERROR] %s\n", except.what());
+		return 1; 
 	}
 
-	if (ProgramId::get_unique_id(ncsd_hdr.title_id()) != 0xff402) {
-		printf("[ERROR] CSU is not a SystemUpdater.\n");
-		return 1;
-	}
-#endif
+
 
 	// Configure CIA
 	CiaBuilder cia;
@@ -109,32 +121,36 @@ int main(int argc, char** argv)
 		cia.SetTicketSigner(es_tik_key, es_tik_cert);
 		cia.SetTmdSigner(es_tmd_key, es_tmd_cert);
 
-		cia.SetTitleId(hdr.title_id());
+		cia.SetTitleId(hdr.GetTitleId());
 		cia.SetVersion(0);
 
+#ifdef SYSUPD_RESTRICT
+		cia.SetCxiSaveDataSize(0); // no save data
+#else
 		// provide appriate save data size, based on card configuration
-		if (hdr.card_device() == NcsdHeader::CARD_DEVICE_NOR_FLASH) {
+		if (hdr.GetCardDevice() == CciHeader::CARD_DEVICE_NOR_FLASH) {
 			cia.SetCxiSaveDataSize(512 * 1024); // 512KB
 		}
-		else if (hdr.card_device() == NcsdHeader::CARD_DEVICE_NONE && hdr.media_type() == NcsdHeader::MEDIA_TYPE_CARD2) {
+		else if (hdr.GetCardDevice() == CciHeader::CARD_DEVICE_NONE && hdr.GetMediaType() == CciHeader::MEDIA_TYPE_CARD2) {
 			cia.SetCxiSaveDataSize(2 * 1024 * 1024); // 2MB
 		}
 		else {
 			cia.SetCxiSaveDataSize(0); // no save data
 		}
-
-		cia.SetCommonKey(es_commonkey_dev[0], 0);
+#endif
+		int commonKeyId = 0;
+		cia.SetCommonKey(es_commonkey_dev[commonKeyId], commonKeyId);
 		cia.SetTitleKey(title_key);
 		cia.SetTicketId(0);
 
 		// Add only executable/emanual/dlpchild from csu to cia
-		for (int i = 0; i < NcsdHeader::kSectionNum; i++)
+		for (int i = 0; i < CciHeader::kSectionNum; i++)
 		{
-			if (hdr.section_size(i) == 0) continue;
+			if (hdr.GetPartition(i).size == 0) continue;
 
-			if (i != NcsdHeader::SECTION_EXEC && i != NcsdHeader::SECTION_EMANUAL && i != NcsdHeader::SECTION_DLP_CHILD) continue;
+			if (i != CciHeader::SECTION_EXEC && i != CciHeader::SECTION_EMANUAL && i != CciHeader::SECTION_DLP_CHILD) continue;
 
-			cia.AddContent(i, i, EsTmd::ES_CONTENT_TYPE_ENCRYPTED, ncsd.data_const() + hdr.section_offset(i), hdr.section_size(i));
+			cia.AddContent(i, i, ESContentInfo::ES_CONTENT_TYPE_ENCRYPTED, ncsd.data_const() + hdr.GetPartition(i).offset, hdr.GetPartition(i).size);
 		}
 
 

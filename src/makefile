@@ -1,4 +1,4 @@
-PROGS = ctr_makecsucia ctr_readrom ctrtool_legacy makerom_legacy # ciatool cxitool
+PROGS = ctr_makecsucia ctr_readrom ctrtool_legacy makerom_legacy ctr_makeromfs
 
 main: build
 

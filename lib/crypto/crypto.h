@@ -1,5 +1,5 @@
 #pragma once
-#include "types.h"
+#include <cstdint>
 #include <cstring>
 
 class Crypto
@@ -25,9 +25,9 @@ public:
 #pragma pack (push, 1)
 	struct sAes128Key
 	{
-		u8 key[kAes128KeySize];
+		uint8_t key[kAes128KeySize];
 
-		void set(const u8 key[kAes128KeySize])
+		void set(const uint8_t key[kAes128KeySize])
 		{
 			memcpy(this->key, key, kAes128KeySize);
 		}
@@ -35,7 +35,7 @@ public:
 
 	struct sAesIvCtr
 	{
-		u8 iv[kAesBlockSize];
+		uint8_t iv[kAesBlockSize];
 	};
 
 	struct sRsa1024Key
@@ -43,7 +43,7 @@ public:
 		uint8_t modulus[kRsa1024Size];
 		uint8_t priv_exponent[kRsa1024Size];
 
-		void set(const u8 modulus[kRsa1024Size], const u8 priv_exponent[kRsa1024Size])
+		void set(const uint8_t modulus[kRsa1024Size], const uint8_t priv_exponent[kRsa1024Size])
 		{
 			memcpy(this->modulus, modulus, kRsa1024Size);
 			memcpy(this->priv_exponent, priv_exponent, kRsa1024Size);
@@ -117,13 +117,13 @@ public:
 	};
 #pragma pack (pop)
 
-	static void Sha1(const u8* in, u32 size, u8 hash[kSha1HashLen]);
-	static void Sha256(const u8* in, u32 size, u8 hash[kSha256HashLen]);
+	static void Sha1(const uint8_t* in, uint64_t size, uint8_t hash[kSha1HashLen]);
+	static void Sha256(const uint8_t* in, uint64_t size, uint8_t hash[kSha256HashLen]);
 
 	// aes-128
-	static void AesCtr(const u8* in, u32 size, const u8 key[kAes128KeySize], u8 ctr[kAesBlockSize], u8* out);
-	static void AesCbcDecrypt(const u8* in, u32 size, const u8 key[kAes128KeySize], u8 iv[kAesBlockSize], u8* out);
-	static void AesCbcEncrypt(const u8* in, u32 size, const u8 key[kAes128KeySize], u8 iv[kAesBlockSize], u8* out);
+	static void AesCtr(const uint8_t* in, uint64_t size, const uint8_t key[kAes128KeySize], uint8_t ctr[kAesBlockSize], uint8_t* out);
+	static void AesCbcDecrypt(const uint8_t* in, uint64_t size, const uint8_t key[kAes128KeySize], uint8_t iv[kAesBlockSize], uint8_t* out);
+	static void AesCbcEncrypt(const uint8_t* in, uint64_t size, const uint8_t key[kAes128KeySize], uint8_t iv[kAesBlockSize], uint8_t* out);
 
 	// rsa1024
 	static int RsaSign(const sRsa1024Key& key, HashType hash_type, const uint8_t* hash, uint8_t signature[kRsa1024Size]);

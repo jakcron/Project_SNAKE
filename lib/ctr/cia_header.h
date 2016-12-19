@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
-#include "types.h"
-#include "ByteBuffer.h"
+#include <fnd/types.h>
+#include <fnd/ByteBuffer.h>
 
 class CiaHeader
 {
@@ -11,7 +11,11 @@ public:
 
 	// Constructor/Destructor
 	CiaHeader();
+	CiaHeader(const u8* data);
+	CiaHeader(const CiaHeader& other);
 	~CiaHeader();
+
+	void operator=(const CiaHeader& other);
 
 	// Export serialised data
 	const u8* GetSerialisedData() const;
@@ -74,6 +78,8 @@ private:
 		u32 footer_size() const { return le_word(footer_size_); }
 		u64 content_size() const { return le_dword(content_size_); }
 		bool is_content_index_set(u16 index) const { return ((content_mask_[index / 8] & BIT(7 - (index % 8))) != 0); }
+
+		void clear() { memset(this, 0, sizeof(sCiaHeader)); }
 
 		void set_header_size(u32 size) { header_size_ = le_word(size); }
 		void set_type(u16 type) { type_ = le_hword(type); }

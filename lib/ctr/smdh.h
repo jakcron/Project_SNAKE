@@ -1,6 +1,6 @@
 #pragma once
-#include "types.h"
-#include "oschar.h"
+#include <fnd/types.h>
+#include <oschar/oschar.h>
 
 class Smdh
 {

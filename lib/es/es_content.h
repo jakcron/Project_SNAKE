@@ -1,5 +1,6 @@
 #pragma once
-#include "es_content_info.h"
+#include <es/es_content_info.h>
+
 class ESContent : public ESContentInfo
 {
 public:

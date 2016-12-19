@@ -1,6 +1,6 @@
 #pragma once
-#include "es_ticket.h"
-#include "es_cert_chain.h"
+#include <es/es_ticket.h>
+#include <es/es_cert_chain.h>
 
 class ESCdnTicket
 {
