@@ -81,8 +81,8 @@ private:
 	const std::string kRootKeyStr = "RootKey";
 	const std::string kCaKeyStr = "CaKey";
 	const std::string kCaCertStr = "CaCert";
-	const std::string kXsKeyStr = "TikKey";
-	const std::string kXsCertStr = "TikCert";
+	const std::string kXsKeyStr = "TicketKey";
+	const std::string kXsCertStr = "TicketCert";
 	const std::string kCpKeyStr = "TmdKey";
 	const std::string kCpCertStr = "TmdCert";
 	const std::string kCommonKeyStr = "CommonKey";
