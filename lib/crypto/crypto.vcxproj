@@ -112,6 +112,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="aes_ctr_stream.h" />
     <ClInclude Include="crypto.h" />
     <ClInclude Include="ecdsa.h" />
     <ClInclude Include="polarssl\aes.h" />
@@ -124,6 +125,7 @@
     <ClInclude Include="polarssl\sha2.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="aes_ctr_stream.cpp" />
     <ClCompile Include="crypto.cpp" />
     <ClCompile Include="ecdsa.cpp" />
     <ClCompile Include="polarssl\aes.c" />

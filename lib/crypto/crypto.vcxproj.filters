@@ -51,6 +51,9 @@
     <ClInclude Include="ecdsa.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="aes_ctr_stream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="polarssl\aes.c">
@@ -75,6 +78,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ecdsa.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="aes_ctr_stream.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

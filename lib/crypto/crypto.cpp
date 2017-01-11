@@ -24,6 +24,36 @@ void Crypto::AesCtr(const uint8_t* in, uint64_t size, const uint8_t key[kAes128K
 	aes_crypt_ctr(&ctx, size, &counterOffset, ctr, block, in, out);
 }
 
+void Crypto::AesIncrementCounter(const uint8_t in[kAesBlockSize], size_t block_num, uint8_t out[kAesBlockSize])
+{
+	memcpy(out, in, kAesBlockSize);
+
+	uint32_t ctr[4];
+	ctr[3] = getbe32(&in[0]);
+	ctr[2] = getbe32(&in[4]);
+	ctr[1] = getbe32(&in[8]);
+	ctr[0] = getbe32(&in[12]);
+
+	for (uint32_t i = 0; i < 4; i++) {
+		uint64_t total = ctr[i] + block_num;
+		// if there wasn't a wrap around, add the two together and exit
+		if (total <= 0xffffffff) {
+			ctr[i] += block_num;
+			break;
+		}
+
+		// add the difference
+		ctr[i] = (uint32_t)(total - 0x100000000);
+		// carry to next word
+		block_num = (uint32_t)(total >> 32);
+	}
+
+	putbe32(&out[0], ctr[3]);
+	putbe32(&out[4], ctr[2]);
+	putbe32(&out[8], ctr[1]);
+	putbe32(&out[12], ctr[0]);
+}
+
 void Crypto::AesCbcDecrypt(const uint8_t* in, uint64_t size, const uint8_t key[kAes128KeySize], uint8_t iv[kAesBlockSize], uint8_t* out)
 {
 	aes_context ctx;
