@@ -123,16 +123,17 @@
     <ClInclude Include="cia_footer.h" />
     <ClInclude Include="cia_header.h" />
     <ClInclude Include="cia_reader.h" />
+    <ClInclude Include="ctr_crypto.h" />
     <ClInclude Include="ctr_program_id.h" />
     <ClInclude Include="ctr_tmd_reserved_data.h" />
-    <ClInclude Include="exefs.h" />
-    <ClInclude Include="exefs_code.h" />
+    <ClInclude Include="exefs_header.h" />
     <ClInclude Include="extended_header.h" />
-    <ClInclude Include="ivfc.h" />
+    <ClInclude Include="ivfc_header.h" />
     <ClInclude Include="ncch_header.h" />
-    <ClInclude Include="romfs.h" />
-    <ClInclude Include="romfs_dir_filter.h" />
-    <ClInclude Include="romfs_dir_scanner.h" />
+    <ClInclude Include="romfs_directory_node.h" />
+    <ClInclude Include="romfs_file_node.h" />
+    <ClInclude Include="romfs_header.h" />
+    <ClInclude Include="romfs_file_tree.h" />
     <ClInclude Include="smdh.h" />
     <ClInclude Include="system_control_info.h" />
   </ItemGroup>
@@ -147,14 +148,16 @@
     <ClCompile Include="cia_footer.cpp" />
     <ClCompile Include="cia_header.cpp" />
     <ClCompile Include="cia_reader.cpp" />
-    <ClCompile Include="exefs.cpp" />
-    <ClCompile Include="exefs_code.cpp" />
+    <ClCompile Include="ctr_crypto.cpp" />
+    <ClCompile Include="code_binary.cpp" />
+    <ClCompile Include="exefs_header.cpp" />
     <ClCompile Include="extended_header.cpp" />
-    <ClCompile Include="ivfc.cpp" />
+    <ClCompile Include="ivfc_header.cpp" />
     <ClCompile Include="ncch_header.cpp" />
-    <ClCompile Include="romfs.cpp" />
-    <ClCompile Include="romfs_dir_filter.cpp" />
-    <ClCompile Include="romfs_dir_scanner.cpp" />
+    <ClCompile Include="romfs_directory_node.cpp" />
+    <ClCompile Include="romfs_file_node.cpp" />
+    <ClCompile Include="romfs_header.cpp" />
+    <ClCompile Include="romfs_file_tree.cpp" />
     <ClCompile Include="smdh.cpp" />
     <ClCompile Include="system_control_info.cpp" />
   </ItemGroup>

@@ -1,6 +1,6 @@
 #pragma once
 #include <fnd/types.h>
-#include <fnd/ByteBuffer.h>
+#include <fnd/memory_blob.h>
 #include <ctr/ncch_header.h>
 
 class CardInfoHeader
@@ -101,7 +101,7 @@ private:
 #pragma pack (pop)
 
 	// serialised data
-	ByteBuffer serialised_data_;
+	MemoryBlob serialised_data_;
 
 	// variables
 	u32 writable_offset_;

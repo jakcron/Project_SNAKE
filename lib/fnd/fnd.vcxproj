@@ -115,16 +115,15 @@
     <None Include="makefile" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ByteBuffer.cpp" />
-    <ClCompile Include="program_id_v1.cpp" />
+    <ClCompile Include="memory_blob.cpp" />
     <ClCompile Include="project_snake_exception.cpp" />
+    <ClCompile Include="string_conv.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ByteBuffer.h" />
+    <ClInclude Include="memory_blob.h" />
     <ClInclude Include="elf.h" />
-    <ClInclude Include="program_id_v0.h" />
-    <ClInclude Include="program_id_v1.h" />
     <ClInclude Include="project_snake_exception.h" />
+    <ClInclude Include="string_conv.h" />
     <ClInclude Include="types.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

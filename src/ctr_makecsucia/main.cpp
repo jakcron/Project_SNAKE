@@ -1,5 +1,5 @@
 #include <fnd/types.h>
-#include <fnd/ByteBuffer.h>
+#include <fnd/memory_blob.h>
 #include <fnd/project_snake_exception.h>
 #include <crypto/crypto.h>
 #include <ctr/ctr_program_id.h>
@@ -76,7 +76,7 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	ByteBuffer ncsd;
+	MemoryBlob ncsd;
 	CciHeader hdr;
 	
 	// Open NCSD + Header

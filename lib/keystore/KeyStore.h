@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <fnd/types.h>
-#include <fnd/ByteBuffer.h>
+//#include <fnd/memory_blob.h>
 #include <es/es_crypto.h>
 #include <es/es_cert.h>
 #include <yaml/YamlFile.h>

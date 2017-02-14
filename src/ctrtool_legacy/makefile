@@ -3,7 +3,7 @@ SRC_DIR = .
 OBJS = $(foreach dir,$(SRC_DIR),$(subst .cpp,.o,$(wildcard $(dir)/*.cpp))) $(foreach dir,$(SRC_DIR),$(subst .c,.o,$(wildcard $(dir)/*.c)))
 
 #local dependencies
-DEPENDS = ctr oschar es crypto fnd
+DEPENDS = ctr es crypto nintendo fnd
 
 LIB_DIR = ../../lib
 

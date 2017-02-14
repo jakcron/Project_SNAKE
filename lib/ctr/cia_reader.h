@@ -1,6 +1,6 @@
 #pragma once
 #include <fnd/types.h>
-#include <fnd/ByteBuffer.h>
+#include <fnd/memory_blob.h>
 #include <crypto/crypto.h>
 #include <ctr/cia_header.h>
 #include <ctr/cia_footer.h>

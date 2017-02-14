@@ -3,6 +3,95 @@
 #include <ctr/cia_reader.h>
 #include <es/es_version.h>
 
+#include <ctr/romfs_file_tree.h>
+
+#include <fnd/string_conv.h>
+
+#include <iostream>
+#include <fstream>
+
+int main(int argc, char** argv)
+{
+
+	MemoryBlob file;
+	file.OpenFile("test/homemenu.romfs");
+
+	try {
+		//RomfsFileTree romfs1;
+
+		//romfs1.DeserialiseData(file.data_const() + 0x1000);
+		
+		char16_t name[0x10] = { 0x30D6, 0x30EB, 0x30FC, 0x30D9, 0x30EA, 0x30FC, 0x002E, 0x0064, 0x0061, 0x0074, 0x0000 };
+		
+		std::string utf8 = StringConv::ConvertChar16ToChar8(name);
+
+		for (size_t i = 0; i < utf8.length(); i++)
+		{
+			printf("%2x ", utf8[i] &= 0xff);
+		}
+		printf("\n");
+
+		std::cout << utf8 << std::endl;
+	}
+	catch (const ProjectSnakeException& e) {
+		printf("[%s ERROR] %s\n", e.module(), e.what());
+		return 1;
+	}
+
+	/*
+	char16_t file_str[0x10] = { 'f', '0' };
+	char16_t dir_str[0x10] = { 'd', '0' };
+	
+	romfs.AddFile(file_str, 0, 0x0ded);
+	file_str[1] = '1';
+	romfs.AddFile(file_str, 0, 0x1ded);
+	file_str[1] = '2';
+	romfs.AddFile(file_str, 0, 0x2ded);
+
+	
+	u32 subDirID = romfs.AddDirectory(dir_str, 0);
+
+	file_str[1] = '3';
+	romfs.AddFile(file_str, subDirID, 0x3ded);
+	file_str[1] = '4';
+	romfs.AddFile(file_str, 0, 0x4ded);
+	
+
+	dir_str[1] = '1';
+	subDirID = romfs.AddDirectory(dir_str, 0);
+
+	file_str[1] = 'X';
+	romfs.AddFile(file_str, subDirID, 0x3ded);
+
+	dir_str[1] = '2';
+	subDirID = romfs.AddDirectory(dir_str, 0);
+
+	file_str[1] = 'X';
+	romfs.AddFile(file_str, subDirID, 0x3ded);
+
+	dir_str[1] = '3';
+	subDirID = romfs.AddDirectory(dir_str, 0);
+
+	dir_str[1] = '4';
+	subDirID = romfs.AddDirectory(dir_str, 0x18);
+
+	file_str[1] = 'X';
+	romfs.AddFile(file_str, subDirID, 0x3ded);
+
+
+	file_str[1] = 'Y';
+	romfs.AddFile(file_str, subDirID, 0x3ded);
+	
+	romfs.SerialiseData();
+	//throw ProjectSnakeException("Get rekt m8");
+	//printf("tracer is doin me a frightn'\n");
+	romfs.DebugDumpFileTreeAscii(0, 0);
+	*/
+	return 0;
+}
+
+
+#ifdef ES_TEST
 void nintendoPrintHexArray(const u8* data, size_t size)
 {
 	for (size_t i = 0; i < size; i++) {
@@ -71,7 +160,7 @@ void nintendoLitFields(const ESTicket& lgy_tik)
 	printf("\n");
 	printf(" limits: ");
 	//for (
-	
+
 }
 
 int main(int argc, char** argv)
@@ -92,7 +181,7 @@ int main(int argc, char** argv)
 	kstr.GetEsRsa4096Key(kstr.ES_IDENT_ROOT, root_key);
 
 	// file reader
-	ByteBuffer file;
+	MemoryBlob file;
 
 	// Open CIA
 	file.OpenFile(argv[1]);
@@ -211,3 +300,5 @@ int main(int argc, char** argv)
 
 	return userset.ParseUserArgs(argc, argv);
 }
+
+#endif

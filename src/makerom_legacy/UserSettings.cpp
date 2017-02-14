@@ -58,7 +58,7 @@ int UserSettings::ParseUserArgs(int argc, char** argv)
 
 void UserSettings::DisplayHelp(const char * bin_path, bool extended_help)
 {
-	printf("CTR MAKEROM v0.16 (C) jakcron 2016\n");
+	printf("CTR MAKEROM v0.16 (C) jakcron 2017\n");
 	printf("Built: %s %s\n\n", __TIME__, __DATE__);
 
 	printf("Usage: %s [options... ]\n", bin_path);
@@ -85,7 +85,7 @@ void UserSettings::DisplayHelp(const char * bin_path, bool extended_help)
 	printf(" -code          <file>              Decompressed ExeFS \".code\"\n");
 	printf(" -exheader      <file>              Exheader template\n");
 	if (extended_help) {
-		printf(" -plainrgn      <file>              Plain Region binary\n");
+		printf(" -plainrgn      <file>              Plain CryptRegion binary\n");
 	}
 	printf(" -romfs         <file>              RomFS binary\n");
 	if (extended_help) {
@@ -148,8 +148,17 @@ int UserSettings::ProcessArgument(int argc, int argp, char ** argv)
 	else if (MATCH_ARG("-f")) {
 		PARAM_CHECK(1);
 
-		if (MATCH_PARAM("ncch", 0) || MATCH_PARAM("cxi", 0) || MATCH_PARAM("cfa", 0) || MATCH_PARAM("exec", 0) || MATCH_PARAM("data", 0)) {
+		if (MATCH_PARAM("ncch", 0)) {
 			common_.output_type = FILE_NCCH_GENERIC;
+		}
+		else if (MATCH_PARAM("cxi", 0) && MATCH_PARAM("exec", 0)) {
+			common_.output_type = FILE_CXI;
+		}
+		else if (MATCH_PARAM("cfa", 0) && MATCH_PARAM("data", 0)) {
+			common_.output_type = FILE_CFA;
+		}
+		else if (MATCH_PARAM("cip", 0)) {
+			common_.output_type = FILE_CIP;
 		}
 		else if (MATCH_PARAM("cci", 0)) {
 			common_.output_type = FILE_CCI;
@@ -378,33 +387,33 @@ int UserSettings::ProcessArgument(int argc, int argp, char ** argv)
 			return FAIL_RET;
 		}
 
-sRsfStringSubstitute subs;
+		sRsfStringSubstitute subs;
 
-std::string tmp = GET_ARG;
-size_t separater_pos = tmp.find('=', 0);
+		std::string tmp = GET_ARG;
+		size_t separater_pos = tmp.find('=', 0);
 
-// if there is a parameter, it is the KEY, and should not have any '=' present in the NAME section
-if (arg_param_num == 1) {
-	if (separater_pos != std::string::npos) {
-		fprintf(stderr, "[MAKEROM ERROR] RSF string substitutions must be of the format:\n   \"-DNAME=VALUE\" or \"-DNAME VALUE\"\n");
-		return FAIL_RET;
-	}
-	subs.name = tmp.substr(2);
-	subs.value = GET_PARAM(0);
-}
-// the the KEY is in the same string as the NAME, so we need to split before and after the '=' character
-else {
-	if (separater_pos == std::string::npos) {
-		fprintf(stderr, "[MAKEROM ERROR] RSF string substitutions must be of the format:\n   \"-DNAME=VALUE\" or \"-DNAME VALUE\"\n");
-		return FAIL_RET;
-	}
-	subs.name = tmp.substr(2, separater_pos - 2);
-	subs.value = tmp.substr(separater_pos + 1);
-}
+		// if there is a parameter, it is the KEY, and should not have any '=' present in the NAME section
+		if (arg_param_num == 1) {
+			if (separater_pos != std::string::npos) {
+				fprintf(stderr, "[MAKEROM ERROR] RSF string substitutions must be of the format:\n   \"-DNAME=VALUE\" or \"-DNAME VALUE\"\n");
+				return FAIL_RET;
+			}
+			subs.name = tmp.substr(2);
+			subs.value = GET_PARAM(0);
+		}
+		// the the KEY is in the same string as the NAME, so we need to split before and after the '=' character
+		else {
+			if (separater_pos == std::string::npos) {
+				fprintf(stderr, "[MAKEROM ERROR] RSF string substitutions must be of the format:\n   \"-DNAME=VALUE\" or \"-DNAME VALUE\"\n");
+				return FAIL_RET;
+			}
+			subs.name = tmp.substr(2, separater_pos - 2);
+			subs.value = tmp.substr(separater_pos + 1);
+		}
 
-common_.rsf_substitutes.push_back(subs);
+		common_.rsf_substitutes.push_back(subs);
 
-return SUCCESS_RET;
+		return SUCCESS_RET;
 	}
 	else {
 		fprintf(stderr, "[MAKEROM ERROR] Unrecognised argument \"%s\".\n", GET_ARG);
@@ -509,22 +518,23 @@ int UserSettings::PostProcessArguments()
 
 const char* UserSettings::GetFileTypeExtention(FileType file_type)
 {
+	const char* extention = nullptr;
 	switch (file_type)
 	{
-	case (FILE_NCCH_GENERIC): return ".ncch";
-	case (FILE_CXI): return ".cxi";
-	case (FILE_CIP): return ".cip";
-	case (FILE_CAA): return ".caa";
-	case (FILE_CFA): return ".cfa";
-	case (FILE_CCI): return ".cci";
-	case (FILE_CIA): return ".cia";
-	case (FILE_TIK): return ".tik";
-	case (FILE_TMD): return ".tmd";
-	case (FILE_SRL): return ".srl";
-	case (FILE_TAD): return ".tad";
-	default: ".bin";
+	case (FILE_NCCH_GENERIC): extention = ".ncch"; break;
+	case (FILE_CXI): extention = ".cxi"; break;
+	case (FILE_CIP): extention = ".cip"; break;
+	case (FILE_CAA): extention = ".caa"; break;
+	case (FILE_CFA): extention = ".cfa"; break;
+	case (FILE_CCI): extention = ".cci"; break;
+	case (FILE_CIA): extention = ".cia"; break;
+	case (FILE_TIK): extention = ".tik"; break;
+	case (FILE_TMD): extention = ".tmd"; break;
+	case (FILE_SRL): extention = ".srl"; break;
+	case (FILE_TAD): extention = ".tad"; break;
+	default: extention = ".bin"; break;
 	}
-	return ".bin";
+	return extention;
 }
 
 void UserSettings::ErrorInvalidParamNum(const char * arg, int valid_param_num)

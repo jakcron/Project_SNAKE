@@ -21,22 +21,7 @@
     <ClInclude Include="cia_header.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="exefs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="exefs_code.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ivfc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ncch_header.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="romfs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="romfs_dir_scanner.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="smdh.h">
@@ -46,9 +31,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cia_footer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="romfs_dir_filter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ctr_program_id.h">
@@ -81,6 +63,27 @@
     <ClInclude Include="access_descriptor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="exefs_header.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ctr_crypto.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ivfc_header.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="romfs_header.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="romfs_file_tree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="romfs_directory_node.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="romfs_file_node.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cia_builder.cpp">
@@ -89,22 +92,7 @@
     <ClCompile Include="cia_header.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="exefs.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="exefs_code.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ivfc.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ncch_header.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="romfs.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="romfs_dir_scanner.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="smdh.cpp">
@@ -114,9 +102,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cia_footer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="romfs_dir_filter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cci_header.cpp">
@@ -141,6 +126,30 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="access_descriptor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="exefs_header.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ctr_crypto.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ivfc_header.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="code_binary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="romfs_header.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="romfs_file_tree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="romfs_directory_node.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="romfs_file_node.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -13,30 +13,21 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Header Files\bannerutil">
-      <UniqueIdentifier>{5649c066-1e85-4d3c-a342-6981b06b0d46}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\bannerutil">
-      <UniqueIdentifier>{13740552-6db4-4037-9c0c-49440d806d9b}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="ctr_app_icon.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="bannerutil\stb_image.h">
-      <Filter>Header Files\bannerutil</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="ctr_app_icon.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="bannerutil\stb_image.c">
-      <Filter>Source Files\bannerutil</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="makefile" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="program_id_v1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="program_id_v0.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="program_id_v1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <fnd/types.h>
-#include <fnd/ByteBuffer.h>
+#include <fnd/memory_blob.h>
 
 class CiaHeader
 {
@@ -95,7 +95,7 @@ private:
 #pragma pack (pop)
 
 	// serialised data
-	ByteBuffer serialised_data_;
+	MemoryBlob serialised_data_;
 
 	// members for deserialised data
 	struct sSectionGeometry

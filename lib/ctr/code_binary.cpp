@@ -1,13 +1,13 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
-#include "exefs_code.h"
+#include "code_binary.h"
 
 #define die(msg) do { fputs(msg "\n\n", stderr); return 1; } while(0)
 #define safe_call(a) do { int rc = a; if(rc != 0) return rc; } while(0)
 
 
-ExefsCode::ExefsCode()
+CodeBinary::CodeBinary()
 {
 	InitCodeSegment(text_);
 	InitCodeSegment(rodata_);
@@ -15,7 +15,7 @@ ExefsCode::ExefsCode()
 	InitCodeSegment(module_id_);
 }
 
-ExefsCode::~ExefsCode()
+CodeBinary::~CodeBinary()
 {
 	FreeCodeSegment(text_);
 	FreeCodeSegment(rodata_);
@@ -24,8 +24,8 @@ ExefsCode::~ExefsCode()
 }
 
 // internally generate code blob
-// code blobs are normally page aligned, except in builtin sysmodules
-int ExefsCode::CreateCodeBlob(const u8* elf, bool is_page_aligned)
+// code blobs are normally page aligned, except in builtin sysmodules (CTR Initial Processe, aka: CIP)
+int CodeBinary::CreateCodeBlob(const u8* elf, bool is_page_aligned)
 {
 	u8* text, *rodata, *data;
 
@@ -55,7 +55,7 @@ int ExefsCode::CreateCodeBlob(const u8* elf, bool is_page_aligned)
 	return 0;
 }
 
-int ExefsCode::ParseElf(const u8* elf)
+int CodeBinary::ParseElf(const u8* elf)
 {
 	const Elf32_Ehdr* ehdr = (const Elf32_Ehdr*)elf;
 
@@ -112,7 +112,7 @@ int ExefsCode::ParseElf(const u8* elf)
 	return 0;
 }
 
-void ExefsCode::InitCodeSegment(struct sCodeSegment& segment)
+void CodeBinary::InitCodeSegment(struct sCodeSegment& segment)
 {
 	segment.data = NULL;
 	segment.address = 0;
@@ -122,7 +122,7 @@ void ExefsCode::InitCodeSegment(struct sCodeSegment& segment)
 }
 
 
-void ExefsCode::FreeCodeSegment(struct sCodeSegment& segment)
+void CodeBinary::FreeCodeSegment(struct sCodeSegment& segment)
 {
 	if (segment.data != NULL) 
 	{
@@ -132,7 +132,7 @@ void ExefsCode::FreeCodeSegment(struct sCodeSegment& segment)
 	InitCodeSegment(segment);
 }
 
-void ExefsCode::CreateCodeSegment(struct sCodeSegment& segment, const Elf32_Phdr& phdr, const u8* elf)
+void CodeBinary::CreateCodeSegment(struct sCodeSegment& segment, const Elf32_Phdr& phdr, const u8* elf)
 {
 	FreeCodeSegment(segment);
 

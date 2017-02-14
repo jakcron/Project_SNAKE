@@ -1,5 +1,4 @@
 #include <fstream>
-#include <fnd/ByteBuffer.h>
 #include <ctr/romfs.h>
 #include <ctr/ivfc.h>
 

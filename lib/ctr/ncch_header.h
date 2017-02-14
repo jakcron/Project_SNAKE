@@ -1,6 +1,6 @@
 #pragma once
 #include <fnd/types.h>
-#include <fnd/ByteBuffer.h>
+#include <fnd/memory_blob.h>
 #include <crypto/crypto.h>
 
 class NcchHeader
@@ -218,7 +218,7 @@ private:
 
 		void clear() { memset(this, 0, sizeof(sNcchHeader)); }
 
-		void set_struct_signature(const char signature[4]) { memcpy(struct_signature_, signature, 4); }
+		void set_struct_signature(const char signature[4]) { strncpy(struct_signature_, signature, 4); }
 		void set_size(u32 size) { size_ = le_word(size); }
 		void set_title_id(u64 title_id) { title_id_ = le_dword(title_id); }
 		void set_company_code(const char company_code[kCompanyCodeLen]) { memcpy(company_code_, company_code, kCompanyCodeLen); }
@@ -273,7 +273,7 @@ private:
 #pragma pack (pop)
 
 	// serialised data
-	ByteBuffer serialised_data_;
+	MemoryBlob serialised_data_;
 
 	/*
 	struct sNcchHeader header_;

@@ -54,7 +54,7 @@ private:
 #pragma pack (pop)
 
 	// serialised data
-	ByteBuffer serialised_data_;
+	MemoryBlob serialised_data_;
 
 	// variables
 	SystemControlInfo system_control_info_;

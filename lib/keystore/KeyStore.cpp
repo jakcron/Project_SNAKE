@@ -162,7 +162,7 @@ int KeyStore::SaveEsCertificate(const YamlElement* node, ESCert& certificate)
 
 	if (!node->data().empty())
 	{
-		ByteBuffer tmp;
+		MemoryBlob tmp;
 		tmp.alloc(node->data()[0].size() / 2);
 		if (DecodeHexString(node->data()[0], tmp.size(), tmp.data()) != ERR_NOERROR)
 		{

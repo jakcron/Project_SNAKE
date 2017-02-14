@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <fnd/types.h>
-#include <fnd/ByteBuffer.h>
+#include <fnd/memory_blob.h>
 #include <keystore/KeyStore.h>
 
 #include "RsfSettings.h"
@@ -74,7 +74,7 @@ private:
 
 		std::string input_path;
 		FileType input_type;
-		ByteBuffer input_file;
+		MemoryBlob input_file;
 	} common_;
 
 	struct sNcchSettings

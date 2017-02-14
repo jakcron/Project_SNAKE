@@ -6,7 +6,7 @@
 #include <vector>
 #include <fnd/types.h>
 
-class ByteBuffer
+class MemoryBlob
 {
 public:
 	enum ErrorCode
@@ -17,11 +17,12 @@ public:
 		ERR_FAILREAD,
 	};
 
-	ByteBuffer();
+	MemoryBlob();
 
-	~ByteBuffer();
+	~MemoryBlob();
 
 	int alloc(size_t size);
+	int extend(size_t new_size);;
 
 	int OpenFile(const char* path);
 

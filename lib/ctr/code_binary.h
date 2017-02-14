@@ -1,13 +1,13 @@
 #pragma once
 #include <fnd/types.h>
 #include <fnd/elf.h>
-#include <fnd/ByteBuffer.h>
+#include <fnd/memory_blob.h>
 
-class ExefsCode
+class CodeBinary
 {
 public:
-	ExefsCode();
-	~ExefsCode();
+	CodeBinary();
+	~CodeBinary();
 
 	// internally generate code blob
 	// code blobs are normally page aligned, except in builtin sysmodules
@@ -45,7 +45,7 @@ private:
 		u8 *data;
 	};
 
-	ByteBuffer code_blob_;
+	MemoryBlob code_blob_;
 
 	struct sCodeSegment text_;
 	struct sCodeSegment rodata_;

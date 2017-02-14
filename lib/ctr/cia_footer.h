@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <fnd/types.h>
-#include <fnd/ByteBuffer.h>
+#include <fnd/memory_blob.h>
 #include <ctr/system_control_info.h>
 #include <ctr/ctr_program_id.h>
 
@@ -57,12 +57,12 @@ private:
 #pragma pack (pop)
 
 	// serialised data
-	ByteBuffer serialised_data_;
+	MemoryBlob serialised_data_;
 
 	// deserialised variables
 	std::vector<u64> dependency_list_;
 	u64 firm_title_id_;
-	ByteBuffer icon_;
+	MemoryBlob icon_;
 
 
 	void ClearDeserialisedVariables();

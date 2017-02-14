@@ -89,7 +89,7 @@ private:
 #pragma pack (pop)
 
 	// serialised data
-	ByteBuffer serialised_data_;
+	MemoryBlob serialised_data_;
 
 	// variables
 	Crypto::sRsa2048Key ncch_public_key_;

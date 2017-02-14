@@ -1,7 +1,7 @@
-#include "ByteBuffer.h"
+#include "memory_blob.h"
 
 
-ByteBuffer::ByteBuffer() :
+MemoryBlob::MemoryBlob() :
 	data_(),
 	size_(0),
 	apparent_size_(0)
@@ -9,11 +9,11 @@ ByteBuffer::ByteBuffer() :
 
 }
 
-ByteBuffer::~ByteBuffer()
+MemoryBlob::~MemoryBlob()
 {
 }
 
-int ByteBuffer::alloc(size_t size)
+int MemoryBlob::alloc(size_t size)
 {
 	int ret = ERR_NONE;
 	if (size > size_)
@@ -28,7 +28,21 @@ int ByteBuffer::alloc(size_t size)
 	return ret;
 }
 
-int ByteBuffer::OpenFile(const char * path)
+int MemoryBlob::extend(size_t new_size)
+{
+	try {
+		data_.resize(new_size);
+	}
+	catch (...) {
+		return ERR_FAILMALLOC;
+	}
+
+	return ERR_NONE;
+	
+	return 0;
+}
+
+int MemoryBlob::OpenFile(const char * path)
 {
 	FILE* fp;
 	size_t filesz, filepos;
@@ -63,7 +77,7 @@ int ByteBuffer::OpenFile(const char * path)
 	return ERR_NONE;
 }
 
-int ByteBuffer::AllocateMemory(size_t size)
+int MemoryBlob::AllocateMemory(size_t size)
 {
 	size_ = (size_t)align(size, 0x1000);
 	apparent_size_ = size;
@@ -72,7 +86,7 @@ int ByteBuffer::AllocateMemory(size_t size)
 	return ERR_NONE;
 }
 
-void ByteBuffer::ClearMemory()
+void MemoryBlob::ClearMemory()
 {
 	memset(data_.data(), 0, size_);
 }

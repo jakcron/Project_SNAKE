@@ -1,5 +1,5 @@
 #pragma once
-#include <fnd/ByteBuffer.h>
+#include <fnd/memory_blob.h>
 #include <es/es_crypto.h>
 
 class ESContentInfo

@@ -1,5 +1,5 @@
 #pragma once
-#include <fnd/ByteBuffer.h>
+#include <fnd/memory_blob.h>
 #include <es/es_crypto.h>
 
 class ESCert
@@ -85,7 +85,7 @@ private:
 #pragma pack (pop)
 
 	// serialised data
-	ByteBuffer serialised_data_;
+	MemoryBlob serialised_data_;
 
 	// serialised data staging ground
 	sCertificateBody cert_body_;

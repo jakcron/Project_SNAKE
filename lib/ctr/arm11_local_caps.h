@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <fnd/types.h>
-#include <fnd/ByteBuffer.h>
+#include <fnd/memory_blob.h>
 #include <ctr/ctr_program_id.h>
 
 class Arm11LocalCaps
@@ -250,7 +250,7 @@ private:
 #pragma pack (pop)
 
 	// serialised data
-	ByteBuffer serialised_data_;
+	MemoryBlob serialised_data_;
 
 	// variables
 	u64 program_id_;

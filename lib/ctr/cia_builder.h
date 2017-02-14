@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <fnd/types.h>
-#include <fnd/ByteBuffer.h>
+#include <fnd/memory_blob.h>
 #include <crypto/crypto.h>
 #include <ctr/cia_header.h>
 #include <ctr/cia_footer.h>
@@ -19,7 +19,7 @@ public:
 
 	void CreateCia();
 	void WriteToFile(const std::string& path);
-	void WriteToBuffer(ByteBuffer& out);
+	void WriteToBuffer(MemoryBlob& out);
 
 	void SetCaCert(const u8* cert);
 	void SetTicketSigner(const Crypto::sRsa2048Key& rsa_key, const u8* cert);

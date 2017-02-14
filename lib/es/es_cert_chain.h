@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <fnd/types.h>
-#include <fnd/ByteBuffer.h>
+#include <fnd/memory_blob.h>
 #include <es/es_crypto.h>
 #include <es/es_cert.h>
 
@@ -34,7 +34,7 @@ private:
 	const std::string kModuleName = "ES_CERT_CHAIN";
 	const std::string kCaCertIssuer = "Root";
 
-	ByteBuffer serialised_data_;
+	MemoryBlob serialised_data_;
 	std::vector<ESCert> certs_;
 };
 

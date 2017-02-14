@@ -42,26 +42,26 @@ void SystemControlInfo::SerialiseData()
 	// allocate memory for serialised data
 	if (serialised_data_.alloc(sizeof(sSystemControlInfo)) != serialised_data_.ERR_NONE)
 	{
-		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for serialised data");
+		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for serialised sci");
 	}
 
-	sSystemControlInfo* data = (sSystemControlInfo*)serialised_data_.data();
+	sSystemControlInfo* sci = (sSystemControlInfo*)serialised_data_.data();
 
-	data->set_process_title(process_title_.c_str());
-	data->set_is_code_compressed(is_code_compressed_);
-	data->set_is_sdmc_title(is_sdmc_title_);
-	data->set_remaster_version(remaster_version_);
-	data->set_text(text_.address(), text_.page_num(), text_.size());
-	data->set_rodata(rodata_.address(), rodata_.page_num(), rodata_.size());
-	data->set_data(data_.address(), data_.page_num(), data_.size());
-	data->set_stack_size(stack_size_);
-	data->set_bss_size(bss_size_);
+	sci->set_process_title(process_title_.c_str());
+	sci->set_is_code_compressed(is_code_compressed_);
+	sci->set_is_sdmc_title(is_sdmc_title_);
+	sci->set_remaster_version(remaster_version_);
+	sci->set_text(text_.address(), text_.page_num(), text_.size());
+	sci->set_rodata(rodata_.address(), rodata_.page_num(), rodata_.size());
+	sci->set_data(data_.address(), data_.page_num(), data_.size());
+	sci->set_stack_size(stack_size_);
+	sci->set_bss_size(bss_size_);
 	for (size_t i = 0; i < dependency_list_.size(); i++)
 	{
-		data->set_dependency(i, dependency_list_[i]);
+		sci->set_dependency(i, dependency_list_[i]);
 	}
-	data->set_save_data_size(save_data_size_);
-	data->set_jump_id(jump_id_);
+	sci->set_save_data_size(save_data_size_);
+	sci->set_jump_id(jump_id_);
 }
 
 void SystemControlInfo::SetProcessTitle(const std::string & title)
@@ -151,7 +151,7 @@ void SystemControlInfo::DeserialiseData(const u8 * data)
 	// allocate memory for serialised data
 	if (serialised_data_.alloc(sizeof(sSystemControlInfo)) != serialised_data_.ERR_NONE)
 	{
-		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for serialised data");
+		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for serialised sci");
 	}
 	memcpy(serialised_data_.data(), data, sizeof(sSystemControlInfo));
 

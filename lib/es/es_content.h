@@ -28,7 +28,7 @@ private:
 
 	bool is_shallow_copy_;
 	const u8* data_ptr_;
-	ByteBuffer content_;
+	MemoryBlob content_;
 
 	void CopyToInternalBuffer();
 };

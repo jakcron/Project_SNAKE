@@ -165,7 +165,7 @@ void CiaBuilder::WriteToFile(const std::string & path)
 	}
 }
 
-void CiaBuilder::WriteToBuffer(ByteBuffer& out)
+void CiaBuilder::WriteToBuffer(MemoryBlob& out)
 {
 	// allocate projected CIA size
 	if (out.alloc(header_.GetPredictedCiaSize()) != out.ERR_NONE)

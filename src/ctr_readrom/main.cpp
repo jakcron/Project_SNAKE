@@ -1,7 +1,7 @@
 #include <cinttypes>
 
 #include <fnd/types.h>
-#include <fnd/ByteBuffer.h>
+#include <fnd/memory_blob.h>
 
 #include <ctr/ctr_program_id.h>
 
@@ -17,7 +17,7 @@ int main(int argc, char** argv)
 	NcchHeader ncch_header;
 	CciHeader cci_header;
 
-	ByteBuffer file;
+	MemoryBlob file;
 
 	if (argc != 3)
 	{
@@ -26,7 +26,7 @@ int main(int argc, char** argv)
 	}
 
 	printf("open file\n");
-	if (file.OpenFile(argv[2]) != ByteBuffer::ERR_NONE) 
+	if (file.OpenFile(argv[2]) != MemoryBlob::ERR_NONE) 
 	{
 		printf("Failed to open \"%s\"\n", argv[1]);
 		return 1;

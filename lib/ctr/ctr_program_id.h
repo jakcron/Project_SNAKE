@@ -1,5 +1,5 @@
 #pragma once
-#include <fnd/program_id_v1.h>
+#include <nintendo/program_id_v1.h>
 
 class CtrProgramId : public ProgramId_v1
 {
