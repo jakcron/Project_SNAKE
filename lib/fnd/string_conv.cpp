@@ -9,9 +9,9 @@ std::u16string StringConv::ConvertChar8ToChar16(const std::string & in)
 	size_t done = 0;
 	for (size_t i = 0; i < in.length(); i += done)
 	{
-		// this isn't a utf16 reserved character, so just add to unicode string
+		// get number of leading high bits in first byte
 		uint8_t prefix = get_utf8_prefix(in[i]);
-		if (prefix == 1 || prefix > 4)
+		if (prefix == 1 || prefix > 4) // 1 is reserved for trailer bytes
 		{
 			throw std::logic_error("not a UTF-8 string");
 		}
