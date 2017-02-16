@@ -24,9 +24,6 @@
     <ClInclude Include="ncch_header.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="smdh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="cia_reader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -84,6 +81,9 @@
     <ClInclude Include="romfs_file_node.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="app_icon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cia_builder.cpp">
@@ -93,9 +93,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ncch_header.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="smdh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cia_reader.cpp">
@@ -150,6 +147,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="romfs_file_node.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="app_icon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

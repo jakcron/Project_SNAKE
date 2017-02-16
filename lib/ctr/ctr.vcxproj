@@ -114,6 +114,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="access_descriptor.h" />
+    <ClInclude Include="app_icon.h" />
     <ClInclude Include="arm11_kernel_caps.h" />
     <ClInclude Include="arm11_local_caps.h" />
     <ClInclude Include="arm9_access_control.h" />
@@ -134,11 +135,11 @@
     <ClInclude Include="romfs_file_node.h" />
     <ClInclude Include="romfs_header.h" />
     <ClInclude Include="romfs_file_tree.h" />
-    <ClInclude Include="smdh.h" />
     <ClInclude Include="system_control_info.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="access_descriptor.cpp" />
+    <ClCompile Include="app_icon.cpp" />
     <ClCompile Include="arm11_kernel_caps.cpp" />
     <ClCompile Include="arm11_local_caps.cpp" />
     <ClCompile Include="arm9_access_control.cpp" />
@@ -158,7 +159,6 @@
     <ClCompile Include="romfs_file_node.cpp" />
     <ClCompile Include="romfs_header.cpp" />
     <ClCompile Include="romfs_file_tree.cpp" />
-    <ClCompile Include="smdh.cpp" />
     <ClCompile Include="system_control_info.cpp" />
   </ItemGroup>
   <ItemGroup>
