@@ -2,6 +2,7 @@
 #include <cstring>
 #include <cmath>
 #include "ncch_header.h"
+#include "ctr_crypto.h"
 
 NcchHeader::NcchHeader()
 {
@@ -582,6 +583,36 @@ void NcchHeader::InitialiseAesCtr(AesCtrSectionId section, uint8_t ctr[Crypto::k
 		// for future reference
 		throw ProjectSnakeException(kModuleName, "Unsupported NCCH format");
 	}
+}
+
+void NcchHeader::GenerateAesKey(const uint8_t key_x[Crypto::kAes128KeySize], uint8_t key[Crypto::kAes128KeySize])
+{
+	CtrCrypto::KeyGenerator(key_x, serialised_data_.data_const(), key);
+}
+
+void NcchHeader::GenerateAesKey(const uint8_t key_x[Crypto::kAes128KeySize], const u8 seed[Crypto::kAes128KeySize], uint8_t key[Crypto::kAes128KeySize])
+{
+	if (HasPreloadSeed() == false)
+	{
+		GenerateAesKey(key_x, key);
+	}
+
+	if (ValidatePreloadSeed(seed) == false)
+	{
+		return;
+	}
+
+	u8 hash_data[Crypto::kAes128KeySize + Crypto::kAesBlockSize];
+	u8 hash[Crypto::kSha256HashLen];
+
+	// copy data
+	memcpy(hash_data + 0x00, serialised_data_.data_const(), Crypto::kAes128KeySize); // old key_y
+	memcpy(hash_data + 0x10, seed, Crypto::kAesBlockSize); // seed
+	
+	// hash data
+	Crypto::Sha256((u8*)&hash_data, Crypto::kAes128KeySize + Crypto::kAesBlockSize, hash);
+
+	CtrCrypto::KeyGenerator(key_x, hash, key); // new key_y is first 0x10 bytes of the hash
 }
 
 void NcchHeader::FinaliseNcchLayout()

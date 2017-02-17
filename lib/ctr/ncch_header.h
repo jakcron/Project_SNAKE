@@ -115,6 +115,8 @@ public:
 
 	// aes encryption helper methods
 	void InitialiseAesCtr(AesCtrSectionId section, uint8_t ctr[Crypto::kAesBlockSize]);
+	void GenerateAesKey(const uint8_t key_x[Crypto::kAes128KeySize], uint8_t key[Crypto::kAes128KeySize]);
+	void GenerateAesKey(const uint8_t key_x[Crypto::kAes128KeySize], const u8 seed[Crypto::kAes128KeySize], uint8_t key[Crypto::kAes128KeySize]);
 
 protected:
 	u32 GetSeedChecksum() const; // consider private
