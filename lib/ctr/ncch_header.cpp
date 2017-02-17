@@ -419,6 +419,11 @@ const u8 * NcchHeader::GetExheaderHash() const
 	return exheader_.hash;
 }
 
+u32 NcchHeader::GetExheaderOffset() const
+{
+	return exheader_.offset;
+}
+
 u32 NcchHeader::GetExheaderSize() const
 {
 	return exheader_.size;
@@ -529,6 +534,55 @@ const u8 * NcchHeader::GetRomfsHash() const
 	return romfs_.hash;
 }
 
+void NcchHeader::InitialiseAesCtr(AesCtrSectionId section, uint8_t ctr[Crypto::kAesBlockSize])
+{
+	FormatVersion format = GetFormatVersion();
+	u64 title_id = GetTitleId();
+
+	// current format
+	if (format == NCCH_FORMAT_1)
+	{
+		// clear counter
+		memset(ctr, 0, Crypto::kAesBlockSize);
+
+		// set bytes 0-7 of the counter to the big endian title id
+		*(u64*)(ctr) = be_dword(title_id);
+
+		// set byte 8 of the counter to the section type
+		ctr[8] = section;
+	}
+	else if (format == NcchHeader::FormatVersion::NCCH_FORMAT_0)
+	{
+		// clear counter
+		memset(ctr, 0, Crypto::kAesBlockSize);
+
+		// set bytes 0-7 of the counter to the little endian title id
+		*(u64*)(ctr) = le_dword(title_id);
+
+		u64 offset = 0;
+		switch (section)
+		{
+		case (SECTION_EXHEADER) :
+			offset = GetExheaderOffset();
+			break;
+		case (SECTION_EXEFS) :
+			offset = GetExefsOffset();
+			break;
+		case (SECTION_ROMFS):
+			offset = GetRomfsOffset();
+			break;
+		default:
+			throw ProjectSnakeException(kModuleName, "Unknown AES CTR NCCH section id");
+		}
+
+		// set bytes 8-15 of the counter to the big endian offset
+		*(u64*)(ctr+8) = be_dword(offset);
+
+		// for future reference
+		throw ProjectSnakeException(kModuleName, "Unsupported NCCH format");
+	}
+}
+
 void NcchHeader::FinaliseNcchLayout()
 {
 	u64 size = Crypto::kRsa2048Size + sizeof(struct sNcchHeader);
@@ -536,6 +590,7 @@ void NcchHeader::FinaliseNcchLayout()
 	// exheader
 	if (exheader_.size)
 	{
+		exheader_.offset = size;
 		size += align(exheader_.size, block_size_) + align(access_descriptor_.size, block_size_);
 	}
 

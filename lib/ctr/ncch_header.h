@@ -37,6 +37,13 @@ public:
 		SNAKE = 2
 	};
 
+	enum AesCtrSectionId // for crypto
+	{
+		SECTION_EXHEADER = 1,
+		SECTION_EXEFS,
+		SECTION_ROMFS,
+	};
+
 	// Constructor/Destructor
 	NcchHeader();
 	NcchHeader(const u8* data);
@@ -83,6 +90,7 @@ public:
 	const u8* GetLogoHash() const;
 	const std::string& GetProductCode() const;
 	const u8* GetExheaderHash() const;
+	u32 GetExheaderOffset() const;
 	u32 GetExheaderSize() const;
 	u8 GetKeyId() const;
 	Platform GetPlatform() const;
@@ -104,6 +112,9 @@ public:
 	u64 GetRomfsHashedRegionSize() const;
 	const u8* GetExefsHash() const;
 	const u8* GetRomfsHash() const;
+
+	// aes encryption helper methods
+	void InitialiseAesCtr(AesCtrSectionId section, uint8_t ctr[Crypto::kAesBlockSize]);
 
 protected:
 	u32 GetSeedChecksum() const; // consider private
@@ -216,7 +227,7 @@ private:
 		const u8* exefs_hash() const { return exefs_hash_; }
 		const u8* romfs_hash() const { return romfs_hash_; }
 
-		void clear() { memset(this, 0, sizeof(sNcchHeader)); }
+		void clear() { memset(this, 0, sizeof(*this)); }
 
 		void set_struct_signature(const char signature[4]) { strncpy(struct_signature_, signature, 4); }
 		void set_size(u32 size) { size_ = le_word(size); }
