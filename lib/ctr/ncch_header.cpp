@@ -595,6 +595,7 @@ void NcchHeader::GenerateAesKey(const uint8_t key_x[Crypto::kAes128KeySize], con
 	if (HasPreloadSeed() == false)
 	{
 		GenerateAesKey(key_x, key);
+		return;
 	}
 
 	if (ValidatePreloadSeed(seed) == false)
