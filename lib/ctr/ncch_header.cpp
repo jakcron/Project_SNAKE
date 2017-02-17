@@ -309,6 +309,7 @@ void NcchHeader::DeserialiseHeader(const u8* ncch_data)
 	product_code_ = std::string(hdr->body.product_code(), kProductCodeLen);
 	exheader_.set_hash(hdr->body.exheader_hash());
 	exheader_.size = hdr->body.exheader_size();
+	exheader_.offset = exheader_.size > 0 ? sizeof(sSignedNcchHeader) : 0x0;
 	key_id_ = hdr->body.key_id();
 	platform_ = hdr->body.platform();
 	form_type_ = hdr->body.form_type();
