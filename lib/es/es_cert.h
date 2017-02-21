@@ -27,7 +27,7 @@ public:
 	void SerialiseCert(const Crypto::sRsa4096Key& private_key);
 	void SerialiseCert(const Crypto::sRsa4096Key& private_key, bool use_sha1);
 	void SetIssuer(const std::string& issuer);
-	void SetName(const std::string& name);
+	void SetSubject(const std::string& name);
 	void SetUniqueId(u32 id);
 	void SetPublicKey(const Crypto::sRsa4096Key& key);
 	void SetPublicKey(const Crypto::sRsa2048Key& key);
@@ -38,8 +38,11 @@ public:
 	bool ValidateSignature(const Crypto::sRsa2048Key& key) const;
 	bool ValidateSignature(const Crypto::sRsa4096Key& key) const;
 	bool ValidateSignature(const ESCert& signer) const;
+	ESCrypto::ESSignType GetSignType() const;
+	const u8* GetSignature() const;
+	size_t GetSignatureSize() const;
 	const std::string& GetIssuer() const;
-	const std::string& GetName() const;
+	const std::string& GetSubject() const;
 	const std::string& GetChildIssuer() const;
 	u32 GetUniqueId() const;
 	PublicKeyType GetPublicKeyType() const;
@@ -57,10 +60,23 @@ private:
 #pragma pack (push, 1)
 	struct sCertificateBody
 	{
-		char issuer[kStringMax];
-		u32 key_type;
-		char name[kStringMax];
-		u32 unique_id;
+	private:
+		char issuer_[kStringMax];
+		u32 key_type_;
+		char subject_[kStringMax];
+		u32 unique_id_;
+	public:
+		inline const char* signature_issuer() const { return issuer_; }
+		inline PublicKeyType public_key_type() const { return (PublicKeyType)be_word(key_type_); }
+		inline const char* subject() const { return subject_; }
+		inline u32 unique_id() const { return be_word(unique_id_); }
+
+		void clear() { memset(this, 0, sizeof(*this)); }
+
+		inline void set_signature_issuer(const char* issuer) { strncpy(issuer_, issuer, kStringMax); }
+		inline void set_public_key_type(PublicKeyType public_key_type) { key_type_ = be_word(public_key_type); }
+		inline void set_subject(const char* name) { strncpy(subject_, name, kStringMax); }
+		inline void set_unique_id(u32 unique_id) { unique_id_ = be_word(unique_id); }
 	};
 
 	struct sRsa4096PublicKeyBody
@@ -68,6 +84,10 @@ private:
 		u8 modulus[Crypto::kRsa4096Size];
 		u8 public_exponent[Crypto::kRsaPublicExponentSize];
 		u8 padding[0x34];
+
+		void set_modulus(const u8 modulus[Crypto::kRsa4096Size]) { memcpy(this->modulus, modulus, Crypto::kRsa4096Size); }
+		void set_public_exponent(const u8 public_exponent[Crypto::kRsaPublicExponentSize]) { memcpy(this->public_exponent, public_exponent, Crypto::kRsaPublicExponentSize); }
+		void clear() { memset(this, 0, sizeof(*this)); }
 	};
 
 	struct sRsa2048PublicKeyBody
@@ -75,49 +95,35 @@ private:
 		u8 modulus[Crypto::kRsa2048Size];
 		u8 public_exponent[Crypto::kRsaPublicExponentSize];
 		u8 padding[0x34];
+
+		void set_modulus(const u8 modulus[Crypto::kRsa2048Size]) { memcpy(this->modulus, modulus, Crypto::kRsa2048Size); }
+		void set_public_exponent(const u8 public_exponent[Crypto::kRsaPublicExponentSize]) { memcpy(this->public_exponent, public_exponent, Crypto::kRsaPublicExponentSize); }
+		void clear() { memset(this, 0, sizeof(*this)); }
 	};
 
 	struct sEcdsaPublicKeyBody
 	{
-		u8 public_key[Crypto::kEcdsaSize];
+		u8 r[Crypto::kEcParam240Bit];
+		u8 s[Crypto::kEcParam240Bit];
 		u8 padding[0x3C];
+
+		void set_r(const u8 r[Crypto::kEcParam240Bit]) { memcpy(this->r, r, Crypto::kEcParam240Bit); }
+		void set_s(const u8 s[Crypto::kEcParam240Bit]) { memcpy(this->s, s, Crypto::kEcParam240Bit); }
+		void clear() { memset(this, 0, sizeof(*this)); }
 	};
 #pragma pack (pop)
 
 	// serialised data
 	MemoryBlob serialised_data_;
 
-	// serialised data staging ground
-	sCertificateBody cert_body_;
-
-	// serialised data get interface
-	inline const char* signature_issuer() const { return cert_body_.issuer; }
-	inline PublicKeyType public_key_type() const { return (PublicKeyType)be_word(cert_body_.key_type); }
-	inline const char* name() const { return cert_body_.name; }
-	inline u32 unique_id() const { return be_word(cert_body_.unique_id); }
-	inline const u8* rsa_public_key_modulus(const sRsa4096PublicKeyBody& rsa_key) const { return rsa_key.modulus; }
-	inline const u8* rsa_public_key_public_exponent(const sRsa4096PublicKeyBody& rsa_key) const { return rsa_key.public_exponent; }
-	inline const u8* rsa_public_key_modulus(const sRsa2048PublicKeyBody& rsa_key) const { return rsa_key.modulus; }
-	inline const u8* rsa_public_key_public_exponent(const sRsa2048PublicKeyBody& rsa_key) const { return rsa_key.public_exponent; }
-	inline const u8* ecdsa_public_key(const sEcdsaPublicKeyBody& ecdsa_key) const { return ecdsa_key.public_key; }
-
-	// serialised data set interface
-	inline void set_signature_issuer(const char* issuer, int len) { memcpy(cert_body_.name, issuer, len < kStringMax ? len : kStringMax); }
-	inline void set_public_key_type(PublicKeyType public_key_type) { cert_body_.key_type = be_word(public_key_type); }
-	inline void set_name(const char* name, int len) { memcpy(cert_body_.name, name, len < kStringMax? len : kStringMax); }
-	inline void set_unique_id(u32 unique_id) { cert_body_.unique_id = be_word(unique_id); }
-	inline void set_rsa_public_key_modulus(sRsa4096PublicKeyBody& rsa_key, const u8 modulus[Crypto::kRsa4096Size]) { memcpy(rsa_key.modulus, modulus, Crypto::kRsa4096Size); }
-	inline void set_rsa_public_key_public_exponent(sRsa4096PublicKeyBody& rsa_key, const u8 public_exponent[Crypto::kRsaPublicExponentSize]) { memcpy(rsa_key.public_exponent, public_exponent, Crypto::kRsaPublicExponentSize); }
-	inline void set_rsa_public_key_modulus(sRsa2048PublicKeyBody& rsa_key, const u8 modulus[Crypto::kRsa4096Size]) { memcpy(rsa_key.modulus, modulus, Crypto::kRsa4096Size); }
-	inline void set_rsa_public_key_public_exponent(sRsa2048PublicKeyBody& rsa_key, const u8 public_exponent[Crypto::kRsaPublicExponentSize]) { memcpy(rsa_key.public_exponent, public_exponent, Crypto::kRsaPublicExponentSize); }
-	inline void set_ecdsa_public_key(sEcdsaPublicKeyBody& ecdsa_key, const u8 data[Crypto::kEcdsaSize]) { memcpy(ecdsa_key.public_key, data, Crypto::kEcdsaSize); }
-
 	// members for deserialised data
 	std::string issuer_;
-	std::string name_;
+	std::string subject_;
 	u32 unique_id_;
 	PublicKeyType public_key_type_;
-	u8 public_key_[kPublicKeyBufferLen];
+	sRsa4096PublicKeyBody public_key_rsa4096_;
+	sRsa2048PublicKeyBody public_key_rsa2048_;
+	sEcdsaPublicKeyBody public_key_ecdsa_;
 
 	std::string child_issuer_;
 

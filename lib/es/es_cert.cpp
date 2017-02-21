@@ -82,13 +82,13 @@ void ESCert::SetIssuer(const std::string & issuer)
 	issuer_ = issuer;
 }
 
-void ESCert::SetName(const std::string & name)
+void ESCert::SetSubject(const std::string & subject)
 {
-	if (name.length() > kStringMax)
+	if (subject.length() > kStringMax)
 	{
-		throw ProjectSnakeException(kModuleName, "Name length is too large");
+		throw ProjectSnakeException(kModuleName, "Subject length is too large");
 	}
-	name_ = name;
+	subject_ = subject;
 }
 
 void ESCert::SetUniqueId(u32 id)
@@ -99,35 +99,39 @@ void ESCert::SetUniqueId(u32 id)
 void ESCert::SetPublicKey(const Crypto::sRsa4096Key& key)
 {
 	public_key_type_ = RSA_4096;
-	memcpy(public_key_, key.modulus, Crypto::kRsa4096Size);
+	public_key_rsa4096_.set_modulus(key.modulus);
+	public_key_rsa4096_.set_public_exponent(key.public_exponent);
 }
 
 void ESCert::SetPublicKey(const Crypto::sRsa2048Key & key)
 {
 	public_key_type_ = RSA_2048;
-	memcpy(public_key_, key.modulus, Crypto::kRsa2048Size);
+	public_key_rsa2048_.set_modulus(key.modulus);
+	public_key_rsa2048_.set_public_exponent(key.public_exponent);
 }
 
 void ESCert::SetPublicKey(const Crypto::sEccPoint & key)
 {
 	public_key_type_ = ECDSA;
-	memcpy(public_key_, key.r, 0x1e);
-	memcpy(public_key_ + 0x1e, key.s, 0x1e);
+	public_key_ecdsa_.set_r(key.r);
+	public_key_ecdsa_.set_s(key.s);
 }
 
 void ESCert::ClearDeserialisedVariables()
 {
 	issuer_.clear();
-	name_.clear();
+	subject_.clear();
 	unique_id_ = 0;
 	public_key_type_ = (PublicKeyType)0;
-	memset(public_key_, 0, kPublicKeyBufferLen);
+	public_key_rsa4096_.clear();
+	public_key_rsa2048_.clear();
+	public_key_ecdsa_.clear();
 	child_issuer_.clear();
 }
 
 void ESCert::CreateChildIssuer()
 {
-	child_issuer_ = issuer_ + "-" + name_;
+	child_issuer_ = issuer_ + "-" + subject_;
 	child_issuer_ = child_issuer_.substr(0, kStringMax); // limit child issuer size
 }
 
@@ -174,41 +178,33 @@ void ESCert::SerialiseWithoutSign(ESCrypto::ESSignType sign_type)
 	{
 		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for certificate");
 	}
+	sCertificateBody* cert = (sCertificateBody*)(serialised_data_.data() + sign_size);
 
 	// assure valid public key type
 	if (!IsValidPublicKeyType(public_key_type_))
 	{
-		throw ProjectSnakeException(kModuleName, "Certificate public key type is not supported: " + public_key_type());
+		throw ProjectSnakeException(kModuleName, "Certificate public key type is not supported: " + public_key_type_);
 	}
 
 	// serialise body
-	set_signature_issuer(issuer_.c_str(), issuer_.length());
-	set_public_key_type(public_key_type_);
-	set_name(name_.c_str(), name_.length());
-	set_unique_id(unique_id_);
+	cert->set_signature_issuer(issuer_.c_str());
+	cert->set_public_key_type(public_key_type_);
+	cert->set_subject(subject_.c_str());
+	cert->set_unique_id(unique_id_);
 	CreateChildIssuer();
 
-	// copy body into serialised data
-	memcpy(serialised_data_.data() + sign_size, &cert_body_, sizeof(sCertificateBody));
-
 	// copy public key into serialised data
-	const u8 public_exponent[Crypto::kRsaPublicExponentSize] = { 0x00, 0x01, 0x00, 0x01 };
-	if (public_key_type() == RSA_4096)
+	if (public_key_type_ == RSA_4096)
 	{
-		sRsa4096PublicKeyBody* rsa_key = (sRsa4096PublicKeyBody*)(serialised_data_.data() + sign_size + sizeof(sCertificateBody));
-		set_rsa_public_key_modulus(*rsa_key, public_key_);
-		set_rsa_public_key_public_exponent(*rsa_key, public_exponent);
+		memcpy(serialised_data_.data() + sign_size + sizeof(sCertificateBody), &public_key_rsa4096_, sizeof(sRsa4096PublicKeyBody));
 	}
-	else if (public_key_type() == RSA_2048)
+	else if (public_key_type_ == RSA_2048)
 	{
-		sRsa2048PublicKeyBody* rsa_key = (sRsa2048PublicKeyBody*)(serialised_data_.data() + sign_size + sizeof(sCertificateBody));
-		set_rsa_public_key_modulus(*rsa_key, public_key_);
-		set_rsa_public_key_public_exponent(*rsa_key, public_exponent);
+		memcpy(serialised_data_.data() + sign_size + sizeof(sCertificateBody), &public_key_rsa2048_, sizeof(sRsa2048PublicKeyBody));
 	}
-	else if (public_key_type() == ECDSA)
+	else if (public_key_type_ == ECDSA)
 	{
-		sEcdsaPublicKeyBody* ecdsa_key = (sEcdsaPublicKeyBody*)(serialised_data_.data() + sign_size + sizeof(sCertificateBody));
-		set_ecdsa_public_key(*ecdsa_key, public_key_);
+		memcpy(serialised_data_.data() + sign_size + sizeof(sCertificateBody), &public_key_ecdsa_, sizeof(sEcdsaPublicKeyBody));
 	}
 }
 
@@ -223,19 +219,17 @@ void ESCert::DeserialiseCert(const u8* cert_data)
 	}
 
 	// cache pointer
-	const u8* cert_body = (const u8*)ESCrypto::GetSignedBinaryBody(cert_data);
-	
-	// copy cert body into staging ground
-	memcpy(&cert_body_, cert_body, sizeof(sCertificateBody));
+	const sCertificateBody* cert_body = (const sCertificateBody*)ESCrypto::GetSignedBinaryBody(cert_data);
 
 	// confirm supported public key type
-	if (!IsValidPublicKeyType(public_key_type()))
+	public_key_type_ = cert_body->public_key_type();
+	if (!IsValidPublicKeyType(public_key_type_))
 	{
-		throw ProjectSnakeException(kModuleName, "Certificate public key type is not supported: " + public_key_type());
+		throw ProjectSnakeException(kModuleName, "Certificate public key type is not supported: " + public_key_type_);
 	}
 
 	// get public key size
-	u32 public_key_size = GetPublicKeySize(public_key_type());
+	u32 public_key_size = GetPublicKeySize(public_key_type_);
 
 	// save internal copy of certificate
 	size_t cert_size = ESCrypto::GetSignatureSize(cert_data) + sizeof(sCertificateBody) + public_key_size;
@@ -244,29 +238,33 @@ void ESCert::DeserialiseCert(const u8* cert_data)
 		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for certificate");
 	}
 	memcpy(serialised_data_.data(), cert_data, cert_size);
+	cert_body = (const sCertificateBody*)ESCrypto::GetSignedBinaryBody(serialised_data_.data_const());
+
+	if (cert_body->public_key_type() != public_key_type_)
+	{
+		throw ProjectSnakeException(kModuleName, "ToCToU Data Corruption");
+	}
 
 	// deserialise body
-	issuer_ = signature_issuer();
-	public_key_type_ = public_key_type();
-	name_ = name();
-	unique_id_ = unique_id();
+	issuer_ = cert_body->signature_issuer();
+	public_key_type_ = cert_body->public_key_type();
+	subject_ = cert_body->subject();
+	unique_id_ = cert_body->unique_id();
 	CreateChildIssuer();
 	
 	// deserialise public key
-	if (public_key_type() == RSA_4096)
+	const u8* public_key_pos = serialised_data_.data_const() + ESCrypto::GetSignatureSize(cert_data) + sizeof(sCertificateBody);
+	if (public_key_type_ == RSA_4096)
 	{
-		const sRsa4096PublicKeyBody* rsa_key = (const sRsa4096PublicKeyBody*)(cert_body + sizeof(sCertificateBody));
-		memcpy(public_key_, rsa_public_key_modulus(*rsa_key), Crypto::kRsa4096Size);
+		memcpy(&public_key_rsa4096_, public_key_pos, sizeof(sRsa4096PublicKeyBody));
 	}
-	else if (public_key_type() == RSA_2048)
+	else if (public_key_type_ == RSA_2048)
 	{
-		const sRsa2048PublicKeyBody* rsa_key = (const sRsa2048PublicKeyBody*)(cert_body + sizeof(sCertificateBody));
-		memcpy(public_key_, rsa_public_key_modulus(*rsa_key), Crypto::kRsa2048Size);
+		memcpy(&public_key_rsa2048_, public_key_pos, sizeof(sRsa2048PublicKeyBody));
 	}
-	else if (public_key_type() == ECDSA)
+	else if (public_key_type_ == ECDSA)
 	{
-		const sEcdsaPublicKeyBody* ecdsa_key = (const sEcdsaPublicKeyBody*)(cert_body + sizeof(sCertificateBody));
-		memcpy(public_key_, ecdsa_public_key(*ecdsa_key), Crypto::kEcdsaSize);
+		memcpy(&public_key_ecdsa_, public_key_pos, sizeof(sEcdsaPublicKeyBody));
 	}
 }
 
@@ -334,14 +332,57 @@ bool ESCert::ValidateSignature(const ESCert& signer) const
 	return is_valid;
 }
 
+ESCrypto::ESSignType ESCert::GetSignType() const
+{
+	if (serialised_data_.size() == 0)
+	{
+		throw ProjectSnakeException(kModuleName, "Data not yet serialised.");
+	}
+
+	return ESCrypto::GetSignatureType(serialised_data_.data_const());
+}
+
+const u8 * ESCert::GetSignature() const
+{
+	if (serialised_data_.size() == 0)
+	{
+		throw ProjectSnakeException(kModuleName, "Data not yet serialised.");
+	}
+
+	return serialised_data_.data_const() + sizeof(ESCrypto::ESSignType);
+}
+
+size_t ESCert::GetSignatureSize() const
+{
+	size_t size = 0;
+	ESCrypto::ESSignType sign_type = GetSignType();
+	if (ESCrypto::IsSignRsa4096(sign_type))
+	{
+		size = Crypto::kRsa4096Size;
+	}
+	else if (ESCrypto::IsSignRsa2048(sign_type))
+	{
+		size = Crypto::kRsa2048Size;
+	}
+	else if (ESCrypto::IsSignEcdsa(sign_type))
+	{
+		size = Crypto::kEcdsaSize;
+	}
+	else
+	{
+		throw ProjectSnakeException(kModuleName, "Illegal ESSignType: " + sign_type);
+	}
+	return size;
+}
+
 const std::string & ESCert::GetIssuer() const
 {
 	return issuer_;
 }
 
-const std::string & ESCert::GetName() const
+const std::string & ESCert::GetSubject() const
 {
-	return name_;
+	return subject_;
 }
 
 const std::string & ESCert::GetChildIssuer() const
@@ -366,7 +407,9 @@ void ESCert::GetPublicKey(Crypto::sRsa4096Key & key) const
 		throw ProjectSnakeException(kModuleName, "Public key inconsistent with public key type");
 	}
 
-	memcpy(key.modulus, public_key_, Crypto::kRsa4096Size);
+	memcpy(key.modulus, public_key_rsa4096_.modulus, Crypto::kRsa4096Size);
+	memset(key.priv_exponent, 0, Crypto::kRsa4096Size);
+	memcpy(key.public_exponent, public_key_rsa4096_.public_exponent, Crypto::kRsaPublicExponentSize);
 }
 
 void ESCert::GetPublicKey(Crypto::sRsa2048Key & key) const
@@ -376,7 +419,9 @@ void ESCert::GetPublicKey(Crypto::sRsa2048Key & key) const
 		throw ProjectSnakeException(kModuleName, "Public key inconsistent with public key type");
 	}
 
-	memcpy(key.modulus, public_key_, Crypto::kRsa2048Size);
+	memcpy(key.modulus, public_key_rsa2048_.modulus, Crypto::kRsa4096Size);
+	memset(key.priv_exponent, 0, Crypto::kRsa4096Size);
+	memcpy(key.public_exponent, public_key_rsa2048_.public_exponent, Crypto::kRsaPublicExponentSize);
 }
 
 void ESCert::GetPublicKey(Crypto::sEccPoint & key) const
@@ -386,6 +431,6 @@ void ESCert::GetPublicKey(Crypto::sEccPoint & key) const
 		throw ProjectSnakeException(kModuleName, "Public key inconsistent with public key type");
 	}
 
-	memcpy(key.r, public_key_, 0x1e);
-	memcpy(key.s, public_key_ + 0x1e, 0x1e);
+	memcpy(key.r, public_key_ecdsa_.r, Crypto::kEcParam240Bit);
+	memcpy(key.s, public_key_ecdsa_.s, Crypto::kEcParam240Bit);
 }
