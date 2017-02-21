@@ -5,16 +5,17 @@
 class Crypto
 {
 public:
-	static const int kSha1HashLen = 20;
-	static const int kSha256HashLen = 32;
-	static const int kAes128KeySize = 0x10;
-	static const int kAesBlockSize = 0x10;
-	static const int KAesCcmNonceSize = 0xc;
-	static const int kRsa1024Size = 0x80;
-	static const int kRsa2048Size = 0x100;
-	static const int kRsa4096Size = 0x200;
-	static const int kRsaPublicExponentSize = 4;
-	static const int kEcdsaSize = 0x3C;
+	static const size_t kSha1HashLen = 20;
+	static const size_t kSha256HashLen = 32;
+	static const size_t kAes128KeySize = 0x10;
+	static const size_t kAesBlockSize = 0x10;
+	static const size_t KAesCcmNonceSize = 0xc;
+	static const size_t kRsa1024Size = 0x80;
+	static const size_t kRsa2048Size = 0x100;
+	static const size_t kRsa4096Size = 0x200;
+	static const size_t kRsaPublicExponentSize = 4;
+	static const size_t kEcdsaSize = 0x3C;
+	static const size_t kEcParam240Bit = 0x1E;
 
 	enum HashType
 	{
@@ -42,21 +43,18 @@ public:
 	{
 		uint8_t modulus[kRsa1024Size];
 		uint8_t priv_exponent[kRsa1024Size];
-
-		void set(const uint8_t modulus[kRsa1024Size], const uint8_t priv_exponent[kRsa1024Size])
-		{
-			memcpy(this->modulus, modulus, kRsa1024Size);
-			memcpy(this->priv_exponent, priv_exponent, kRsa1024Size);
-		}
+		uint8_t public_exponent[kRsaPublicExponentSize];
 
 		void operator=(const sRsa1024Key& other)
 		{
-			set(other.modulus, other.priv_exponent);
+			memcpy(this->modulus, modulus, kRsa1024Size);
+			memcpy(this->priv_exponent, priv_exponent, kRsa1024Size);
+			memcpy(this->public_exponent, other.public_exponent, kRsaPublicExponentSize);
 		}
 
 		bool operator==(const sRsa1024Key& other)
 		{
-			return memcmp(this->modulus, other.modulus, kRsa1024Size) == 0 && memcmp(this->priv_exponent, other.priv_exponent, kRsa1024Size) == 0;
+			return memcmp(this->modulus, other.modulus, kRsa1024Size) == 0 && memcmp(this->priv_exponent, other.priv_exponent, kRsa1024Size) == 0 && memcpy(this->public_exponent, other.public_exponent, kRsaPublicExponentSize) == 0;
 		}
 	};
 
@@ -64,16 +62,18 @@ public:
 	{
 		uint8_t modulus[kRsa2048Size];
 		uint8_t priv_exponent[kRsa2048Size];
+		uint8_t public_exponent[kRsaPublicExponentSize];
 
 		void operator=(const sRsa2048Key& other)
 		{
 			memcpy(this->modulus, other.modulus, kRsa2048Size);
 			memcpy(this->priv_exponent, other.priv_exponent, kRsa2048Size);
+			memcpy(this->public_exponent, other.public_exponent, kRsaPublicExponentSize);
 		}
 
 		bool operator==(const sRsa2048Key& other)
 		{
-			return memcmp(this->modulus, other.modulus, kRsa2048Size) == 0 && memcmp(this->priv_exponent, other.priv_exponent, kRsa2048Size) == 0;
+			return memcmp(this->modulus, other.modulus, kRsa2048Size) == 0 && memcmp(this->priv_exponent, other.priv_exponent, kRsa2048Size) == 0 && memcpy(this->public_exponent, other.public_exponent, kRsaPublicExponentSize) == 0;
 		}
 	};
 
@@ -81,39 +81,41 @@ public:
 	{
 		uint8_t modulus[kRsa4096Size];
 		uint8_t priv_exponent[kRsa4096Size];
+		uint8_t public_exponent[kRsaPublicExponentSize];
 
 		void operator=(const sRsa4096Key& other)
 		{
 			memcpy(this->modulus, other.modulus, kRsa4096Size);
 			memcpy(this->priv_exponent, other.priv_exponent, kRsa4096Size);
+			memcpy(this->public_exponent, other.public_exponent, kRsaPublicExponentSize);
 		}
 
 		bool operator==(const sRsa4096Key& other)
 		{
-			return memcmp(this->modulus, other.modulus, kRsa4096Size) == 0 && memcmp(this->priv_exponent, other.priv_exponent, kRsa4096Size) == 0;
+			return memcmp(this->modulus, other.modulus, kRsa4096Size) == 0 && memcmp(this->priv_exponent, other.priv_exponent, kRsa4096Size) == 0 && memcpy(this->public_exponent, other.public_exponent, kRsaPublicExponentSize) == 0;
 		}
 	};
 
 	struct sEccPoint
 	{
-		uint8_t r[0x1e];
-		uint8_t s[0x1e];
+		uint8_t r[kEcParam240Bit];
+		uint8_t s[kEcParam240Bit];
 
 		void operator=(const sEccPoint& other) 
 		{
-			memcpy(this->r, other.r, 0x1e);
-			memcpy(this->s, other.s, 0x1e);
+			memcpy(this->r, other.r, kEcParam240Bit);
+			memcpy(this->s, other.s, kEcParam240Bit);
 		}
 
 		bool operator==(const sEccPoint& other)
 		{
-			return memcmp(this->r, other.r, 0x1e) == 0 && memcmp(this->s, other.s, 0x1e) == 0;
+			return memcmp(this->r, other.r, kEcParam240Bit) == 0 && memcmp(this->s, other.s, kEcParam240Bit) == 0;
 		}
 	};
 
 	struct sEccPrivateKey
 	{
-		uint8_t k[0x1e]; // stub
+		uint8_t k[kEcParam240Bit]; // stub
 	};
 #pragma pack (pop)
 
