@@ -40,7 +40,6 @@ public:
 	void SerialiseTmd(const Crypto::sRsa4096Key& private_key);
 	void SerialiseTmd(const Crypto::sRsa4096Key& private_key, ESTmdFormatVersion format);
 	void SetIssuer(const std::string& issuer);
-	//void SetFormatVersion(u8 version);
 	void SetCaCrlVersion(u8 version);
 	void SetSignerCrlVersion(u8 version);
 	void SetSystemVersion(u64 system_version);
@@ -58,6 +57,9 @@ public:
 	bool ValidateSignature(const Crypto::sRsa2048Key& key) const;
 	bool ValidateSignature(const Crypto::sRsa4096Key& key) const;
 	bool ValidateSignature(const ESCert& signer) const;
+	ESCrypto::ESSignType GetSignType() const;
+	const u8* GetSignature() const;
+	size_t GetSignatureSize() const;
 	const std::string& GetIssuer() const;
 	u8 GetFormatVersion() const;
 	u8 GetCaCrlVersion() const;

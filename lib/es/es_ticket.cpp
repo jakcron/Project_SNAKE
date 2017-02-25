@@ -460,6 +460,49 @@ bool ESTicket::ValidateSignature(const ESCert & signer) const
 	return is_valid;
 }
 
+ESCrypto::ESSignType ESTicket::GetSignType() const
+{
+	if (serialised_data_.size() == 0)
+	{
+		throw ProjectSnakeException(kModuleName, "Data not yet serialised.");
+	}
+
+	return ESCrypto::GetSignatureType(serialised_data_.data_const());
+}
+
+const u8 * ESTicket::GetSignature() const
+{
+	if (serialised_data_.size() == 0)
+	{
+		throw ProjectSnakeException(kModuleName, "Data not yet serialised.");
+	}
+
+	return serialised_data_.data_const() + sizeof(ESCrypto::ESSignType);
+}
+
+size_t ESTicket::GetSignatureSize() const
+{
+	size_t size = 0;
+	ESCrypto::ESSignType sign_type = GetSignType();
+	if (ESCrypto::IsSignRsa4096(sign_type))
+	{
+		size = Crypto::kRsa4096Size;
+	}
+	else if (ESCrypto::IsSignRsa2048(sign_type))
+	{
+		size = Crypto::kRsa2048Size;
+	}
+	else if (ESCrypto::IsSignEcdsa(sign_type))
+	{
+		size = Crypto::kEcdsaSize;
+	}
+	else
+	{
+		throw ProjectSnakeException(kModuleName, "Illegal ESSignType: " + sign_type);
+	}
+	return size;
+}
+
 const std::string & ESTicket::GetIssuer() const
 {
 	return issuer_;

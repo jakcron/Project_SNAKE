@@ -85,6 +85,9 @@ public:
 	bool ValidateSignature(const Crypto::sRsa2048Key& key) const;
 	bool ValidateSignature(const Crypto::sRsa4096Key& key) const;
 	bool ValidateSignature(const ESCert& signer) const;
+	ESCrypto::ESSignType GetSignType() const;
+	const u8* GetSignature() const;
+	size_t GetSignatureSize() const;
 	const std::string& GetIssuer() const;
 	const Crypto::sEccPoint& GetServerPublicKey() const;
 	u8 GetFormatVersion() const;
