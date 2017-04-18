@@ -42,41 +42,6 @@ int MemoryBlob::extend(size_t new_size)
 	return 0;
 }
 
-int MemoryBlob::OpenFile(const char * path)
-{
-	FILE* fp;
-	size_t filesz, filepos;
-
-	if ((fp = fopen(path, "rb")) == NULL)
-	{
-		return ERR_FAILOPEN;
-	}
-
-	fseek(fp, 0, SEEK_END);
-	filesz = ftell(fp);
-	rewind(fp);
-
-	if (alloc(filesz) != ERR_NONE)
-	{
-		fclose(fp);
-		return ERR_FAILMALLOC;
-	}
-
-	for (filepos = 0; filesz > kBlockSize; filesz -= kBlockSize, filepos += kBlockSize)
-	{
-		fread(data_.data() + filepos, 1, kBlockSize, fp);
-	}
-
-	if (filesz)
-	{
-		fread(data_.data() + filepos, 1, filesz, fp);
-	}
-
-	fclose(fp);
-
-	return ERR_NONE;
-}
-
 int MemoryBlob::AllocateMemory(size_t size)
 {
 	size_ = (size_t)align(size, 0x1000);
