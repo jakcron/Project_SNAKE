@@ -71,7 +71,7 @@ void ReplaceFileExtention(std::string& path, const std::string& new_extention)
 	return;
 }
 
-void AddPrefix(std::string& path, const std::string& prefix)
+void AddFilePrefix(std::string& path, const std::string& prefix)
 {
 #ifdef _WIN32
 	char path_separate = '\\';
@@ -145,9 +145,6 @@ int main(int argc, char** argv)
 		cia.SetTitleId(hdr.GetTitleId());
 		cia.SetVersion(0);
 
-#ifdef SYSUPD_RESTRICT
-		cia.SetCxiSaveDataSize(0); // no save data
-#else
 		// provide appriate save data size, based on card configuration
 		if (hdr.GetCardDevice() == CciHeader::CARD_DEVICE_NOR_FLASH) {
 			cia.SetCxiSaveDataSize(512 * 1024); // 512KB
@@ -158,7 +155,7 @@ int main(int argc, char** argv)
 		else {
 			cia.SetCxiSaveDataSize(0); // no save data
 		}
-#endif
+
 		int commonKeyId = 0;
 		if (ncch.IsEncrypted() == true && ncch.IsFixedAesKey() == false)
 		{
@@ -186,7 +183,7 @@ int main(int argc, char** argv)
 			cia.AddContent(i, i, ESContentInfo::ES_CONTENT_FLAG_ENCRYPTED, ncsd.data() + hdr.GetPartition(i).offset, hdr.GetPartition(i).size);
 		}
 
-
+		// if this is a system updater, append the footer
 		if (CtrProgramId::get_unique_id(hdr.GetTitleId()) == 0xff402)
 		{
 			CiaFooter footer;
@@ -201,9 +198,7 @@ int main(int argc, char** argv)
 		// Create outpath
 		std::string path(argv[1]);
 		ReplaceFileExtention(path, ".cia");
-		AddPrefix(path, "SD_");
-
-		std::cout << path << std::endl;
+		AddFilePrefix(path, "SD_");
 
 		cia.WriteToFile(path.c_str());
 	}
