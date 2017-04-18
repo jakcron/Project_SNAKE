@@ -113,7 +113,7 @@ bool ESContentInfo::ValidateHash(const u8 * hash) const
 	return memcmp(hash_, hash, IsSha1Hash()? Crypto::kSha1HashLen : Crypto::kSha256HashLen) == 0;
 }
 
-bool ESContentInfo::IsFlagSet(ESContentType flag) const
+bool ESContentInfo::IsFlagSet(ESContentFlag flag) const
 {
 	return (flags_ & flag) == flag;
 }
@@ -125,5 +125,5 @@ bool ESContentInfo::IsLegacy() const
 
 bool ESContentInfo::IsSha1Hash() const
 {
-	return IsFlagSet(ESContentType::ES_CONTENT_TYPE_SHA1_HASH) || IsLegacy();
+	return IsFlagSet(ESContentFlag::ES_CONTENT_FLAG_SHA1_HASH) || IsLegacy();
 }

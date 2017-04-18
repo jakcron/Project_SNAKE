@@ -208,7 +208,7 @@ private:
 		u64 extdata_id() const { return le_dword(extdata_id_); }
 		u32 system_save_id(int index) const { return le_word(system_save_ids_[index]); }
 		u32 other_user_save_id(int index) const { return read_u64(le_dword(other_user_save_ids_), k20BitIdMask, k20BitShift * (2-index)); }
-		bool use_other_variation_save_data() const { return le_dword(other_user_save_ids_) & (u64)BIT(kCanUseOtherVariationSaveBit); }
+		bool use_other_variation_save_data() const { return (le_dword(other_user_save_ids_) & (u64)BIT(kCanUseOtherVariationSaveBit)) == BIT(kCanUseOtherVariationSaveBit); }
 		u32 accessible_save_id(int index) const { return index < 3? other_user_save_id(index) : read_u64(le_dword(extdata_id_), k20BitIdMask, k20BitShift * (2 + 3 - index)); }
 		u64 fs_rights() const { return read_u64(le_dword(fs_rights_), kFsRightsMask, 0); }
 		bool fs_rights_has_bit(u8 bit) const { return (fs_rights() & BIT(bit)) == BIT(bit); }

@@ -32,12 +32,12 @@ void CiaReader::ImportCia(const u8 * cia_data)
 
 	if (header_.GetTicketSize() > 0)
 	{
-		tik_.DeserialiseTicket(cia_data + header_.GetTicketOffset());
+		tik_.DeserialiseTicket(cia_data + header_.GetTicketOffset(), header_.GetTicketSize());
 	}
 
 	if (header_.GetTmdSize() > 0)
 	{
-		tmd_.DeserialiseTmd(cia_data + header_.GetTmdOffset());
+		tmd_.DeserialiseTmd(cia_data + header_.GetTmdOffset(), header_.GetTmdSize());
 
 		DeserialiseTmdPlatformReservedData();
 	}

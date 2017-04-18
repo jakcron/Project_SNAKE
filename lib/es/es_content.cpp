@@ -28,7 +28,7 @@ void ESContent::EnableContent(bool isEnabled)
 
 const u8 * ESContent::GetData() const
 {
-	return is_shallow_copy_? data_ptr_ : content_.data_const();
+	return is_shallow_copy_? data_ptr_ : content_.data();
 }
 
 bool ESContent::IsContentEnabled() const

@@ -14,7 +14,7 @@ public:
 	int CreateCodeBlob(const u8* elf, bool is_page_aligned);
 
 	// data relevant for CXI creation
-	inline const u8* code_blob() const { return code_blob_.data_const(); }
+	inline const u8* code_blob() const { return code_blob_.data(); }
 	inline u32 code_size() const { return code_blob_.size(); }
 	inline const u8* module_id_blob() const { return module_id_.data; }
 	inline u32 module_id_size() const { return module_id_.file_size; }

@@ -29,7 +29,7 @@ void ExefsHeader::operator=(const ExefsHeader & other)
 
 const u8 * ExefsHeader::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t ExefsHeader::GetSerialisedDataSize() const
@@ -103,7 +103,7 @@ void ExefsHeader::DeserialiseData(const u8 * data)
 	}
 	memcpy(serialised_data_.data(), data, sizeof(sExefsHeader));
 
-	const sExefsHeader* hdr = (const sExefsHeader*)serialised_data_.data_const();
+	const sExefsHeader* hdr = (const sExefsHeader*)serialised_data_.data();
 
 	if (align_size_ == 0)
 	{

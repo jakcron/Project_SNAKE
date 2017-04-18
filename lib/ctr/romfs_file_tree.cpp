@@ -19,7 +19,7 @@ RomfsFileTree::~RomfsFileTree()
 
 const u8 * RomfsFileTree::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t RomfsFileTree::GetSerialisedDataSize() const
@@ -210,13 +210,13 @@ void RomfsFileTree::DeserialiseData(const u8 * data)
 	data_offset_ = hdr.GetDataOffset();
 
 	// deserialise hash tables
-	const u32* table = (const u32*)(serialised_data_.data_const() + hdr.GetDirHashMapTableOffset());
+	const u32* table = (const u32*)(serialised_data_.data() + hdr.GetDirHashMapTableOffset());
 	for (size_t i = 0; i < hdr.GetDirHashMapTableSize() / sizeof(u32); i++)
 	{
 		dir_hashmap_table_.push_back(le_word(table[i]));
 	}
 
-	table = (const u32*)(serialised_data_.data_const() + hdr.GetFileHashMapTableOffset());
+	table = (const u32*)(serialised_data_.data() + hdr.GetFileHashMapTableOffset());
 	for (size_t i = 0; i < hdr.GetFileHashMapTableSize() / sizeof(u32); i++)
 	{
 		file_hashmap_table_.push_back(le_word(table[i]));
@@ -224,7 +224,7 @@ void RomfsFileTree::DeserialiseData(const u8 * data)
 
 	// save dir node table
 	dir_node_table_size_ = hdr.GetDirNodeTableSize();
-	const u8* dir_node_ptr = (const u8*)(serialised_data_.data_const() + hdr.GetDirNodeTableOffset());
+	const u8* dir_node_ptr = (const u8*)(serialised_data_.data() + hdr.GetDirNodeTableOffset());
 	for (u32 pos = 0; pos < dir_node_table_size_; pos += dir_node_table_.back().GetNodeSize())
 	{
 
@@ -245,7 +245,7 @@ void RomfsFileTree::DeserialiseData(const u8 * data)
 
 	// save file node table
 	file_node_table_size_ = hdr.GetFileNodeTableSize();
-	const u8* file_node_ptr = (const u8*)(serialised_data_.data_const() + hdr.GetFileNodeTableOffset());
+	const u8* file_node_ptr = (const u8*)(serialised_data_.data() + hdr.GetFileNodeTableOffset());
 	for (u32 pos = 0; pos < file_node_table_size_; pos += file_node_table_.back().GetNodeSize())
 	{
 		// save maps

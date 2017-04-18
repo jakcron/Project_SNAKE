@@ -29,7 +29,7 @@ void CiaFooter::operator=(const CiaFooter & other)
 
 const u8 * CiaFooter::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t CiaFooter::GetSerialisedDataSize() const
@@ -58,7 +58,7 @@ void CiaFooter::SerialiseFooter()
 	// copy icon, if it exists
 	if (icon_.size())
 	{
-		memcpy(serialised_data_.data() + sizeof(sCiaFooterBody), icon_.data_const(), icon_.size());
+		memcpy(serialised_data_.data() + sizeof(sCiaFooterBody), icon_.data(), icon_.size());
 	}
 }
 
@@ -106,7 +106,7 @@ void CiaFooter::DeserialiseFooter(const u8* data, size_t size)
 	}
 	memcpy(serialised_data_.data(), data, size);
 
-	const sCiaFooterBody* body = (const sCiaFooterBody*)serialised_data_.data_const();
+	const sCiaFooterBody* body = (const sCiaFooterBody*)serialised_data_.data();
 	
 
 	// if there are dependencies, they will have the category MODULE, otherwise this is likely corrupt
@@ -133,7 +133,7 @@ void CiaFooter::DeserialiseFooter(const u8* data, size_t size)
 	if (serialised_data_.size() > sizeof(sCiaFooterBody))
 	{
 		size_t icon_size = serialised_data_.size() - sizeof(sCiaFooterBody);
-		SetIcon(serialised_data_.data_const() + sizeof(sCiaFooterBody), icon_size);
+		SetIcon(serialised_data_.data() + sizeof(sCiaFooterBody), icon_size);
 	}
 }
 
@@ -149,7 +149,7 @@ u64 CiaFooter::GetFirmwareTitleId() const
 
 const u8 * CiaFooter::GetIcon() const
 {
-	return icon_.data_const();
+	return icon_.data();
 }
 
 size_t CiaFooter::GetIconSize() const

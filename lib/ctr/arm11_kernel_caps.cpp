@@ -29,7 +29,7 @@ void Arm11KernelCaps::operator=(const Arm11KernelCaps & other)
 
 const u8 * Arm11KernelCaps::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t Arm11KernelCaps::GetSerialisedDataSize() const
@@ -237,7 +237,7 @@ void Arm11KernelCaps::DeserialiseData(const u8 * data)
 	}
 	memcpy(serialised_data_.data(), data, sizeof(sArm11KernelCaps));
 
-	const sArm11KernelCaps* kern = (const sArm11KernelCaps*)serialised_data_.data_const();
+	const sArm11KernelCaps* kern = (const sArm11KernelCaps*)serialised_data_.data();
 
 	std::vector<u32> interrupt_acl;
 	std::vector<u32> system_call_acl;

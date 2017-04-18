@@ -32,7 +32,7 @@ void NcchHeader::operator=(const NcchHeader & other)
 
 const u8 * NcchHeader::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t NcchHeader::GetSerialisedDataSize() const
@@ -281,7 +281,7 @@ void NcchHeader::DeserialiseHeader(const u8* ncch_data)
 
 	memcpy(serialised_data_.data(), ncch_data, serialised_data_.size());
 
-	const sSignedNcchHeader* hdr = (const sSignedNcchHeader*)(serialised_data_.data_const());
+	const sSignedNcchHeader* hdr = (const sSignedNcchHeader*)(serialised_data_.data());
 
 	if (memcmp(hdr->body.struct_signature(), kNcchStructSignature, 4) != 0)
 	{
@@ -335,7 +335,7 @@ void NcchHeader::DeserialiseHeader(const u8* ncch_data)
 
 bool NcchHeader::ValidateSignature(const Crypto::sRsa2048Key & ncch_rsa_key) const
 {
-	const struct sSignedNcchHeader* data = (const struct sSignedNcchHeader*)serialised_data_.data_const();
+	const struct sSignedNcchHeader* data = (const struct sSignedNcchHeader*)serialised_data_.data();
 
 	// hash header
 	u8 hash[Crypto::kSha256HashLen];
@@ -587,7 +587,7 @@ void NcchHeader::InitialiseAesCtr(AesCtrSectionId section, uint8_t ctr[Crypto::k
 
 void NcchHeader::GenerateAesKey(const uint8_t key_x[Crypto::kAes128KeySize], uint8_t key[Crypto::kAes128KeySize])
 {
-	CtrCrypto::KeyGenerator(key_x, serialised_data_.data_const(), key);
+	CtrCrypto::KeyGenerator(key_x, serialised_data_.data(), key);
 }
 
 void NcchHeader::GenerateAesKey(const uint8_t key_x[Crypto::kAes128KeySize], const u8 seed[Crypto::kAes128KeySize], uint8_t key[Crypto::kAes128KeySize])
@@ -607,7 +607,7 @@ void NcchHeader::GenerateAesKey(const uint8_t key_x[Crypto::kAes128KeySize], con
 	u8 hash[Crypto::kSha256HashLen];
 
 	// copy data
-	memcpy(hash_data + 0x00, serialised_data_.data_const(), Crypto::kAes128KeySize); // old key_y
+	memcpy(hash_data + 0x00, serialised_data_.data(), Crypto::kAes128KeySize); // old key_y
 	memcpy(hash_data + 0x10, seed, Crypto::kAesBlockSize); // seed
 	
 	// hash data

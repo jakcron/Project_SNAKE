@@ -141,7 +141,7 @@ void CiaBuilder::WriteToFile(const std::string & path)
 
 	// content
 	for (size_t i = 0; i < content_.size(); i++) {
-		bool is_content_encrypted = content_[i].IsFlagSet(ESContentInfo::ES_CONTENT_TYPE_ENCRYPTED);
+		bool is_content_encrypted = content_[i].IsFlagSet(ESContentInfo::ES_CONTENT_FLAG_ENCRYPTED);
 
 		if (is_content_encrypted) {
 			ESCrypto::SetupContentAesIv(content_[i].GetContentIndex(), content_iv_);
@@ -182,7 +182,7 @@ void CiaBuilder::WriteToBuffer(MemoryBlob& out)
 
 	u64 pos = header_.GetContentOffset();
 	for (size_t i = 0; i < content_.size(); i++) {
-		if (content_[i].IsFlagSet(ESContentInfo::ES_CONTENT_TYPE_ENCRYPTED)) {
+		if (content_[i].IsFlagSet(ESContentInfo::ES_CONTENT_FLAG_ENCRYPTED)) {
 			ESCrypto::SetupContentAesIv(content_[i].GetContentIndex(), content_iv_);
 			Crypto::AesCbcEncrypt(content_[i].GetData(), content_[i].GetSize(), titlekey_, content_iv_, out.data() + pos);
 		}

@@ -29,7 +29,7 @@ void Arm9AccessControl::operator=(const Arm9AccessControl & other)
 
 const u8 * Arm9AccessControl::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t Arm9AccessControl::GetSerialisedDataSize() const
@@ -80,7 +80,7 @@ void Arm9AccessControl::DeserialiseData(const u8 * data)
 	}
 	memcpy(serialised_data_.data(), data, sizeof(sArm9AccessControl));
 
-	const sArm9AccessControl* arm9 = (const sArm9AccessControl*)serialised_data_.data_const();
+	const sArm9AccessControl* arm9 = (const sArm9AccessControl*)serialised_data_.data();
 
 	for (u32 i = 0; i < kMaxIOFlags; i++)
 	{

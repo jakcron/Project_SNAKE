@@ -18,7 +18,7 @@ AppIcon::~AppIcon()
 
 const u8 * AppIcon::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t AppIcon::GetSerialisedDataSize() const
@@ -221,7 +221,7 @@ void AppIcon::DeserialiseData(const u8 * data)
 	memcpy(serialised_data_.data(), data, sizeof(sIcon));
 
 	// get pointer to header struct
-	const sIcon* icn = (const sIcon*)serialised_data_.data_const();
+	const sIcon* icn = (const sIcon*)serialised_data_.data();
 
 	// check for corruption
 	if (memcmp(icn->struct_signature(), kStructSignature, 4) != 0)

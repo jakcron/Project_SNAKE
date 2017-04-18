@@ -29,7 +29,7 @@ void CardInfoHeader::operator=(const CardInfoHeader & other)
 
 const u8 * CardInfoHeader::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t CardInfoHeader::GetSerialisedDataSize() const

@@ -18,7 +18,7 @@ RomfsHeader::~RomfsHeader()
 
 const u8 * RomfsHeader::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t RomfsHeader::GetSerialisedDataSize() const
@@ -75,7 +75,7 @@ void RomfsHeader::DeserialiseData(const u8 * data)
 		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for serialised data");
 	}
 	memcpy(serialised_data_.data(), data, sizeof(sRomfsHeader));
-	const sRomfsHeader* hdr = (const sRomfsHeader*)serialised_data_.data_const();
+	const sRomfsHeader* hdr = (const sRomfsHeader*)serialised_data_.data();
 
 	// corruption checks
 	if (hdr->header_size() != sizeof(sRomfsHeader))

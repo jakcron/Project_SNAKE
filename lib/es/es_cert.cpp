@@ -21,7 +21,7 @@ void ESCert::operator=(const ESCert & other)
 
 const u8* ESCert::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t ESCert::GetSerialisedDataSize() const
@@ -165,7 +165,7 @@ void ESCert::HashSerialisedData(ESCrypto::ESSignType type, u8* hash) const
 {
 	size_t data_size = sizeof(sCertificateBody) + GetPublicKeySize(public_key_type_);
 	size_t sign_size = ESCrypto::GetSignatureSize(type);
-	ESCrypto::HashData(type, serialised_data_.data_const() + sign_size, data_size, hash);
+	ESCrypto::HashData(type, serialised_data_.data() + sign_size, data_size, hash);
 }
 
 void ESCert::SerialiseWithoutSign(ESCrypto::ESSignType sign_type)
@@ -238,7 +238,7 @@ void ESCert::DeserialiseCert(const u8* cert_data)
 		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for certificate");
 	}
 	memcpy(serialised_data_.data(), cert_data, cert_size);
-	cert_body = (const sCertificateBody*)ESCrypto::GetSignedBinaryBody(serialised_data_.data_const());
+	cert_body = (const sCertificateBody*)ESCrypto::GetSignedBinaryBody(serialised_data_.data());
 
 	if (cert_body->public_key_type() != public_key_type_)
 	{
@@ -253,7 +253,7 @@ void ESCert::DeserialiseCert(const u8* cert_data)
 	CreateChildIssuer();
 	
 	// deserialise public key
-	const u8* public_key_pos = serialised_data_.data_const() + ESCrypto::GetSignatureSize(cert_data) + sizeof(sCertificateBody);
+	const u8* public_key_pos = serialised_data_.data() + ESCrypto::GetSignatureSize(cert_data) + sizeof(sCertificateBody);
 	if (public_key_type_ == RSA_4096)
 	{
 		memcpy(&public_key_rsa4096_, public_key_pos, sizeof(sRsa4096PublicKeyBody));
@@ -270,7 +270,7 @@ void ESCert::DeserialiseCert(const u8* cert_data)
 
 bool ESCert::ValidateSignature(const Crypto::sRsa2048Key& key) const
 {
-	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data_const());
+	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data());
 	if (!ESCrypto::IsSignRsa2048(sign_type))
 	{
 		throw ProjectSnakeException(kModuleName, "Attempted to validate signature with incompatible key");
@@ -279,12 +279,12 @@ bool ESCert::ValidateSignature(const Crypto::sRsa2048Key& key) const
 	// signature check
 	u8 hash[Crypto::kSha256HashLen];
 	HashSerialisedData(sign_type, hash);
-	return ESCrypto::VerifySignature(hash, key, serialised_data_.data_const()) == 0;
+	return ESCrypto::VerifySignature(hash, key, serialised_data_.data()) == 0;
 }
 
 bool ESCert::ValidateSignature(const Crypto::sRsa4096Key & key) const
 {
-	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data_const());
+	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data());
 	if (!ESCrypto::IsSignRsa4096(sign_type))
 	{
 		throw ProjectSnakeException(kModuleName, "Attempted to validate signature with incompatible key");
@@ -293,13 +293,13 @@ bool ESCert::ValidateSignature(const Crypto::sRsa4096Key & key) const
 	// signature check
 	u8 hash[Crypto::kSha256HashLen];
 	HashSerialisedData(sign_type, hash);
-	return ESCrypto::VerifySignature(hash, key, serialised_data_.data_const()) == 0;
+	return ESCrypto::VerifySignature(hash, key, serialised_data_.data()) == 0;
 }
 
 
 bool ESCert::ValidateSignature(const ESCert& signer) const
 {
-	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data_const());
+	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data());
 
 	if (signer.GetChildIssuer() != GetIssuer())
 	{
@@ -339,7 +339,7 @@ ESCrypto::ESSignType ESCert::GetSignType() const
 		throw ProjectSnakeException(kModuleName, "Data not yet serialised.");
 	}
 
-	return ESCrypto::GetSignatureType(serialised_data_.data_const());
+	return ESCrypto::GetSignatureType(serialised_data_.data());
 }
 
 const u8 * ESCert::GetSignature() const
@@ -349,7 +349,7 @@ const u8 * ESCert::GetSignature() const
 		throw ProjectSnakeException(kModuleName, "Data not yet serialised.");
 	}
 
-	return serialised_data_.data_const() + sizeof(ESCrypto::ESSignType);
+	return serialised_data_.data() + sizeof(ESCrypto::ESSignType);
 }
 
 size_t ESCert::GetSignatureSize() const

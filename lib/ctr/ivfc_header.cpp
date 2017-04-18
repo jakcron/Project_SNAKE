@@ -71,7 +71,7 @@ void IvfcHeader::ClearDeserialisedVariables()
 
 const u8 * IvfcHeader::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t IvfcHeader::GetSerialisedDataSize() const
@@ -140,7 +140,7 @@ void IvfcHeader::DeserialiseData(const u8 * data)
 	memcpy(serialised_data_.data(), data, sizeof(sIvfcHeader));
 
 	
-	const sIvfcHeader* hdr = (const sIvfcHeader*)serialised_data_.data_const();
+	const sIvfcHeader* hdr = (const sIvfcHeader*)serialised_data_.data();
 
 	// check for corruption
 	if (memcmp(hdr->struct_signature(), kIvfcStructSignature, 4) != 0)

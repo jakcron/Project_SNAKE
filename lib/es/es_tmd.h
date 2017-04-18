@@ -10,7 +10,7 @@
 class ESTmd
 {
 public:
-	// public enums / structs
+	// public enums / constants
 	enum ESTmdFormatVersion
 	{
 		ES_TMD_VER_0,
@@ -19,9 +19,14 @@ public:
 
 	enum ESTitleType
 	{
+		ES_TITLE_TYPE_NC_TITLE = 0,
+		ES_TITLE_TYPE_NG_TITLE = BIT(0),
+		ES_TITLE_TYPE_RVL = BIT(1),
 		ES_TITLE_TYPE_DATA = BIT(3),
-		ES_TITLE_TYPE_CTR = BIT(6)
+		ES_TITLE_TYPE_CTR = BIT(6),
+		ES_TITLE_TYPE_CAFE = BIT(8),
 	};
+	static const int kPlatformReservedDataSize = 0x3E;
 
 	// Constructor/destructor
 	ESTmd();
@@ -53,7 +58,7 @@ public:
 	void AddContent(const ESContentInfo& content_info);
 
 	// Ticket Deserialisation
-	void DeserialiseTmd(const u8* tmd_data);
+	void DeserialiseTmd(const u8* tmd_data, size_t size);
 	bool ValidateSignature(const Crypto::sRsa2048Key& key) const;
 	bool ValidateSignature(const Crypto::sRsa4096Key& key) const;
 	bool ValidateSignature(const ESCert& signer) const;
@@ -68,6 +73,7 @@ public:
 	u64 GetTitleId() const;
 	ESTitleType GetTitleType() const;
 	const std::string& GetCompanyCode() const;
+	bool HasPlatformReservedData() const;
 	const u8* GetPlatformReservedData() const;
 	u32 GetAccessRights() const;
 	u16 GetTitleVersion() const;
@@ -83,7 +89,7 @@ private:
 	static const u8 kFormatVersion = 1;
 	static const u8 kCaCrlVersion = 0;
 	static const u8 kSignerCrlVersion = 0;
-	static const int kPlatformReservedDataSize = 0x3E;
+	
 	static const int kInfoRecordNum = 64;
 	static const u32 kContentSizeAlign = 0x10;
 
@@ -292,8 +298,8 @@ private:
 	void SerialiseWithoutSign_v0(ESCrypto::ESSignType sign_type);
 	void SerialiseWithoutSign_v1(ESCrypto::ESSignType sign_type);
 	u8 GetRawBinaryFormatVersion(const u8* raw_tmd_body);
-	void Deserialise_v0(const u8* tmd_data);
-	void Deserialise_v1(const u8* tmd_data);
+	void Deserialise_v0(const u8* tmd_data, size_t size);
+	void Deserialise_v1(const u8* tmd_data, size_t size);
 
 
 	bool IsSupportedFormatVersion(u8 version) const;

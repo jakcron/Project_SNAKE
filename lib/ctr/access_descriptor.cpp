@@ -29,7 +29,7 @@ void AccessDescriptor::operator=(const AccessDescriptor & other)
 
 const u8 * AccessDescriptor::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t AccessDescriptor::GetSerialisedDataSize() const
@@ -116,7 +116,7 @@ void AccessDescriptor::DeserialiseData(const u8 * data)
 	}
 	memcpy(serialised_data_.data(), data, sizeof(sAccessDescriptor));
 
-	const sAccessDescriptor* desc = (const sAccessDescriptor*)serialised_data_.data_const();
+	const sAccessDescriptor* desc = (const sAccessDescriptor*)serialised_data_.data();
 
 	memcpy(ncch_public_key_.modulus, desc->body.ncch_rsa_public_key, Crypto::kRsa2048Size);
 	arm11_local_caps_.DeserialiseData(desc->body.arm11_local_caps);
@@ -126,7 +126,7 @@ void AccessDescriptor::DeserialiseData(const u8 * data)
 
 bool AccessDescriptor::ValidateSignature(const Crypto::sRsa2048Key & accessdesc_rsa_key) const
 {
-	const sAccessDescriptor* data = (const sAccessDescriptor*)serialised_data_.data_const();
+	const sAccessDescriptor* data = (const sAccessDescriptor*)serialised_data_.data();
 
 	// hash header
 	u8 hash[Crypto::kSha256HashLen];

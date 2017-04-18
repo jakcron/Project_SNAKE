@@ -19,7 +19,7 @@ RomfsFileNode::~RomfsFileNode()
 
 const u8 * RomfsFileNode::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t RomfsFileNode::GetSerialisedDataSize() const
@@ -107,7 +107,7 @@ void RomfsFileNode::DeserialiseData(const u8 * data)
 
 	// save local copy of serialised data
 	memcpy(serialised_data_.data(), data, size);
-	node = (const sFileNode*)serialised_data_.data_const();
+	node = (const sFileNode*)serialised_data_.data();
 
 	// check data wasn't corrupted
 	if (node->node_size() != size)
@@ -123,7 +123,7 @@ void RomfsFileNode::DeserialiseData(const u8 * data)
 	hashmap_sibling_node_ = node->hashmap_sibling_node();
 
 	name_.clear();
-	const char16_t* name = (const char16_t*)(serialised_data_.data_const() + sizeof(sFileNode));
+	const char16_t* name = (const char16_t*)(serialised_data_.data() + sizeof(sFileNode));
 	for (size_t i = 0; i < node->name_size() / 2; i++)
 	{
 		name_.push_back(le_hword(name[i]));

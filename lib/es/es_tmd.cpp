@@ -13,12 +13,12 @@ ESTmd::~ESTmd()
 
 void ESTmd::operator=(const ESTmd & other)
 {
-	DeserialiseTmd(other.GetSerialisedData());
+	DeserialiseTmd(other.GetSerialisedData(), other.GetSerialisedDataSize());
 }
 
 const u8* ESTmd::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t ESTmd::GetSerialisedDataSize() const
@@ -42,7 +42,7 @@ void ESTmd::HashSerialisedData(ESCrypto::ESSignType sign_type, u8* hash) const
 		throw ProjectSnakeException(kModuleName, "Unsupported TMD version");
 	}
 
-	ESCrypto::HashData(sign_type, serialised_data_.data_const() + sign_size, data_size, hash);
+	ESCrypto::HashData(sign_type, serialised_data_.data() + sign_size, data_size, hash);
 }
 
 void ESTmd::SerialiseWithoutSign_v0(ESCrypto::ESSignType sign_type)
@@ -114,7 +114,7 @@ void ESTmd::SerialiseWithoutSign_v1(ESCrypto::ESSignType sign_type)
 		info_ptr[i].set_index(content_list_[i].GetContentIndex());
 		info_ptr[i].set_flag(content_list_[i].GetFlags());
 		info_ptr[i].set_size(content_list_[i].GetSize());
-		if (content_list_[i].IsFlagSet(ESContentInfo::ES_CONTENT_TYPE_SHA1_HASH)) {
+		if (content_list_[i].IsFlagSet(ESContentInfo::ES_CONTENT_FLAG_SHA1_HASH)) {
 			info_ptr[i].set_sha1_hash(content_list_[i].GetHash());
 		}
 		else {
@@ -155,7 +155,7 @@ u8 ESTmd::GetRawBinaryFormatVersion(const u8* raw_tmd_body)
 	return raw_tmd_body[0x40];
 }
 
-void ESTmd::Deserialise_v0(const u8 * tmd_data)
+void ESTmd::Deserialise_v0(const u8 * tmd_data, size_t size)
 {
 	// cache body pointer
 	const u8* tmd_body = (const u8*)ESCrypto::GetSignedBinaryBody(tmd_data);
@@ -165,6 +165,10 @@ void ESTmd::Deserialise_v0(const u8 * tmd_data)
 
 	// save internal copy of tmd
 	size_t tmd_size = ESCrypto::GetSignatureSize(tmd_data) + sizeof(sTitleMetadataBody_v0) + sizeof(sContentInfo_v0) * body->content_num();
+	if (tmd_size > size)
+	{
+		throw ProjectSnakeException(kModuleName, "Tmd is corrupt");
+	}
 	if (serialised_data_.alloc(tmd_size) != serialised_data_.ERR_NONE)
 	{
 		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for TMD");
@@ -195,7 +199,7 @@ void ESTmd::Deserialise_v0(const u8 * tmd_data)
 	}
 }
 
-void ESTmd::Deserialise_v1(const u8* tmd_data)
+void ESTmd::Deserialise_v1(const u8* tmd_data, size_t size)
 {
 	// cache body pointer
 	const u8* tmd_body = (const u8*)ESCrypto::GetSignedBinaryBody(tmd_data);
@@ -205,6 +209,10 @@ void ESTmd::Deserialise_v1(const u8* tmd_data)
 
 	// save internal copy of tmd
 	size_t tmd_size = ESCrypto::GetSignatureSize(tmd_data) + sizeof(sTitleMetadataBody_v1) + sizeof(sInfoRecord) * kInfoRecordNum + sizeof(sContentInfo_v1) * body->content_num();
+	if (tmd_size > size)
+	{
+		throw ProjectSnakeException(kModuleName, "Tmd is corrupt");
+	}
 	if (serialised_data_.alloc(tmd_size) != serialised_data_.ERR_NONE)
 	{
 		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for TMD");
@@ -418,7 +426,7 @@ void ESTmd::AddContent(const ESContentInfo& content_info)
 	content_num_++;
 }
 
-void ESTmd::DeserialiseTmd(const u8* tmd_data)
+void ESTmd::DeserialiseTmd(const u8* tmd_data, size_t size)
 {
 	ClearDeserialisedVariables();
 
@@ -435,11 +443,11 @@ void ESTmd::DeserialiseTmd(const u8* tmd_data)
 	u8 format_version = GetRawBinaryFormatVersion(tmd_body);
 	if (format_version == ES_TMD_VER_0) 
 	{
-		Deserialise_v0(tmd_data);
+		Deserialise_v0(tmd_data, size);
 	}
 	else if (format_version == ES_TMD_VER_1) 
 	{
-		Deserialise_v1(tmd_data);
+		Deserialise_v1(tmd_data, size);
 	}
 	else {
 		throw ProjectSnakeException(kModuleName, "Unsupported TMD format version");
@@ -448,7 +456,7 @@ void ESTmd::DeserialiseTmd(const u8* tmd_data)
 
 bool ESTmd::ValidateSignature(const Crypto::sRsa2048Key & key) const
 {
-	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data_const());
+	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data());
 	if (!ESCrypto::IsSignRsa2048(sign_type))
 	{
 		throw ProjectSnakeException(kModuleName, "Attempted to validate signature with incompatible key");
@@ -457,12 +465,12 @@ bool ESTmd::ValidateSignature(const Crypto::sRsa2048Key & key) const
 	// signature check
 	u8 hash[Crypto::kSha256HashLen];
 	HashSerialisedData(sign_type, hash);
-	return ESCrypto::VerifySignature(hash, key, serialised_data_.data_const()) == 0;
+	return ESCrypto::VerifySignature(hash, key, serialised_data_.data()) == 0;
 }
 
 bool ESTmd::ValidateSignature(const Crypto::sRsa4096Key & key) const
 {
-	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data_const());
+	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data());
 	if (!ESCrypto::IsSignRsa4096(sign_type))
 	{
 		throw ProjectSnakeException(kModuleName, "Attempted to validate signature with incompatible key");
@@ -471,12 +479,12 @@ bool ESTmd::ValidateSignature(const Crypto::sRsa4096Key & key) const
 	// signature check
 	u8 hash[Crypto::kSha256HashLen];
 	HashSerialisedData(sign_type, hash);
-	return ESCrypto::VerifySignature(hash, key, serialised_data_.data_const()) == 0;
+	return ESCrypto::VerifySignature(hash, key, serialised_data_.data()) == 0;
 }
 
 bool ESTmd::ValidateSignature(const ESCert & signer) const
 {
-	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data_const());
+	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data());
 
 	if (signer.GetChildIssuer() != GetIssuer())
 	{
@@ -516,7 +524,7 @@ ESCrypto::ESSignType ESTmd::GetSignType() const
 		throw ProjectSnakeException(kModuleName, "Data not yet serialised.");
 	}
 
-	return ESCrypto::GetSignatureType(serialised_data_.data_const());
+	return ESCrypto::GetSignatureType(serialised_data_.data());
 }
 
 const u8 * ESTmd::GetSignature() const
@@ -526,7 +534,7 @@ const u8 * ESTmd::GetSignature() const
 		throw ProjectSnakeException(kModuleName, "Data not yet serialised.");
 	}
 
-	return serialised_data_.data_const() + sizeof(ESCrypto::ESSignType);
+	return serialised_data_.data() + sizeof(ESCrypto::ESSignType);
 }
 
 size_t ESTmd::GetSignatureSize() const
@@ -590,6 +598,20 @@ ESTmd::ESTitleType ESTmd::GetTitleType() const
 const std::string& ESTmd::GetCompanyCode() const
 {
 	return company_code_;
+}
+
+bool ESTmd::HasPlatformReservedData() const
+{
+	bool has_data = false;
+	for (size_t i = 0; i < kPlatformReservedDataSize; i++)
+	{
+		if (platform_reserved_data_[i] != 0)
+		{
+			has_data = true;
+			break;
+		}
+	}
+	return has_data;
 }
 
 const u8 * ESTmd::GetPlatformReservedData() const

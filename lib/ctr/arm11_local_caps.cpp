@@ -29,7 +29,7 @@ void Arm11LocalCaps::operator=(const Arm11LocalCaps & other)
 
 const u8 * Arm11LocalCaps::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t Arm11LocalCaps::GetSerialisedDataSize() const
@@ -298,7 +298,7 @@ void Arm11LocalCaps::DeserialiseData(const u8 * data)
 	}
 	memcpy(serialised_data_.data(), data, sizeof(sArm11LocalCapabilities));
 
-	const sArm11LocalCapabilities* local = (const sArm11LocalCapabilities*)serialised_data_.data_const();
+	const sArm11LocalCapabilities* local = (const sArm11LocalCapabilities*)serialised_data_.data();
 
 	program_id_ = local->program_id();
 	firm_title_id_ = local->firm_title_id();

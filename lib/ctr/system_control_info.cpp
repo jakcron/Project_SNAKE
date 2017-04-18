@@ -29,7 +29,7 @@ void SystemControlInfo::operator=(const SystemControlInfo & other)
 
 const u8* SystemControlInfo::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t SystemControlInfo::GetSerialisedDataSize() const
@@ -155,7 +155,7 @@ void SystemControlInfo::DeserialiseData(const u8 * data)
 	}
 	memcpy(serialised_data_.data(), data, sizeof(sSystemControlInfo));
 
-	const sSystemControlInfo* sci = (const sSystemControlInfo*)serialised_data_.data_const();
+	const sSystemControlInfo* sci = (const sSystemControlInfo*)serialised_data_.data();
 
 	process_title_ = std::string(sci->process_title(), kProcessTitleLength);
 	is_code_compressed_ = sci->is_code_compressed();

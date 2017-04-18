@@ -27,7 +27,7 @@ void CiaHeader::operator=(const CiaHeader & other)
 
 const u8* CiaHeader::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t CiaHeader::GetSerialisedDataSize() const

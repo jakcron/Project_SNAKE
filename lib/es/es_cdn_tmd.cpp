@@ -13,7 +13,7 @@ ESCdnTmd::~ESCdnTmd()
 
 void ESCdnTmd::DeserialiseTmd(const u8 * tmd_data, size_t size)
 {
-	tmd_.DeserialiseTmd(tmd_data);
+	tmd_.DeserialiseTmd(tmd_data, size);
 	if (size > tmd_.GetSerialisedDataSize()) {
 		certs_.DeserialiseCertChain(tmd_data + tmd_.GetSerialisedDataSize(), size - tmd_.GetSerialisedDataSize());
 	}

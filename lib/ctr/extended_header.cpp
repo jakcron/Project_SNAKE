@@ -41,7 +41,7 @@ void ExtendedHeader::operator=(const ExtendedHeader & other)
 
 const u8 * ExtendedHeader::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t ExtendedHeader::GetSerialisedDataSize() const
@@ -101,7 +101,7 @@ void ExtendedHeader::DeserialiseData(const u8 * data)
 	}
 	memcpy(serialised_data_.data(), data, sizeof(sExtendedHeader));
 
-	const sExtendedHeader* exhdr = (const sExtendedHeader*)serialised_data_.data_const();
+	const sExtendedHeader* exhdr = (const sExtendedHeader*)serialised_data_.data();
 
 	system_control_info_.DeserialiseData(exhdr->system_control_info);
 	arm11_local_caps_.DeserialiseData(exhdr->arm11_local_caps);

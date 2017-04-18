@@ -30,7 +30,7 @@ void CciHeader::operator=(const CciHeader & other)
 
 const u8 * CciHeader::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t CciHeader::GetSerialisedDataSize() const
@@ -152,7 +152,7 @@ void CciHeader::DeserialiseHeader(const u8 * cci_data)
 	// get pointer to header struct
 	memcpy(serialised_data_.data(), cci_data, serialised_data_.size());
 
-	const sSignedCciHeader* hdr = (const sSignedCciHeader*)(serialised_data_.data_const());
+	const sSignedCciHeader* hdr = (const sSignedCciHeader*)(serialised_data_.data());
 
 	// validate header bytes
 	if (memcmp(hdr->body.struct_signature(), kCciStructSignature, 4) != 0)
@@ -222,7 +222,7 @@ void CciHeader::DeserialiseHeader(const u8 * cci_data)
 
 bool CciHeader::ValidateSignature(const Crypto::sRsa2048Key & ncsd_rsa_key) const
 {
-	const struct sSignedCciHeader* data = (const struct sSignedCciHeader*)serialised_data_.data_const();
+	const struct sSignedCciHeader* data = (const struct sSignedCciHeader*)serialised_data_.data();
 
 	// hash header
 	u8 hash[Crypto::kSha256HashLen];

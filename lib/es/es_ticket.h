@@ -32,8 +32,10 @@ public:
 		ES_LC_NUM_TITLES = 3,
 		ES_LC_NUM_LAUNCH = 4,
 		ES_LC_ELAPSED_TIME = 5,
+		ES_MAX_LIMIT_TYPE = 8,
 	};
 
+	/*
 	enum ESItemRight
 	{
 		ES_ITEM_RIGHT_PERMANENT = 1,
@@ -43,6 +45,7 @@ public:
 		ES_ITEM_RIGHT_ACCESS_TITLE = 5,
 		ES_ITEM_RIGHT_LIMITED_RESOURCE = 6,
 	};
+	*/
 
 	// Constructor/Destructor
 	ESTicket();
@@ -68,7 +71,7 @@ public:
 	void SetTicketId(u64 ticket_id);
 	void SetDeviceId(u32 device_id);
 	void SetTitleId(u64 title_id);
-	void SetSystemAccessMask(u16 system_access_mask);
+	void EnableSystemContentAccess(u16 index);
 	void SetTitleVersion(u16 title_version);
 	void SetAccessTitleId(u32 access_title_id);
 	void SetAccessTitleIdMask(u32 access_title_id_mask);
@@ -78,10 +81,11 @@ public:
 	void SetAudit(u8 audit);
 	void AddLimit(ESLimitCode limit_code, u32 value);
 	void RemoveLimit(ESLimitCode limit_code);
+	void ClearLimits();
 	void EnableContent(u16 index);
 
 	// Ticket Deserialisation
-	void DeserialiseTicket(const u8* ticket_data);
+	void DeserialiseTicket(const u8* ticket_data, size_t size);
 	bool ValidateSignature(const Crypto::sRsa2048Key& key) const;
 	bool ValidateSignature(const Crypto::sRsa4096Key& key) const;
 	bool ValidateSignature(const ESCert& signer) const;
@@ -90,6 +94,7 @@ public:
 	size_t GetSignatureSize() const;
 	const std::string& GetIssuer() const;
 	const Crypto::sEccPoint& GetServerPublicKey() const;
+	bool HasServerPublicKey() const;
 	u8 GetFormatVersion() const;
 	u8 GetCaCrlVersion() const;
 	u8 GetSignerCrlVersion() const;
@@ -100,7 +105,7 @@ public:
 	bool IsTicketAssociatedWithDevice() const;
 	u32 GetDeviceId() const;
 	u64 GetTitleId() const;
-	u16 GetSystemAccessMask() const;
+	const std::vector<u16>& GetSystemAccessibleContentList() const;
 	u16 GetTitleVersion() const;
 	u32 GetAccessTitleId() const;
 	u32 GetAccessTitleIdMask() const;
@@ -109,6 +114,7 @@ public:
 	bool IsTicketAssociatedWithEShopAccount() const;
 	u32 GetEShopAccountId() const;
 	u8 GetAudit() const;
+	bool HasLimits() const;
 	bool IsLimitSet(ESLimitCode limit_code) const;
 	u32 GetLimit(ESLimitCode limit_code) const;
 	bool IsContentEnabled(u16 content_index) const;
@@ -124,6 +130,7 @@ private:
 	static const int kCaCrlVersion = 0;
 	static const int kSignerCrlVersion = 0;
 	static const u32 kEnabledIndexMax_v0 = 0x200; // 0x0-0x1ff
+	static const u32 kSystemAccessIndexMax_v0 = 0x10; // 0x0-0xf
 	static const u32 kEnabledIndexMax_v1 = 0x10000; // 0x0-0xffff
 	static const int kContentIndexBlockSize = 0x80;
 	static const u16 kContentIndexUpperMask = 0xFC00;
@@ -133,11 +140,6 @@ private:
 	enum ESLicenseTypePrivate
 	{
 		ES_LICENSE_MASK = 15,
-	};
-
-	enum ESLimitCodePrivate
-	{
-		ES_MAX_LIMIT_TYPE = 8,
 	};
 
 	// Private Structures
@@ -161,7 +163,7 @@ private:
 		u64 ticket_id_;
 		u32 device_id_;
 		u64 title_id_;
-		u16 system_title_access_mask_;
+		u8 system_access_content_mask_[2];
 		u16 title_version_;
 		u32 access_title_id_;
 		u32 access_title_id_mask_;
@@ -169,7 +171,7 @@ private:
 		u8 key_id_;
 		u8 reserved3_[0x2f];
 		u8 audit_; // VC title related (RVL only?)
-		u8 enabled_content_bits_[0x40];
+		u8 enabled_content_mask_[0x40];
 		u8 reserved5_[0x2];
 		sLimit limits_[ES_MAX_LIMIT_TYPE];
 
@@ -183,14 +185,14 @@ private:
 		u64 ticket_id() const { return be_dword(ticket_id_); }
 		u32 device_id() const { return be_word(device_id_); }
 		u64 title_id() const { return be_dword(title_id_); }
-		u16 system_title_access_mask() const { return be_hword(system_title_access_mask_); }
+		bool is_content_system_accessible(u16 index) const { return (system_access_content_mask_[((index / 8) % kSystemAccessIndexMax_v0)] & BIT(index % 8)) != 0; }
 		u16 title_version() const { return be_hword(title_version_); }
 		u32 access_title_id() const { return be_word(access_title_id_); }
 		u32 access_title_id_mask() const { return be_word(access_title_id_mask_); }
 		ESLicenseType license_type() const { return (ESLicenseType)(license_type_ & ES_LICENSE_MASK); }
 		u8 key_id() const { return key_id_; }
 		u8 audit() const { return audit_; }
-		bool is_content_enabled(u16 index) const { return (enabled_content_bits_[((index / 8) & 0x3f)] & BIT(index % 8)) != 0; }
+		bool is_content_enabled(u16 index) const { return (enabled_content_mask_[((index / 8) % kEnabledIndexMax_v0)] & BIT(index % 8)) != 0; }
 		ESLimitCode limit_code(u8 index) const { return (ESLimitCode)be_word(limits_[index].id); }
 		u32 limit_value(u8 index) const { return be_word(limits_[index].value); }
 
@@ -204,15 +206,16 @@ private:
 		void set_ticket_id(u64 ticket_id) { ticket_id_ = be_dword(ticket_id); }
 		void set_device_id(u32 device_id) { device_id_ = be_word(device_id); }
 		void set_title_id(u64 title_id) { title_id_ = be_dword(title_id); }
-		void set_system_title_access_mask(u16 system_title_access_mask) { system_title_access_mask_ = be_hword(system_title_access_mask); }
+		void enable_system_content_access(u16 index) { system_access_content_mask_[(index / 8) % kSystemAccessIndexMax_v0] |= BIT(index % 8); }
+		void disable_system_content_access(u16 index) { system_access_content_mask_[(index / 8) % kSystemAccessIndexMax_v0] &= ~BIT(index % 8); }
 		void set_title_version(u16 title_version) { title_version_ = be_hword(title_version); }
 		void set_access_title_id(u32 access_title_id) { access_title_id_ = be_word(access_title_id); }
 		void set_access_title_id_mask(u32 access_title_id_mask) { access_title_id_mask_ = be_word(access_title_id_mask); }
 		void set_license_type(ESLicenseType license_type) { license_type_ = license_type & ES_LICENSE_MASK; }
 		void set_key_id(u8 key_id) { key_id_ = key_id; }
 		void set_audit(u8 audit) { audit_ = audit; }
-		void enable_content_index(u16 index) { enabled_content_bits_[(index / 8) % 0x40] |= BIT(index % 8); }
-		void disable_content_index(u16 index) { enabled_content_bits_[(index / 8) % 0x40] &= ~BIT(index % 8); }
+		void enable_content(u16 index) { enabled_content_mask_[(index / 8) % 0x40] |= BIT(index % 8); }
+		void disable_content(u16 index) { enabled_content_mask_[(index / 8) % 0x40] &= ~BIT(index % 8); }
 		void set_limit(u8 index, ESLimitCode code, u32 value) { limits_[index].id = be_word(code); limits_[index].value = be_word(value); }
 	};
 
@@ -357,12 +360,11 @@ private:
 	u64 ticket_id_;
 	u32 device_id_;
 	u64 title_id_;
-	u16 system_title_access_mask_;
+	std::vector<u16> system_accessible_content_;
 	u16 title_version_;
 	u32 access_title_id_;
 	u32 access_title_id_mask_;
 	ESLicenseType license_type_;
-	ESItemRight item_right_;
 	u8 common_key_index_;
 	u32 eshop_account_id_;
 	u8 audit_;
@@ -382,8 +384,10 @@ private:
 	void SerialiseWithoutSign_v0(ESCrypto::ESSignType sign_type);
 	void SerialiseWithoutSign_v1(ESCrypto::ESSignType sign_type);
 	u8 GetRawBinaryFormatVersion(const u8* raw_tik_body);
-	void Deserialise_v0(const u8* tik_data);
-	void Deserialise_v1(const u8* tik_data);
+	void Deserialise_v0(const u8* tik_data, size_t size);
+	void Deserialise_v1(const u8* tik_data, size_t size);
+
+	bool IsEcdsaPublicKeySet(const Crypto::sEccPoint& public_key) const;
 
 	bool IsSupportedFormatVersion(u8 version) const;
 

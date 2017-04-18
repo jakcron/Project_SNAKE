@@ -15,12 +15,12 @@ ESTicket::~ESTicket()
 
 void ESTicket::operator=(const ESTicket & other)
 {
-	DeserialiseTicket(other.GetSerialisedData());
+	DeserialiseTicket(other.GetSerialisedData(), other.GetSerialisedDataSize());
 }
 
 const u8* ESTicket::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t ESTicket::GetSerialisedDataSize() const 
@@ -62,11 +62,11 @@ void ESTicket::HashSerialisedData(ESCrypto::ESSignType sign_type, u8 * hash) con
 	}
 	else if (format_version_ == ES_TIK_VER_1)
 	{
-		const sContentIndexChunkHeader* cntHdr = (const sContentIndexChunkHeader*)(serialised_data_.data_const() + sign_size + sizeof(sTicketBody_v1));
+		const sContentIndexChunkHeader* cntHdr = (const sContentIndexChunkHeader*)(serialised_data_.data() + sign_size + sizeof(sTicketBody_v1));
 		data_size = sizeof(sTicketBody_v1) + cntHdr->total_size();
 	}
 	
-	ESCrypto::HashData(sign_type, serialised_data_.data_const() + sign_size, data_size, hash);
+	ESCrypto::HashData(sign_type, serialised_data_.data() + sign_size, data_size, hash);
 }
 
 void ESTicket::SerialiseWithoutSign_v0(ESCrypto::ESSignType sign_type)
@@ -89,7 +89,10 @@ void ESTicket::SerialiseWithoutSign_v0(ESCrypto::ESSignType sign_type)
 	body.set_ticket_id(ticket_id_);
 	body.set_device_id(device_id_);
 	body.set_title_id(title_id_);
-	body.set_system_title_access_mask(system_title_access_mask_);
+	for (u16 index : system_accessible_content_)
+	{
+		body.enable_system_content_access(index);
+	}
 	body.set_title_version(title_version_);
 	body.set_access_title_id(access_title_id_);
 	body.set_access_title_id_mask(access_title_id_mask_);
@@ -102,8 +105,7 @@ void ESTicket::SerialiseWithoutSign_v0(ESCrypto::ESSignType sign_type)
 	}
 	for (u16 index : enabled_content_)
 	{
-		body.enable_content_index(index);
-		
+		body.enable_content(index);
 	}
 
 	size_t ticket_size = sign_size + sizeof(sTicketBody_v0);
@@ -214,7 +216,7 @@ u8 ESTicket::GetRawBinaryFormatVersion(const u8 * raw_tik_body)
 	return raw_tik_body[0x7C];
 }
 
-void ESTicket::Deserialise_v0(const u8 * tik_data)
+void ESTicket::Deserialise_v0(const u8 * tik_data, size_t size)
 {
 	// cache body pointer
 	const u8* tik_body = (const u8*)ESCrypto::GetSignedBinaryBody(tik_data);
@@ -224,6 +226,10 @@ void ESTicket::Deserialise_v0(const u8 * tik_data)
 	
 	// save internal copy of ticket
 	size_t tik_size = ESCrypto::GetSignatureSize(tik_data) + sizeof(sTicketBody_v0);
+	if (tik_size > size)
+	{
+		throw ProjectSnakeException(kModuleName, "Ticket is corrupt");
+	}
 	if (serialised_data_.alloc(tik_size) != serialised_data_.ERR_NONE)
 	{
 		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for tik");
@@ -240,7 +246,14 @@ void ESTicket::Deserialise_v0(const u8 * tik_data)
 	ticket_id_ = body->ticket_id();
 	device_id_ = body->device_id();
 	title_id_ = body->title_id();
-	system_title_access_mask_ = body->system_title_access_mask();
+	// save content indexes
+	for (u32 i = 0; i < kSystemAccessIndexMax_v0; i++)
+	{
+		if (body->is_content_system_accessible(i))
+		{
+			system_accessible_content_.push_back(i);
+		}
+	}
 	title_version_ = body->title_version();
 	access_title_id_ = body->access_title_id();
 	access_title_id_mask_ = body->access_title_id_mask();
@@ -268,7 +281,7 @@ void ESTicket::Deserialise_v0(const u8 * tik_data)
 	}
 }
 
-void ESTicket::Deserialise_v1(const u8 * tik_data)
+void ESTicket::Deserialise_v1(const u8 * tik_data, size_t size)
 {
 	// cache body pointer
 	const u8* tik_body = (const u8*)ESCrypto::GetSignedBinaryBody(tik_data);
@@ -280,6 +293,10 @@ void ESTicket::Deserialise_v1(const u8 * tik_data)
 
 	// save internal copy of ticket
 	size_t tik_size = ESCrypto::GetSignatureSize(tik_data) + sizeof(sTicketBody_v1) + cntHdr->total_size();
+	if (tik_size > size)
+	{
+		throw ProjectSnakeException(kModuleName, "Ticket is corrupt");
+	}
 	if (serialised_data_.alloc(tik_size) != serialised_data_.ERR_NONE)
 	{
 		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for ticket");
@@ -340,6 +357,21 @@ void ESTicket::Deserialise_v1(const u8 * tik_data)
 	}
 }
 
+bool ESTicket::IsEcdsaPublicKeySet(const Crypto::sEccPoint & public_key) const
+{
+	bool public_key_set = false;
+	for (size_t i = 0; i < Crypto::kEcParam240Bit; i++)
+	{
+		if (public_key.r[i] != 0 || public_key.s[i] != 0)
+		{
+			public_key_set = true;
+			break;
+		}
+	}
+
+	return public_key_set;
+}
+
 bool ESTicket::IsSupportedFormatVersion(u8 version) const
 {
 	return version == ES_TIK_VER_0 || version == ES_TIK_VER_1;
@@ -356,9 +388,9 @@ void ESTicket::ClearDeserialisedVariables()
 	ticket_id_ = 0;
 	device_id_ = 0;
 	title_id_ = 0;
+	system_accessible_content_.clear();
 	title_version_ = 0;
 	license_type_ = (ESLicenseType)0;
-	item_right_ = (ESItemRight)0;
 	common_key_index_ = 0;
 	eshop_account_id_ = 0;
 	audit_ = 0;
@@ -369,7 +401,7 @@ void ESTicket::ClearDeserialisedVariables()
 	memset(common_key_, 0, Crypto::kAes128KeySize);
 }
 
-void ESTicket::DeserialiseTicket(const u8* ticket_data)
+void ESTicket::DeserialiseTicket(const u8* ticket_data, size_t size)
 {
 	ClearDeserialisedVariables();
 
@@ -386,11 +418,11 @@ void ESTicket::DeserialiseTicket(const u8* ticket_data)
 	u8 format_version = GetRawBinaryFormatVersion(tik_body);
 	if (format_version == ES_TIK_VER_0)
 	{
-		Deserialise_v0(ticket_data);
+		Deserialise_v0(ticket_data, size);
 	}
 	else if (format_version == ES_TIK_VER_1)
 	{
-		Deserialise_v1(ticket_data);
+		Deserialise_v1(ticket_data, size);
 	}
 	else {
 		throw ProjectSnakeException(kModuleName, "Unsupported ticket format version");
@@ -399,7 +431,7 @@ void ESTicket::DeserialiseTicket(const u8* ticket_data)
 
 bool ESTicket::ValidateSignature(const Crypto::sRsa2048Key & key) const
 {
-	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data_const());
+	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data());
 	if (!ESCrypto::IsSignRsa2048(sign_type))
 	{
 		throw ProjectSnakeException(kModuleName, "Attempted to validate signature with incompatible key");
@@ -408,12 +440,12 @@ bool ESTicket::ValidateSignature(const Crypto::sRsa2048Key & key) const
 	// signature check
 	u8 hash[Crypto::kSha256HashLen];
 	HashSerialisedData(sign_type, hash);
-	return ESCrypto::VerifySignature(hash, key, serialised_data_.data_const()) == 0;
+	return ESCrypto::VerifySignature(hash, key, serialised_data_.data()) == 0;
 }
 
 bool ESTicket::ValidateSignature(const Crypto::sRsa4096Key & key) const
 {
-	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data_const());
+	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data());
 	if (!ESCrypto::IsSignRsa4096(sign_type))
 	{
 		throw ProjectSnakeException(kModuleName, "Attempted to validate signature with incompatible key");
@@ -422,12 +454,12 @@ bool ESTicket::ValidateSignature(const Crypto::sRsa4096Key & key) const
 	// signature check
 	u8 hash[Crypto::kSha256HashLen];
 	HashSerialisedData(sign_type, hash);
-	return ESCrypto::VerifySignature(hash, key, serialised_data_.data_const()) == 0;
+	return ESCrypto::VerifySignature(hash, key, serialised_data_.data()) == 0;
 }
 
 bool ESTicket::ValidateSignature(const ESCert & signer) const
 {
-	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data_const());
+	ESCrypto::ESSignType sign_type = ESCrypto::GetSignatureType(serialised_data_.data());
 
 	if (signer.GetChildIssuer() != GetIssuer())
 	{
@@ -467,7 +499,7 @@ ESCrypto::ESSignType ESTicket::GetSignType() const
 		throw ProjectSnakeException(kModuleName, "Data not yet serialised.");
 	}
 
-	return ESCrypto::GetSignatureType(serialised_data_.data_const());
+	return ESCrypto::GetSignatureType(serialised_data_.data());
 }
 
 const u8 * ESTicket::GetSignature() const
@@ -477,7 +509,7 @@ const u8 * ESTicket::GetSignature() const
 		throw ProjectSnakeException(kModuleName, "Data not yet serialised.");
 	}
 
-	return serialised_data_.data_const() + sizeof(ESCrypto::ESSignType);
+	return serialised_data_.data() + sizeof(ESCrypto::ESSignType);
 }
 
 size_t ESTicket::GetSignatureSize() const
@@ -511,6 +543,11 @@ const std::string & ESTicket::GetIssuer() const
 const Crypto::sEccPoint& ESTicket::GetServerPublicKey() const
 {
 	return server_public_key_;
+}
+
+bool ESTicket::HasServerPublicKey() const
+{
+	return IsEcdsaPublicKeySet(server_public_key_);
 }
 
 u8 ESTicket::GetFormatVersion() const
@@ -576,9 +613,9 @@ u64 ESTicket::GetTitleId() const
 	return title_id_;
 }
 
-u16 ESTicket::GetSystemAccessMask() const
+const std::vector<u16>& ESTicket::GetSystemAccessibleContentList() const
 {
-	return system_title_access_mask_;
+	return system_accessible_content_;
 }
 
 u16 ESTicket::GetTitleVersion() const
@@ -621,6 +658,11 @@ u8 ESTicket::GetAudit() const
 	return audit_;
 }
 
+bool ESTicket::HasLimits() const
+{
+	return limits_.size() > 0;
+}
+
 bool ESTicket::IsLimitSet(ESLimitCode limit_code) const
 {
 	bool found = false;
@@ -629,6 +671,7 @@ bool ESTicket::IsLimitSet(ESLimitCode limit_code) const
 		if (limits_[i].limit_code == limit_code)
 		{
 			found = true;
+			break;
 		}
 	}
 	return found;
@@ -793,9 +836,9 @@ void ESTicket::SetTitleId(u64 title_id)
 	title_id_ = title_id;
 }
 
-void ESTicket::SetSystemAccessMask(u16 system_access_mask)
+void ESTicket::EnableSystemContentAccess(u16 index)
 {
-	system_title_access_mask_ = system_access_mask;
+	system_accessible_content_.push_back(index);
 }
 
 void ESTicket::SetTitleVersion(u16 title_version)
@@ -868,6 +911,11 @@ void ESTicket::RemoveLimit(ESLimitCode limit_code)
 			limits_.erase(limits_.begin() + i);
 		}
 	}
+}
+
+void ESTicket::ClearLimits()
+{
+	limits_.clear();
 }
 
 void ESTicket::EnableContent(u16 index)

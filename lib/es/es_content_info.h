@@ -5,15 +5,15 @@
 class ESContentInfo
 {
 public:
-	enum ESContentType
+	enum ESContentFlag
 	{
-		ES_CONTENT_TYPE_ENCRYPTED = BIT(0),
-		ES_CONTENT_TYPE_DISC = BIT(1),
-		ES_CONTENT_TYPE_HASHED = BIT(1),
-		ES_CONTENT_TYPE_CFM = BIT(3),
-		ES_CONTENT_TYPE_SHA1_HASH = BIT(13),
-		ES_CONTENT_TYPE_OPTIONAL = BIT(14),
-		ES_CONTENT_TYPE_SHARED = BIT(15),
+		ES_CONTENT_FLAG_ENCRYPTED = BIT(0),
+		ES_CONTENT_FLAG_DISC = BIT(1),
+		ES_CONTENT_FLAG_HASHED = BIT(1),
+		ES_CONTENT_FLAG_CFM = BIT(3),
+		ES_CONTENT_FLAG_SHA1_HASH = BIT(13),
+		ES_CONTENT_FLAG_OPTIONAL = BIT(14),
+		ES_CONTENT_FLAG_SHARED = BIT(15),
 	};
 
 	ESContentInfo(u32 cid, u16 cidx, u16 flags, u64 size, const u8* hash);
@@ -29,7 +29,7 @@ public:
 
 	bool ValidateHash(const u8* hash) const;
 
-	bool IsFlagSet(ESContentType flag) const;
+	bool IsFlagSet(ESContentFlag flag) const;
 	bool IsLegacy() const;
 	bool IsSha1Hash() const; // detects legacy override
 

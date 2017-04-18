@@ -170,7 +170,7 @@ int KeyStore::SaveEsCertificate(const YamlElement* node, ESCert& certificate)
 		}
 
 		try {
-			certificate.DeserialiseCert(tmp.data_const());
+			certificate.DeserialiseCert(tmp.data());
 		}
 		catch (const ProjectSnakeException& error) {
 			PrintElementLoadFailure(node->name(), error.what());

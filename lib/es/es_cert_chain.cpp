@@ -36,7 +36,7 @@ const ESCert & ESCertChain::operator[](const std::string & signer) const
 
 const u8* ESCertChain::GetSerialisedData() const
 {
-	return serialised_data_.data_const();
+	return serialised_data_.data();
 }
 
 size_t ESCertChain::GetSerialisedDataSize() const
@@ -84,7 +84,7 @@ void ESCertChain::DeserialiseCertChain(const u8* data, size_t size)
 	while ((size - read_size) > 0x40)
 	{
 		AddCertificate(data + read_size);
-		read_size += certs_[certs_.size()-1].GetSerialisedDataSize();
+		read_size += certs_.back().GetSerialisedDataSize();
 	}
 
 	if (serialised_data_.alloc(read_size) != serialised_data_.ERR_NONE)

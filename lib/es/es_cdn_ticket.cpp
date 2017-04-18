@@ -13,7 +13,7 @@ ESCdnTicket::~ESCdnTicket()
 
 void ESCdnTicket::DeserialiseTicket(const u8 * ticket_data, size_t size)
 {
-	ticket_.DeserialiseTicket(ticket_data);
+	ticket_.DeserialiseTicket(ticket_data, size);
 	if (size > ticket_.GetSerialisedDataSize()) {
 		certs_.DeserialiseCertChain(ticket_data + ticket_.GetSerialisedDataSize(), size - ticket_.GetSerialisedDataSize());
 	}
