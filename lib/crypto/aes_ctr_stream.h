@@ -18,6 +18,12 @@ public:
 
 	void AddRegion(size_t start, size_t end, const uint8_t aes_key[Crypto::kAes128KeySize], const uint8_t aes_ctr[Crypto::kAesBlockSize]);
 
+protected:
+	// Virtual methods for implementation of seek/read/write
+	virtual void seek_internal(size_t offset) = 0;
+	virtual void read_internal(size_t size, size_t& read_len, uint8_t* out) = 0;
+	virtual void write_internal(size_t size, size_t& write_len, const uint8_t* in) = 0;
+
 private:
 	const std::string kModuleName = "AES_CTR_STREAM";
 	static const size_t kIoBufferLen = 0x10000;
@@ -111,9 +117,6 @@ private:
 				memcpy(out + (pos << 4), pad_buffer_ + block_offset, copy_size);
 			}
 		}
-		
-
-
 	private:
 		static const size_t kPadBufferLen = 0x10000;
 		static const size_t kPadBufferCapacity = kPadBufferLen + Crypto::kAesBlockSize; // has an extra block to accomodate non block aligned starts
@@ -134,10 +137,7 @@ private:
 		}
 	};
 
-	// Virtual methods for implementation of seek/read/write
-	virtual void seek_internal(size_t offset) = 0;
-	virtual void read_internal(size_t size, size_t& read_len, uint8_t* out) = 0;
-	virtual void write_internal(size_t size, size_t& write_len, const uint8_t* in) = 0;
+
 
 	inline void xor_data(size_t size, const uint8_t* data1, const uint8_t* data2, uint8_t* out)
 	{
