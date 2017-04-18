@@ -1,4 +1,4 @@
-LIBS = fnd crypto yaml ctr keystore nintendo
+LIBS = fnd crypto yaml keystore nintendo es ctr
 main: build
 
 rebuild: clean build
