@@ -1,4 +1,4 @@
-PROGS = ctr_makecsucia
+PROGS = ctr_makecsucia es-tool
 
 main: build
 
