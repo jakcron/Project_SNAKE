@@ -14,24 +14,24 @@ int main(int argc, char** argv)
 		UserSettings set(argc, argv);
 
 		// if certs
-		if (set.GetFileType() == set.FILE_CERTS)
+		if (set.getFileType() == set.FILE_CERTS)
 		{
 			ESCertChain certs;
 
 			// read data
-			if (set.GetInFilePath().empty() != false)
+			if (!set.getInFilePath().empty())
 			{
-				FileIO::ReadFile(set.GetInFilePath(), blob);
+				FileIO::ReadFile(set.getInFilePath(), blob);
 
 				// deserialise certificate
 				certs.DeserialiseCertChain(blob.data(), blob.size());
 
 				// print data
-				if (set.DoPrintData())
+				if (set.doPrintData())
 				{
 					// if certificates were appended, validate ticket
 					DisplayEsFields::SigState signValid;
-					if (certs.GetCertificateNum() > 0 && set.DoUseCdnCertToVerify())
+					if (certs.GetCertificateNum() > 0 && set.doUseCdnCertToVerify())
 					{
 						try {
 							signValid = certs[0].ValidateSignature(certs[certs[0].GetIssuer()]) ? DisplayEsFields::SIG_VALID : DisplayEsFields::SIG_INVALID;
@@ -41,10 +41,10 @@ int main(int argc, char** argv)
 						}
 					}
 					// if requested use externel certificates
-					else if (set.DoUseExternalCertToVerify())
+					else if (set.doUseExternalCertToVerify())
 					{
 						MemoryBlob certs_data;
-						FileIO::ReadFile(set.GetExternalCertPath(), certs_data);
+						FileIO::ReadFile(set.getExternalCertPath(), certs_data);
 						ESCertChain certs_other;
 						certs_other.DeserialiseCertChain(certs_data.data(), certs_data.size());
 
@@ -61,14 +61,14 @@ int main(int argc, char** argv)
 					}
 
 					// show ticket fields
-					DisplayEsFields::DisplayCertFields(certs[0], signValid, set.DoShowSignatures(), set.DoShowFullPublicKeys());
+					DisplayEsFields::DisplayCertFields(certs[0], signValid, set.doShowSignatures(), set.doShowFullPublicKeys());
 
 					// show cdn certs
-					if (set.DoShowCdnCerts())
+					if (set.doShowCdnCerts())
 					{
 						for (size_t i = 1; i < certs.GetCertificates().size(); i++)
 						{
-							DisplayEsFields::DisplayCertFields(certs[i], DisplayEsFields::SIG_UNCHECKED, set.DoShowSignatures(), set.DoShowFullPublicKeys());
+							DisplayEsFields::DisplayCertFields(certs[i], DisplayEsFields::SIG_UNCHECKED, set.doShowSignatures(), set.doShowFullPublicKeys());
 						}
 					}
 				}
@@ -77,43 +77,65 @@ int main(int argc, char** argv)
 			
 		}
 		// else tik
-		else if (set.GetFileType() == set.FILE_TIK)
+		else if (set.getFileType() == set.FILE_TIK)
 		{
-			ESCdnTicket tik;
+			ESCdnTicket cdn_raw;
 			
 			// read data
-			if (set.GetInFilePath().empty() != false)
+			if (!set.getInFilePath().empty())
 			{
 				// open file
-				FileIO::ReadFile(set.GetInFilePath(), blob);
+				FileIO::ReadFile(set.getInFilePath(), blob);
 
 				// deserialise ticket
-				tik.DeserialiseTicket(blob.data(), blob.size());
+				cdn_raw.DeserialiseTicket(blob.data(), blob.size());
+				ESTicket etik = cdn_raw.GetTicket();
+
+				// set ticket user data
+				set.setFormatVersion(etik.GetFormatVersion());
+				set.setTitleId(etik.GetTitleId());
+				set.setVersion(etik.GetTitleVersion());
+				set.setCaCrlVersion(etik.GetCaCrlVersion());
+				set.setSignerCrlVersion(etik.GetSignerCrlVersion());
+				set.setTicketId(etik.GetTicketId());
+				set.setEscrowKeyId(etik.GetCommonKeyIndex());
+				// TODO title key vs escrowed title key logic
+				// pull out decrypted title key? and reencrypted? use cases?
+				set.setEscrowedTitleKey(etik.GetEncryptedTitleKey());
+				set.setDeviceId(etik.GetDeviceId());
+				set.setSystemAccessibleContent(etik.GetSystemAccessibleContentList());
+				set.setAccessTitleId(etik.GetAccessTitleId());
+				set.setAccessTitleIdMask(etik.GetAccessTitleIdMask());
+				set.setLicenseType(etik.GetLicenseType());
+				for (size_t i = 0; i < ESTicket::ES_MAX_LIMIT_TYPE; i++)
+				{
+
+				}
 
 				// print info
-				if (set.DoPrintData())
+				if (set.doPrintData())
 				{
 					// if certificates were appended, validate ticket
 					DisplayEsFields::SigState signValid;
-					if (tik.GetCerts().GetCertificateNum() > 0 && set.DoUseCdnCertToVerify())
+					if (cdn_raw.GetCerts().GetCertificateNum() > 0 && set.doUseCdnCertToVerify())
 					{
 						try {
-							signValid = tik.GetTicket().ValidateSignature(tik.GetCerts()[tik.GetTicket().GetIssuer()]) ? DisplayEsFields::SIG_VALID : DisplayEsFields::SIG_INVALID;
+							signValid = cdn_raw.GetTicket().ValidateSignature(cdn_raw.GetCerts()[cdn_raw.GetTicket().GetIssuer()]) ? DisplayEsFields::SIG_VALID : DisplayEsFields::SIG_INVALID;
 						}
 						catch (const ProjectSnakeException& e) {
 							signValid = DisplayEsFields::SIG_UNCHECKED;
 						}
 					}
 					// if requested use externel certificates
-					else if (set.DoUseExternalCertToVerify())
+					else if (set.doUseExternalCertToVerify())
 					{
 						MemoryBlob certs_data;
-						FileIO::ReadFile(set.GetExternalCertPath(), certs_data);
+						FileIO::ReadFile(set.getExternalCertPath(), certs_data);
 						ESCertChain certs;
 						certs.DeserialiseCertChain(certs_data.data(), certs_data.size());
 
 						try {
-							signValid = tik.GetTicket().ValidateSignature(certs[tik.GetTicket().GetIssuer()]) ? DisplayEsFields::SIG_VALID : DisplayEsFields::SIG_INVALID;
+							signValid = cdn_raw.GetTicket().ValidateSignature(certs[cdn_raw.GetTicket().GetIssuer()]) ? DisplayEsFields::SIG_VALID : DisplayEsFields::SIG_INVALID;
 						}
 						catch (const ProjectSnakeException& e) {
 							signValid = DisplayEsFields::SIG_INVALID;
@@ -125,14 +147,14 @@ int main(int argc, char** argv)
 					}
 
 					// show ticket fields
-					DisplayEsFields::DisplayTicketFields(tik.GetTicket(), signValid, nullptr, set.DoShowSignatures(), set.DoShowFullPublicKeys());
+					DisplayEsFields::DisplayTicketFields(cdn_raw.GetTicket(), signValid, nullptr, set.doShowSignatures(), set.doShowFullPublicKeys());
 
 					// show cdn certs
-					if (set.DoShowCdnCerts())
+					if (set.doShowCdnCerts())
 					{
-						for (size_t i = 0; i < tik.GetCerts().GetCertificates().size(); i++)
+						for (size_t i = 0; i < cdn_raw.GetCerts().GetCertificates().size(); i++)
 						{
-							DisplayEsFields::DisplayCertFields(tik.GetCerts().GetCertificates()[i], DisplayEsFields::SIG_UNCHECKED, set.DoShowSignatures(), set.DoShowFullPublicKeys());
+							DisplayEsFields::DisplayCertFields(cdn_raw.GetCerts().GetCertificates()[i], DisplayEsFields::SIG_UNCHECKED, set.doShowSignatures(), set.doShowFullPublicKeys());
 						}
 					}
 				}
@@ -141,43 +163,43 @@ int main(int argc, char** argv)
 			// create data
 		}
 		// else tmd
-		else if (set.GetFileType() == set.FILE_TMD)
+		else if (set.getFileType() == set.FILE_TMD)
 		{
-			ESCdnTmd tmd;
+			ESCdnTmd input_tmd;
 
 			// read data
-			if (set.GetInFilePath().empty() != false)
+			if (!set.getInFilePath().empty())
 			{
 				// open file
-				FileIO::ReadFile(set.GetInFilePath(), blob);
+				FileIO::ReadFile(set.getInFilePath(), blob);
 
 				// deserialise tmd
-				tmd.DeserialiseTmd(blob.data(), blob.size());
+				input_tmd.DeserialiseTmd(blob.data(), blob.size());
 
 				// print data
-				if (set.DoPrintData())
+				if (set.doPrintData())
 				{
 					// if certificates were appended, validate tmd
 					DisplayEsFields::SigState signValid;
-					if (tmd.GetCerts().GetCertificateNum() > 0 && set.DoUseCdnCertToVerify())
+					if (input_tmd.GetCerts().GetCertificateNum() > 0 && set.doUseCdnCertToVerify())
 					{
 						try {
-							signValid = tmd.GetTmd().ValidateSignature(tmd.GetCerts()[tmd.GetTmd().GetIssuer()]) ? DisplayEsFields::SIG_VALID : DisplayEsFields::SIG_INVALID;
+							signValid = input_tmd.GetTmd().ValidateSignature(input_tmd.GetCerts()[input_tmd.GetTmd().GetIssuer()]) ? DisplayEsFields::SIG_VALID : DisplayEsFields::SIG_INVALID;
 						}
 						catch (const ProjectSnakeException& e) {
 							signValid = DisplayEsFields::SIG_UNCHECKED;
 						}
 					}
 					// if requested use externel certificates
-					else if (set.DoUseExternalCertToVerify())
+					else if (set.doUseExternalCertToVerify())
 					{
 						MemoryBlob certs_data;
-						FileIO::ReadFile(set.GetExternalCertPath(), certs_data);
+						FileIO::ReadFile(set.getExternalCertPath(), certs_data);
 						ESCertChain certs;
 						certs.DeserialiseCertChain(certs_data.data(), certs_data.size());
 
 						try {
-							signValid = tmd.GetTmd().ValidateSignature(certs[tmd.GetTmd().GetIssuer()]) ? DisplayEsFields::SIG_VALID : DisplayEsFields::SIG_INVALID;
+							signValid = input_tmd.GetTmd().ValidateSignature(certs[input_tmd.GetTmd().GetIssuer()]) ? DisplayEsFields::SIG_VALID : DisplayEsFields::SIG_INVALID;
 						}
 						catch (const ProjectSnakeException& e) {
 							signValid = DisplayEsFields::SIG_INVALID;
@@ -189,26 +211,34 @@ int main(int argc, char** argv)
 					}
 
 					// show tmd fields
-					DisplayEsFields::DisplayTmdFields(tmd.GetTmd(), signValid, set.DoShowSignatures());
+					DisplayEsFields::DisplayTmdFields(input_tmd.GetTmd(), signValid, set.doShowSignatures());
 
 					// show cdn certs
-					if (set.DoShowCdnCerts())
+					if (set.doShowCdnCerts())
 					{
-						for (size_t i = 0; i < tmd.GetCerts().GetCertificates().size(); i++)
+						for (size_t i = 0; i < input_tmd.GetCerts().GetCertificates().size(); i++)
 						{
-							DisplayEsFields::DisplayCertFields(tmd.GetCerts().GetCertificates()[i], DisplayEsFields::SIG_UNCHECKED, set.DoShowSignatures(), set.DoShowFullPublicKeys());
+							DisplayEsFields::DisplayCertFields(input_tmd.GetCerts().GetCertificates()[i], DisplayEsFields::SIG_UNCHECKED, set.doShowSignatures(), set.doShowFullPublicKeys());
 						}
 					}
 				}
 			}
 			
 			// create data
+			/*
 			if (set.GetOutFilePath().empty() == false)
 			{
 				ESTmd new_tmd;
-				//if ()
+				if (set.GetInFilePath().empty() == false)
+				{
+					new_tmd = input_tmd.GetTmd();
+				}
+				else
+				{
+					if (set)
+				}
 			}
-			
+			*/
 
 			/*
 			algo:
