@@ -23,75 +23,6 @@ public:
 		FILE_TMD
 	};
 
-	UserSettings();
-	UserSettings(int argc, char** argv);
-	~UserSettings();
-
-
-	void parseCliArgs(int argc, char** argv);
-	
-	
-	const std::string& getInFilePath() const;
-	const std::string& getOutFilePath() const;
-	FileType getFileType() const;
-
-	bool doPrintData() const;
-	bool doShowSignatures() const;
-	bool doShowFullPublicKeys() const;
-	bool doShowCdnCerts() const;
-	bool doUseCdnCertToVerify() const;
-	bool doUseExternalCertToVerify() const;
-	const std::string& getExternalCertPath() const;
-
-	// general data fields
-	void setFormatVersion(u8 version);
-	u8 getFormatVersion() const;
-	void setTitleId(u64 title_id);
-	u64 getTitleId() const;
-	void setVersion(u16 version);
-	u16 getVersion() const;
-	void setCaCrlVersion(u8 crl_version);
-	u8 getCaCrlVersion() const;
-	void setSignerCrlVersion(u8 crl_version);
-	u8 getSignerCrlVersion() const;
-
-	// ticket data fields
-	void setTicketId(u64 ticket_id);
-	u64 getTicketId() const;
-	void setTitleKey(const u8* title_key);
-	const u8* getTitleKey() const;
-	void setEscrowKey(const u8* escrow_key);
-	const u8* getEscrowKey() const;
-	void setEscrowKeyId(u8 key_id);
-	void setEscrowedTitleKey(const u8* escrowed_key);
-	const u8* getEscrowedTitleKey() const;
-	u8 getEscrowKeyId() const;
-	void setDeviceId(u32 device_id);
-	u32 getDeviceId() const;
-	void setSystemAccessibleContent(const std::vector<u16>& content_index);
-	const std::vector<u16>& getSystemAccessibleContent() const;
-	void setAccessTitleId(u32 id);
-	u32 getAccessTitleId() const;
-	void setAccessTitleIdMask(u32 id_mask);
-	u32 getAccessTitleIdMask() const;
-	void setLicenseType(ESTicket::ESLicenseType type);
-	ESTicket::ESLicenseType getLicenseType() const;
-	void setEShopAccountId(u32 id);
-	u32 getEShopAccountId() const;
-	void setAudit(u8 audit);
-	u8 getAudit() const;
-	void setLimits(std::vector<sESLimit>& limits);
-	const std::vector<sESLimit>& getLimits() const;
-
-
-
-private:	
-	const std::string kModuleName = "USER_SETTINGS";
-	static const int kVersionMajor = 0;
-	static const int kVersionMinor = 1;
-
-	// user settings
-	
 	// SettableValue only primative or classes, no literal arrays.
 	template <class T>
 	class SettableObject
@@ -136,6 +67,75 @@ private:
 		T data_;
 	};
 
+	UserSettings();
+	UserSettings(int argc, char** argv);
+	~UserSettings();
+
+	/// Parse CLI arguments
+	void parseCliArgs(int argc, char** argv);
+	
+	/// input/output and file type
+	const std::string& getInFilePath() const;
+	const std::string& getOutFilePath() const;
+	FileType getFileType() const;
+
+	/// output settings
+	bool doPrintData() const;
+	bool doShowSignatures() const;
+	bool doShowFullPublicKeys() const;
+	bool doShowCerts() const;
+	bool doUseCdnCertToVerify() const;
+	bool doUseExternalCertToVerify() const;
+	const std::string& getExternalCertPath() const;
+
+	// general data fields
+	void setFormatVersion(u8 version);
+	const SettableObject<u8>& getFormatVersion() const;
+	void setTitleId(u64 title_id);
+	const SettableObject<u64>& getTitleId() const;
+	void setVersion(u16 version);
+	const SettableObject<u16>& getVersion() const;
+	void setCaCrlVersion(u8 crl_version);
+	const SettableObject<u8>& getCaCrlVersion() const;
+	void setSignerCrlVersion(u8 crl_version);
+	const SettableObject<u8>& getSignerCrlVersion() const;
+
+	// ticket data fields
+	void setTicketId(u64 ticket_id);
+	const SettableObject<u64>& getTicketId() const;
+	void setTitleKey(const u8* title_key);
+	const SettableObject<std::vector<u8>>& getTitleKey() const;
+	void setEscrowKey(const u8* escrow_key);
+	const SettableObject<std::vector<u8>>& getEscrowKey() const;
+	void setEscrowKeyId(u8 key_id);
+	const SettableObject<u8>& getEscrowKeyId() const;
+	void setEscrowedTitleKey(const u8* escrowed_key);
+	const SettableObject<std::vector<u8>>& getEscrowedTitleKey() const;
+	void setDeviceId(u32 device_id);
+	const SettableObject<u32>& getDeviceId() const;
+	void setSystemAccessibleContentList(const std::vector<u16>& content_index);
+	const SettableObject<std::vector<u16>>& getSystemAccessibleContentList() const;
+	void setAccessTitleId(u32 id);
+	const SettableObject<u32>& getAccessTitleId() const;
+	void setAccessTitleIdMask(u32 id_mask);
+	const SettableObject<u32>& getAccessTitleIdMask() const;
+	void setLicenseType(ESTicket::ESLicenseType type);
+	const SettableObject<ESTicket::ESLicenseType> getLicenseType() const;
+	void setEShopAccountId(u32 id);
+	const SettableObject<u32>& getEShopAccountId() const;
+	void setAudit(u8 audit);
+	const SettableObject<u8> getAudit() const;
+	void setLimits(const std::vector<sESLimit>& limits);
+	const SettableObject<std::vector<sESLimit>>& getLimits() const;
+	void setAccessibleContentList(const std::vector<u16>& content_index);
+	const SettableObject<std::vector<u16>>& content_index getAccessibleContentList() const;
+
+private:	
+	const std::string kModuleName = "USER_SETTINGS";
+	static const int kVersionMajor = 0;
+	static const int kVersionMinor = 1;
+
+	// user settings
 	struct sGeneralSettings
 	{
 		FileType file_type_;
@@ -149,7 +149,7 @@ private:
 		bool verbose_;
 		bool show_signatures_;
 		bool full_public_keys_;
-		bool show_cdn_certs_;
+		bool show_certs_;
 		bool use_cdn_certs_;
 		std::string certs_path_;
 	} cli_output_;

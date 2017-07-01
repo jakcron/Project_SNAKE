@@ -114,7 +114,7 @@ void UserSettings::parseCliArgs(int argc, char ** argv)
 			}
 			else if (args[i] == "--showcdncert")
 			{
-				cli_output_.show_cdn_certs_ = true;
+				cli_output_.show_certs_ = true;
 			}
 			else if (args[i] == "--usecdncert")
 			{
@@ -173,9 +173,9 @@ bool UserSettings::doShowFullPublicKeys() const
 	return cli_output_.full_public_keys_ || cli_output_.verbose_;
 }
 
-bool UserSettings::doShowCdnCerts() const
+bool UserSettings::doShowCerts() const
 {
-	return cli_output_.show_cdn_certs_ || cli_output_.verbose_;
+	return cli_output_.show_certs_ || cli_output_.verbose_;
 }
 
 bool UserSettings::doUseCdnCertToVerify() const
@@ -314,12 +314,12 @@ u32 UserSettings::getDeviceId() const
 	return ticket_.device_id_.get();
 }
 
-void UserSettings::setSystemAccessibleContent(const std::vector<u16>& content_index)
+void UserSettings::setSystemAccessibleContentList(const std::vector<u16>& content_index)
 {
 	ticket_.system_accessible_content_ = content_index;
 }
 
-const std::vector<u16>& UserSettings::getSystemAccessibleContent() const
+const std::vector<u16>& UserSettings::getSystemAccessibleContentList() const
 {
 	return ticket_.system_accessible_content_.get();
 }
@@ -439,7 +439,7 @@ void UserSettings::clearSettings()
 	cli_output_.verbose_ = false;
 	cli_output_.show_signatures_ = false;
 	cli_output_.full_public_keys_ = false;
-	cli_output_.show_cdn_certs_ = false;
+	cli_output_.show_certs_ = false;
 	cli_output_.use_cdn_certs_ = false;
 	cli_output_.certs_path_.clear();
 }
