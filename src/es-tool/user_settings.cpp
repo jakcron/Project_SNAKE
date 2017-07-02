@@ -134,6 +134,70 @@ void UserSettings::parseCliArgs(int argc, char ** argv)
 				// increment args counter
 				i++;
 			}
+
+			// shared params
+			else if (args[i] == "--formatver")
+			{
+				// check a parameter was specified
+				if (i + 1 >= args.size() || args[i + 1][0] == '-')
+				{
+					throw ProjectSnakeException(kModuleName, "Argument \"" + args[i] + "\" requires a parameter.");
+				}
+
+				// save format version
+				setFormatVersion(strtol(args[i + 1].c_str(), nullptr, 0));
+
+				// increment args counter
+				i++;
+			}
+			else if (args[i] == "--titleid")
+			{
+				// check a parameter was specified
+				if (i + 1 >= args.size() || args[i + 1][0] == '-')
+				{
+					throw ProjectSnakeException(kModuleName, "Argument \"" + args[i] + "\" requires a parameter.");
+				}
+
+				// save title id
+				setTitleId(strtol(args[i + 1].c_str(), nullptr, 16));
+
+				// increment args counter
+				i++;
+			}
+			else if (args[i] == "--version")
+			{
+				// check a parameter was specified
+				if (i + 1 >= args.size() || args[i + 1][0] == '-')
+				{
+					throw ProjectSnakeException(kModuleName, "Argument \"" + args[i] + "\" requires a parameter.");
+				}
+
+				// save title version
+				setTitleVersion(strtol(args[i + 1].c_str(), nullptr, 0));
+
+				// increment args counter
+				i++;
+			}
+			else if (args[i] == "--crlver")
+			{
+				// check a parameter was specified
+				if (i + 1 >= args.size() || args[i + 1][0] == '-')
+				{
+					throw ProjectSnakeException(kModuleName, "Argument \"" + args[i] + "\" requires a parameter.");
+				}
+
+				// save crl versions
+				setCaCrlVersion(0);
+				setSignerCrlVersion(0);
+
+				// increment args counter
+				i++;
+			}
+			// cert params
+
+			// ticket params
+
+			// tmd params
 			else
 			{
 				showCliHelp(args[0]);
@@ -193,14 +257,67 @@ const std::string & UserSettings::getExternalCertPath() const
 	return cli_output_.certs_path_;
 }
 
+void UserSettings::setSignType(SignType type)
+{
+	shared_.sign_type_ = type;
+}
+
+const UserSettings::SettableObject<UserSettings::SignType>& UserSettings::getSignType() const
+{
+	return shared_.sign_type_;
+}
+
+void UserSettings::setSigningKey(const Crypto::sRsa4096Key & key)
+{
+	shared_.rsa4096_key_ = key;
+	setSignType(SIGN_RSA_4096);
+}
+
+const UserSettings::SettableObject<Crypto::sRsa4096Key>& UserSettings::getSigningKeyRsa4096() const
+{
+	return shared_.rsa4096_key_;
+}
+
+void UserSettings::setSigningKey(const Crypto::sRsa2048Key & key)
+{
+	shared_.rsa2048_key_ = key;
+	setSignType(SIGN_RSA_2048);
+}
+
+const UserSettings::SettableObject<Crypto::sRsa2048Key>& UserSettings::getSigningKeyRsa2048() const
+{
+	return shared_.rsa2048_key_;
+}
+
+void UserSettings::setSigningKey(const Crypto::sEccPrivateKey & key)
+{
+	shared_.ecdsa240_key_ = key;
+	setSignType(SIGN_ECDSA_240);
+}
+
+const UserSettings::SettableObject<Crypto::sEccPrivateKey>& UserSettings::getSigningKeyEcdsa() const
+{
+	return shared_.ecdsa240_key_;
+}
+
+void UserSettings::setIssuer(const std::string & issuer)
+{
+	shared_.issuer_ = issuer;
+}
+
+const UserSettings::SettableObject<std::string>& UserSettings::getIssuer() const
+{
+	return shared_.issuer_;
+}
+
 void UserSettings::setFormatVersion(u8 version)
 {
 	shared_.format_version_ = version;
 }
 
-u8 UserSettings::getFormatVersion() const
+const UserSettings::SettableObject<u8>& UserSettings::getFormatVersion() const
 {
-	return shared_.format_version_.get();
+	return shared_.format_version_;
 }
 
 void UserSettings::setTitleId(u64 title_id)
@@ -208,19 +325,19 @@ void UserSettings::setTitleId(u64 title_id)
 	shared_.title_id_ = title_id;
 }
 
-u64 UserSettings::getTitleId() const
+const UserSettings::SettableObject<u64>& UserSettings::getTitleId() const
 {
-	return shared_.title_id_.get();
+	return shared_.title_id_;
 }
 
-void UserSettings::setVersion(u16 version)
+void UserSettings::setTitleVersion(u16 version)
 {
 	shared_.version_ = version;
 }
 
-u16 UserSettings::getVersion() const
+const UserSettings::SettableObject<u16>& UserSettings::getTitleVersion() const
 {
-	return shared_.version_.get();
+	return shared_.version_;
 }
 
 void UserSettings::setCaCrlVersion(u8 crl_version)
@@ -228,9 +345,9 @@ void UserSettings::setCaCrlVersion(u8 crl_version)
 	shared_.ca_crl_version_ = crl_version;
 }
 
-u8 UserSettings::getCaCrlVersion() const
+const UserSettings::SettableObject<u8>& UserSettings::getCaCrlVersion() const
 {
-	return shared_.ca_crl_version_.get();
+	return shared_.ca_crl_version_;
 }
 
 void UserSettings::setSignerCrlVersion(u8 crl_version)
@@ -238,9 +355,19 @@ void UserSettings::setSignerCrlVersion(u8 crl_version)
 	shared_.signer_crl_version_ = crl_version;
 }
 
-u8 UserSettings::getSignerCrlVersion() const
+const UserSettings::SettableObject<u8>& UserSettings::getSignerCrlVersion() const
 {
-	return shared_.signer_crl_version_.get();
+	return shared_.signer_crl_version_;
+}
+
+void UserSettings::setServerPublicKey(const Crypto::sEccPoint & public_key)
+{
+	ticket_.server_public_key_ = public_key;
+}
+
+const UserSettings::SettableObject<Crypto::sEccPoint>& UserSettings::getServerPublicKey() const
+{
+	return ticket_.server_public_key_;
 }
 
 void UserSettings::setTicketId(u64 ticket_id)
@@ -248,9 +375,9 @@ void UserSettings::setTicketId(u64 ticket_id)
 	ticket_.ticket_id_ = ticket_id;
 }
 
-u64 UserSettings::getTicketId() const
+const UserSettings::SettableObject<u64>& UserSettings::getTicketId() const
 {
-	return ticket_.ticket_id_.get();
+	return ticket_.ticket_id_;
 }
 
 void UserSettings::setTitleKey(const u8 * title_key)
@@ -264,9 +391,9 @@ void UserSettings::setTitleKey(const u8 * title_key)
 	ticket_.title_key_.set(ticket_.title_key_.get_unsafe());
 }
 
-const u8 * UserSettings::getTitleKey() const
+const UserSettings::SettableObject<MemoryBlob>& UserSettings::getTitleKey() const
 {
-	return ticket_.title_key_.get().data();
+	return ticket_.title_key_;
 }
 
 void UserSettings::setEscrowKey(const u8 * escrow_key)
@@ -280,9 +407,9 @@ void UserSettings::setEscrowKey(const u8 * escrow_key)
 	ticket_.escrow_key_.set(ticket_.escrow_key_.get_unsafe());
 }
 
-const u8 * UserSettings::getEscrowKey() const
+const UserSettings::SettableObject<MemoryBlob>& UserSettings::getEscrowKey() const
 {
-	return ticket_.escrow_key_.get().data();
+	return ticket_.escrow_key_;
 }
 
 void UserSettings::setEscrowKeyId(u8 key_id)
@@ -292,16 +419,23 @@ void UserSettings::setEscrowKeyId(u8 key_id)
 
 void UserSettings::setEscrowedTitleKey(const u8 * escrowed_key)
 {
+	if (ticket_.escrowed_title_key_.get_unsafe().alloc(Crypto::kAes128KeySize) != MemoryBlob::ERR_NONE)
+	{
+		throw ProjectSnakeException(kModuleName, "Failed to allocate memory for title key");
+	}
+	memcpy(ticket_.escrowed_title_key_.get_unsafe().data(), escrowed_key, Crypto::kAes128KeySize);
+
+	ticket_.escrowed_title_key_.set(ticket_.escrowed_title_key_.get_unsafe());
 }
 
-const u8 * UserSettings::getEscrowedTitleKey() const
+const UserSettings::SettableObject<MemoryBlob>& UserSettings::getEscrowedTitleKey() const
 {
-	return nullptr;
+	return ticket_.escrowed_title_key_;
 }
 
-u8 UserSettings::getEscrowKeyId() const
+const UserSettings::SettableObject<u8>& UserSettings::getEscrowKeyId() const
 {
-	return ticket_.escrow_key_id_.get();
+	return ticket_.escrow_key_id_;
 }
 
 void UserSettings::setDeviceId(u32 device_id)
@@ -309,9 +443,9 @@ void UserSettings::setDeviceId(u32 device_id)
 	ticket_.device_id_ = device_id;
 }
 
-u32 UserSettings::getDeviceId() const
+const UserSettings::SettableObject<u32>& UserSettings::getDeviceId() const
 {
-	return ticket_.device_id_.get();
+	return ticket_.device_id_;
 }
 
 void UserSettings::setSystemAccessibleContentList(const std::vector<u16>& content_index)
@@ -319,9 +453,9 @@ void UserSettings::setSystemAccessibleContentList(const std::vector<u16>& conten
 	ticket_.system_accessible_content_ = content_index;
 }
 
-const std::vector<u16>& UserSettings::getSystemAccessibleContentList() const
+const UserSettings::SettableObject<std::vector<u16>>& UserSettings::getSystemAccessibleContentList() const
 {
-	return ticket_.system_accessible_content_.get();
+	return ticket_.system_accessible_content_;
 }
 
 void UserSettings::setAccessTitleId(u32 id)
@@ -329,9 +463,9 @@ void UserSettings::setAccessTitleId(u32 id)
 	ticket_.access_title_id_ = id;
 }
 
-u32 UserSettings::getAccessTitleId() const
+const UserSettings::SettableObject<u32>& UserSettings::getAccessTitleId() const
 {
-	return ticket_.access_title_id_.get();
+	return ticket_.access_title_id_;
 }
 
 void UserSettings::setAccessTitleIdMask(u32 id_mask)
@@ -339,9 +473,9 @@ void UserSettings::setAccessTitleIdMask(u32 id_mask)
 	ticket_.access_title_id_mask_ = id_mask;
 }
 
-u32 UserSettings::getAccessTitleIdMask() const
+const UserSettings::SettableObject<u32>& UserSettings::getAccessTitleIdMask() const
 {
-	return ticket_.access_title_id_mask_.get();
+	return ticket_.access_title_id_mask_;
 }
 
 void UserSettings::setLicenseType(ESTicket::ESLicenseType type)
@@ -349,9 +483,9 @@ void UserSettings::setLicenseType(ESTicket::ESLicenseType type)
 	ticket_.license_type_ = type;
 }
 
-ESTicket::ESLicenseType UserSettings::getLicenseType() const
+const UserSettings::SettableObject<ESTicket::ESLicenseType>& UserSettings::getLicenseType() const
 {
-	return ticket_.license_type_.get();
+	return ticket_.license_type_;
 }
 
 void UserSettings::setEShopAccountId(u32 id)
@@ -359,9 +493,9 @@ void UserSettings::setEShopAccountId(u32 id)
 	ticket_.eshop_act_id_ = id;
 }
 
-u32 UserSettings::getEShopAccountId() const
+const UserSettings::SettableObject<u32>& UserSettings::getEShopAccountId() const
 {
-	return ticket_.eshop_act_id_.get();
+	return ticket_.eshop_act_id_;
 }
 
 void UserSettings::setAudit(u8 audit)
@@ -369,9 +503,29 @@ void UserSettings::setAudit(u8 audit)
 	ticket_.audit_ = audit;
 }
 
-u8 UserSettings::getAudit() const
+const UserSettings::SettableObject<u8>& UserSettings::getAudit() const
 {
-	return ticket_.audit_.get();
+	return ticket_.audit_;
+}
+
+void UserSettings::setLimits(const std::vector<sESLimit>& limits)
+{
+	ticket_.limits_ = limits;
+}
+
+const UserSettings::SettableObject<std::vector<UserSettings::sESLimit>>& UserSettings::getLimits() const
+{
+	return ticket_.limits_;
+}
+
+void UserSettings::setAccessibleContentList(const std::vector<u16>& content_index)
+{
+	ticket_.enabled_content_ = content_index;
+}
+
+const UserSettings::SettableObject<std::vector<u16>>& UserSettings::getAccessibleContentList() const
+{
+	return ticket_.enabled_content_;
 }
 
 void UserSettings::showCliHelp(const std::string& name)
@@ -435,6 +589,7 @@ void UserSettings::clearSettings()
 {
 	general_.file_type_ = FILE_INVALID;
 	general_.infile_path_.clear();
+	general_.outfile_path_.clear();
 	cli_output_.print_fields_ = false;
 	cli_output_.verbose_ = false;
 	cli_output_.show_signatures_ = false;
